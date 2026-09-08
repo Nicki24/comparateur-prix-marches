@@ -79,10 +79,37 @@ Le schéma complet est implémenté : utilisateurs (avec rôle `contributeur`/`a
 - **Contributeur** : `POST /api/releves` (anti-doublon 1/jour, détection automatique prix anormal > ±40 %).
 - **Admin** : gestion des marchés et produits, `GET /api/signalements`, `POST /api/signalements/detecter-obsoletes` (prix > 14 jours).
 
-### Tests (PHPUnit)
+> Le CORS est activé (`config/cors.php`) pour permettre à l'application Flutter Web d'appeler l'API pendant le développement.
+
+### Frontend Flutter
+
+Application mobile Android (+ Web) pour la consultation et la contribution.
+
+- **Consultation publique** (sans compte) : marchés, produits, comparaison des prix par marché (graphique en barres + écarts en %) et évolution historique (courbe `fl_chart`, modes moyenne/min/max).
+- **Espace contributeur** : inscription, connexion, saisie de relevé de prix (avec sélecteur de date et détection du prix anormal).
+- **Espace admin** : vue des signalements (détection des prix obsolètes), création/désactivation de marchés et produits.
+
+```bash
+cd frontend
+flutter pub get
+flutter run                          # émulateur Android / Chrome
+# Autre adresse API :
+flutter run --dart-define=API_URL=https://api.exemple.fr/api
+```
+
+> Par défaut, l'API est `http://localhost:8000/api` (web/désktop) ou `http://10.0.2.2:8000/api` (émulateur Android).
+
+### Tests (Laravel)
 ```bash
 cd backend
 php artisan test    # 16 tests verts (règles métier + API)
+```
+
+### Tests (Flutter)
+```bash
+cd frontend
+flutter analyze     # aucune alerte
+flutter test        # 7 tests verts (widget + décodage des modèles)
 ```
 
 > La configuration `phpunit.xml` utilise une base dédiée `comparateur_prix_test` (MySQL, port 3308). Les tests utilisent `RefreshDatabase` et `Sanctum::actingAs`.
@@ -145,9 +172,10 @@ flutter run                    # sur un appareil Android / émulateur / chrome
 
 ## 📝 Notes techniques importantes
 
-- Ce README reflète un **état de développement en cours** : le **backend (API REST) est fonctionnel**, le frontend Flutter est en cours de développement.
+- **Backend** : API REST fonctionnelle (20 routes) + 16 tests ; **Frontend** : application Flutter fonctionnelle (consultation, contribution, admin) + 7 tests.
 - Le fichier `.env` du backend **ne doit jamais être commité** (il contient les identifiants de la base). Il est déjà exclu via `.gitignore`.
 - Les identifiants de base de données ci-dessus ne sont valables qu'en environnement local de développement.
+- **Jeton de session** : stocké localement via `shared_preferences` ; le jeton Sanctum est révoqué côté serveur à la déconnexion.
 
 ---
 
