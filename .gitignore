@@ -1,0 +1,30 @@
+# Ignorer les fichiers système
+Thumbs.db
+.DS_Store
+*.log
+
+# Artefacts temporaires de travail local
+.freebuff/
+
+# Secrets / environnements locaux (BACKEND)
+.env
+.env.backup
+.env.production
+backend/.env
+backend/.env.*
+!.env.example
+
+# Visual Studio Code
+.vscode/
+.idea/
+*.iml
+
+# Clés / certificats locaux
+*.key
+*.pem
+auth.json
+
+# Artefacts de build
+/build/
+/dist/
+node_modules/
