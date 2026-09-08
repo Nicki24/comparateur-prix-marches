@@ -71,7 +71,27 @@ DB_PASSWORD=root1234   # à changer en production
 > ℹ️ **Pourquoi le port 3308 ?** Le poste dispose déjà d'un **WAMP** qui occupe les ports 3306 (MySQL 8.3) et 3307 (MariaDB 11.3). Le MySQL dédié au projet écoute donc sur **3308**.
 
 ### Migrations
-Les migrations Laravel par défaut (`users`, `cache`, `jobs`) ont été exécutées avec succès sur la base `comparateur_prix`. Le schéma métier (marchés, produits, relevés, contributeurs) reste à créer.
+Le schéma complet est implémenté : utilisateurs (avec rôle `contributeur`/`admin`), jetons Sanctum, **marchés**, **produits**, **relevés de prix** (contrainte unique `un_releve_par_jour_par_contributeur`) et **signalements** d'anomalies.
+
+### API REST (20 routes)
+- **Publique** : `GET /api/marches`, `GET /api/produits`, `GET /api/produits/{id}/comparaison` (prix triés + écarts %), `GET /api/produits/{id}/historique` (points pour `fl_chart`, filtre `marche_id`).
+- **Authentification** (Sanctum) : `POST /api/register`, `POST /api/login`, `POST /api/logout`, `GET /api/user`.
+- **Contributeur** : `POST /api/releves` (anti-doublon 1/jour, détection automatique prix anormal > ±40 %).
+- **Admin** : gestion des marchés et produits, `GET /api/signalements`, `POST /api/signalements/detecter-obsoletes` (prix > 14 jours).
+
+### Tests (PHPUnit)
+```bash
+cd backend
+php artisan test    # 16 tests verts (règles métier + API)
+```
+
+> La configuration `phpunit.xml` utilise une base dédiée `comparateur_prix_test` (MySQL, port 3308). Les tests utilisent `RefreshDatabase` et `Sanctum::actingAs`.
+
+### Comptes de démonstration (seeder)
+| Rôle | Email | Mot de passe |
+|------|-------|--------------|
+| Admin | `admin@comparateur.mg` | `password123` |
+| Contributeur | `contrib@comparateur.mg` | `password123` |
 
 ---
 
@@ -125,7 +145,7 @@ flutter run                    # sur un appareil Android / émulateur / chrome
 
 ## 📝 Notes techniques importantes
 
-- Ce README reflète un **état de développement en cours** ; le schéma métier et les écrans ne sont **pas encore implémentés**.
+- Ce README reflète un **état de développement en cours** : le **backend (API REST) est fonctionnel**, le frontend Flutter est en cours de développement.
 - Le fichier `.env` du backend **ne doit jamais être commité** (il contient les identifiants de la base). Il est déjà exclu via `.gitignore`.
 - Les identifiants de base de données ci-dessus ne sont valables qu'en environnement local de développement.
 
