@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\MarcheController;
 use App\Http\Controllers\Api\ProduitController;
 use App\Http\Controllers\Api\ReleveController;
 use App\Http\Controllers\Api\SignalementController;
+use App\Http\Controllers\Api\StatistiqueController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,6 +28,9 @@ Route::get('/releves', [ReleveController::class, 'index']);
 Route::get('/produits/{produit}/comparaison', [ComparisonController::class, 'dernierPrixParMarche']);
 Route::get('/produits/{produit}/historique', [ComparisonController::class, 'historique']);
 
+// --- Tableau de bord (synthèse publique) ---
+Route::get('/stats', [StatistiqueController::class, 'synthese']);
+
 // --- Zone authentifiée (contributeurs + admin) ---
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'me']);
@@ -47,5 +51,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/signalements', [SignalementController::class, 'index']);
         Route::post('/signalements/detecter-obsoletes', [SignalementController::class, 'detecterObsoletes']);
+
+        // Export CSV des relevés (réservé aux administrateurs)
+        Route::get('/releves/export', [ReleveController::class, 'exportCsv']);
     });
 });

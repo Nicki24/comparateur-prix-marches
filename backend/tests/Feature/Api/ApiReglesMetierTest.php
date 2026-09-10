@@ -259,4 +259,57 @@ class ApiReglesMetierTest extends TestCase
             'date_releve' => now()->toDateString(),
         ])->assertUnauthorized();
     }
+
+    // --- Tableau de bord (synthèse) ---
+
+    public function test_la_synthese_est_consultable_sans_compte(): void
+    {
+        $this->getJson('/api/stats')
+            ->assertOk()
+            ->assertJsonStructure([
+                'nb_releves',
+                'nb_marches_actifs',
+                'nb_produits_actifs',
+                'nb_contributeurs',
+                'nb_signalements',
+                'derniere_mise_a_jour',
+            ]);
+    }
+
+    // --- Export CSV ---
+
+    public function test_l_export_csv_est_reserve_aux_admins(): void
+    {
+        $this->authentifier($this->contributeur);
+
+        $this->get('/api/releves/export')->assertForbidden();
+
+        $this->authentifier($this->admin);
+
+        $this->get('/api/releves/export')->assertOk();
+    }
+
+    public function test_l_export_csv_contient_l_en_tete_et_les_releves(): void
+    {
+        RelevePrix::create([
+            'produit_id' => $this->produit->id,
+            'marche_id' => $this->marche->id,
+            'utilisateur_id' => $this->contributeur->id,
+            'valeur' => 3200,
+            'date_releve' => now()->toDateString(),
+            'statut' => 'valide',
+        ]);
+
+        $this->authentifier($this->admin);
+
+        $response = $this->get('/api/releves/export');
+
+        $response->assertOk();
+        $contenu = $response->streamedContent();
+
+        $this->assertStringContainsString('Date', $contenu);
+        $this->assertStringContainsString('Produit', $contenu);
+        $this->assertStringContainsString('Riz', $contenu);
+        $this->assertStringContainsString('3 200,00', $contenu);
+    }
 }

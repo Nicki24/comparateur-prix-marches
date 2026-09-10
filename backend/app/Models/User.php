@@ -34,7 +34,7 @@ class User extends Authenticatable
 
     public function relevesPrix(): HasMany
     {
-        return $this->hasMany(RelevePrix::class);
+        return $this->hasMany(RelevePrix::class, 'utilisateur_id');
     }
 
     public function estAdmin(): bool

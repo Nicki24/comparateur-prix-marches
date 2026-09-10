@@ -24,7 +24,7 @@ class AnomalieDetectionService
      */
     public function detecterPrixAnormal(RelevePrix $releve): ?Signalement
     {
-        $moyenne = $this->moyenneRecentPourProduit($releve->produit_id, $releve->valeur);
+        $moyenne = $this->moyenneRecentPourProduit($releve->produit_id, $releve->id);
 
         if ($moyenne === null || $moyenne <= 0) {
             return null;
@@ -72,14 +72,15 @@ class AnomalieDetectionService
 
     /**
      * Calcule la moyenne du même produit sur les 14 derniers jours,
-     * hors relevé courant (identifié par sa valeur) et hors relevés signalés.
+     * hors relevé courant (identifié par son id) et hors relevés signalés.
      */
-    protected function moyenneRecentPourProduit(int $produitId, float $valeurCourante): ?float
+    protected function moyenneRecentPourProduit(int $produitId, ?int $exclureReleveId = null): ?float
     {
         $moyenne = RelevePrix::query()
             ->where('produit_id', $produitId)
             ->where('statut', '=', 'valide')
             ->where('date_releve', '>=', Carbon::today()->subDays(self::OBSOLETE_JOURS)->toDateString())
+            ->when($exclureReleveId !== null, fn ($q) => $q->where('id', '!=', $exclureReleveId))
             ->avg('valeur');
 
         return $moyenne === null ? null : (float) $moyenne;
