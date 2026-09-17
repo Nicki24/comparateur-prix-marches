@@ -250,6 +250,32 @@ class ApiReglesMetierTest extends TestCase
             ->assertCreated();
     }
 
+    public function test_un_admin_peut_reactiver_un_marche_desactive(): void
+    {
+        $this->marche->update(['actif' => false]);
+
+        $this->authentifier($this->admin);
+
+        $this->putJson('/api/marches/'.$this->marche->id, ['actif' => true])
+            ->assertOk()
+            ->assertJsonPath('data.actif', true);
+
+        $this->assertDatabaseHas('marches', [
+            'id' => $this->marche->id,
+            'actif' => true,
+        ]);
+    }
+
+    public function test_un_contributeur_ne_peut_pas_reactiver_un_marche(): void
+    {
+        $this->marche->update(['actif' => false]);
+
+        $this->authentifier($this->contributeur);
+
+        $this->putJson('/api/marches/'.$this->marche->id, ['actif' => true])
+            ->assertForbidden();
+    }
+
     public function test_la_saisie_de_releve_requiert_une_authentification(): void
     {
         $this->postJson('/api/releves', [
@@ -258,6 +284,50 @@ class ApiReglesMetierTest extends TestCase
             'valeur' => 3200,
             'date_releve' => now()->toDateString(),
         ])->assertUnauthorized();
+    }
+
+    // --- Historique personnel du contributeur ---
+
+    public function test_un_contributeur_voir_seulement_ses_propres_releves(): void
+    {
+        $autre = User::create([
+            'name' => 'Autre',
+            'email' => 'autre@test.fr',
+            'password' => 'password123',
+            'role' => 'contributeur',
+        ]);
+
+        $monReleve = RelevePrix::create([
+            'produit_id' => $this->produit->id,
+            'marche_id' => $this->marche->id,
+            'utilisateur_id' => $this->contributeur->id,
+            'valeur' => 3200,
+            'date_releve' => now()->toDateString(),
+            'statut' => 'valide',
+        ]);
+
+        RelevePrix::create([
+            'produit_id' => $this->produit->id,
+            'marche_id' => $this->marche->id,
+            'utilisateur_id' => $autre->id,
+            'valeur' => 5000,
+            'date_releve' => now()->toDateString(),
+            'statut' => 'valide',
+        ]);
+
+        $this->authentifier($this->contributeur);
+
+        $this->getJson('/api/mes-releves')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $monReleve->id)
+            ->assertJsonPath('data.0.valeur', 3200);
+    }
+
+    public function test_l_historique_personnel_requiert_une_authentification(): void
+    {
+        $this->getJson('/api/mes-releves')
+            ->assertUnauthorized();
     }
 
     // --- Tableau de bord (synthèse) ---

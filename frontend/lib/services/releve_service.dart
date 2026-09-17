@@ -27,6 +27,20 @@ class ReleveService {
     return RelevePrix.fromJson(releveData);
   }
 
+  /// Historique personnel : les relevés de l'utilisateur connecté.
+  static Future<List<RelevePrix>> mesReleves() async {
+    final data = await ApiClient.instance.get('/mes-releves', {
+      'per_page': '100',
+    }) as Map<String, dynamic>;
+
+    final items = data['data'] is List<dynamic>
+        ? data['data'] as List<dynamic>
+        : data['data']?['data'] as List<dynamic>;
+    return items
+        .map((e) => RelevePrix.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   /// Historique des relevés par produit (filtrable par marché).
   static Future<List<RelevePrix>> lister({
     int? produitId,

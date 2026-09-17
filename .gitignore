@@ -23,6 +23,7 @@ backend/.env.*
 *.key
 *.pem
 auth.json
+login.json
 
 # Artefacts de build
 /build/

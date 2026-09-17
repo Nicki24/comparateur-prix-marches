@@ -22,6 +22,6 @@ class Signalement extends Model
 
     public function releve(): BelongsTo
     {
-        return $this->belongsTo(RelevePrix::class);
+        return $this->belongsTo(RelevePrix::class, 'releve_id');
     }
 }

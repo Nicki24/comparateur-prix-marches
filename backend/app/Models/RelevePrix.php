@@ -40,6 +40,6 @@ class RelevePrix extends Model
 
     public function signalements(): HasMany
     {
-        return $this->hasMany(Signalement::class);
+        return $this->hasMany(Signalement::class, 'releve_id');
     }
 }

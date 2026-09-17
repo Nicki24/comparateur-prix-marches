@@ -39,6 +39,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Saisie de relevés (contributeur)
     Route::post('/releves', [ReleveController::class, 'store']);
 
+    // Historique personnel des relevés de l'utilisateur connecté
+    Route::get('/mes-releves', [ReleveController::class, 'mesReleves']);
+
     // Gestion marchés / produits (admin)
     Route::middleware('admin')->group(function () {
         Route::post('/marches', [MarcheController::class, 'store']);

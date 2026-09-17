@@ -28,20 +28,21 @@ class ApiClient {
     final base = ApiConfig.baseUrl.endsWith('/')
         ? ApiConfig.baseUrl
         : '${ApiConfig.baseUrl}/';
-    return Uri.parse('$base$chemin').replace(
+    final cheminNettoye = chemin.replaceFirst(RegExp(r'^/+'), '');
+    return Uri.parse('$base$cheminNettoye').replace(
       queryParameters: query?.map((k, v) => MapEntry(k, '$v')),
     );
   }
 
-  Map<String, String> _headers({bool json = true}) {
+  Map<String, String> _headers({bool json = true, String? token}) {
     final headers = <String, String>{};
     if (json) {
       headers['Accept'] = 'application/json';
       headers['Content-Type'] = 'application/json';
     }
-    final token = Session.instance.token;
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
+    final jeton = token ?? Session.instance.token;
+    if (jeton != null) {
+      headers['Authorization'] = 'Bearer $jeton';
     }
     return headers;
   }
@@ -53,9 +54,13 @@ class ApiClient {
     return jsonDecode(corps);
   }
 
-  Future<dynamic> get(String chemin, [Map<String, dynamic>? query]) async {
+  Future<dynamic> get(
+    String chemin, [
+    Map<String, dynamic>? query,
+    String? token,
+  ]) async {
     final reponse = await http
-        .get(_uri(chemin, query), headers: _headers())
+        .get(_uri(chemin, query), headers: _headers(token: token))
         .timeout(_timeout);
     return _verifier(reponse);
   }

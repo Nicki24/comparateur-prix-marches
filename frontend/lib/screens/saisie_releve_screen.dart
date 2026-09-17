@@ -9,7 +9,7 @@ import '../services/releve_service.dart';
 import '../utils/formats.dart';
 import '../widgets/etats.dart';
 
-/// Formulaire de saisie d'un relevÃ© de prix (contributeur).
+/// Formulaire de saisie d'un relevé de prix (contributeur).
 class SaisieReleveScreen extends StatefulWidget {
   const SaisieReleveScreen({super.key});
 
@@ -52,7 +52,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
       initialDate: _date,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now(),
-      helpText: 'Date du relevÃ©',
+      helpText: 'Date du relevé',
     );
     if (choix != null) {
       setState(() => _date = choix);
@@ -100,9 +100,9 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
 
   Future<void> _confirmerEnvoi(RelevePrix releve) async {
     final message = releve.estSignale
-        ? 'RelevÃ© enregistrÃ©, mais un prix anormal a Ã©tÃ© dÃ©tectÃ©. '
-            'Il sera vÃ©rifiÃ© par un administrateur.'
-        : 'RelevÃ© de ${formaterPrix(releve.valeur)} enregistrÃ©. '
+        ? 'Relevé enregistré, mais un prix anormal a été détecté. '
+            'Il sera vérifié par un administrateur.'
+        : 'Relevé de ${formaterPrix(releve.valeur)} enregistré. '
             'Merci pour votre contribution !';
 
     await showDialog<void>(
@@ -112,7 +112,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
           releve.estSignale ? Icons.warning : Icons.check_circle,
           color: releve.estSignale ? Colors.orange : Colors.green,
         ),
-        title: Text(releve.estSignale ? 'Prix signalÃ©' : 'RelevÃ© enregistrÃ©'),
+        title: Text(releve.estSignale ? 'Prix signalé' : 'Relevé enregistré'),
         content: Text(message),
         actions: [
           TextButton(
@@ -128,7 +128,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Saisir un relevÃ©')),
+      appBar: AppBar(title: const Text('Saisir un relevé')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -137,10 +137,10 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
               padding: const EdgeInsets.all(8),
               child: ListTile(
                 leading: const Icon(Icons.info_outline),
-                title: const Text('Un relevÃ© par produit, marchÃ© et jour'),
+                title: const Text('Un relevé par produit, marché et jour'),
                 subtitle: const Text(
                   'Vous pouvez soumettre au maximum un prix par produit, '
-                  'par marchÃ© et par jour.',
+                  'par marché et par jour.',
                 ),
               ),
             ),
@@ -169,7 +169,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
                     decimal: true,
                   ),
                   decoration: InputDecoration(
-                    labelText: 'Prix observÃ© (Ariary)',
+                    labelText: 'Prix observé (Ariary)',
                     hintText: 'Ex. 3200',
                     prefixIcon: const Icon(Icons.payments_outlined),
                     border: const OutlineInputBorder(),
@@ -181,7 +181,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
                     }
                     final prix = double.tryParse(v.trim().replaceAll(',', '.'));
                     if (prix == null || prix <= 0) {
-                      return 'Le prix doit Ãªtre supÃ©rieur Ã  0.';
+                      return 'Le prix doit être supérieur à 0.';
                     }
                     return null;
                   },
@@ -190,7 +190,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.event),
-                  title: const Text('Date du relevÃ©'),
+                  title: const Text('Date du relevé'),
                   subtitle: Text(formaterDate(_date)),
                   trailing: TextButton(
                     onPressed: _choisirDate,
@@ -202,7 +202,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
                   controller: _commentaireController,
                   decoration: const InputDecoration(
                     labelText: 'Commentaire (facultatif)',
-                    hintText: 'Ã‰tat du produit, prÃ©cisionsâ€¦',
+                    hintText: 'État du produit, précisions…',
                     border: OutlineInputBorder(),
                   ),
                   maxLines: 2,
@@ -226,7 +226,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
                       : const Icon(Icons.send),
                   label: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Text('Envoyer le relevÃ©'),
+                    child: Text('Envoyer le relevé'),
                   ),
                 ),
               ],
@@ -305,7 +305,7 @@ class _ChampMarche extends StatelessWidget {
         }
         if (snapshot.hasError || (snapshot.data ?? []).isEmpty) {
           return const ContenuVide(
-            message: 'Aucun marchÃ© disponible.',
+            message: 'Aucun marché disponible.',
             icone: Icons.storefront,
           );
         }
@@ -314,7 +314,7 @@ class _ChampMarche extends StatelessWidget {
           value: marche,
           isExpanded: true,
           decoration: const InputDecoration(
-            labelText: 'MarchÃ©',
+            labelText: 'Marché',
             prefixIcon: Icon(Icons.storefront_outlined),
             border: OutlineInputBorder(),
           ),
@@ -323,7 +323,7 @@ class _ChampMarche extends StatelessWidget {
               DropdownMenuItem(value: m, child: Text(m.nom)),
           ],
           onChanged: onChanged,
-          validator: (v) => v == null ? 'Choisissez un marchÃ©.' : null,
+          validator: (v) => v == null ? 'Choisissez un marché.' : null,
         );
       },
     );

@@ -35,4 +35,28 @@ class MarcheService {
   static Future<void> desactiver(int id) async {
     await ApiClient.instance.delete('/marches/$id');
   }
+
+  /// Modifie un marché (admin).
+  static Future<Marche> modifier({
+    required int id,
+    required String nom,
+    required String localisation,
+    String? description,
+  }) async {
+    final data = await ApiClient.instance.put('/marches/$id', {
+      'nom': nom,
+      'localisation': localisation,
+      'description': description,
+    }) as Map<String, dynamic>;
+
+    final marcheData = data['data'] is Map<String, dynamic>
+        ? data['data'] as Map<String, dynamic>
+        : data;
+    return Marche.fromJson(marcheData);
+  }
+
+  /// Réactive un marché désactivé (admin, suppression logique inverse).
+  static Future<void> reactiver(int id) async {
+    await ApiClient.instance.put('/marches/$id', {'actif': true});
+  }
 }

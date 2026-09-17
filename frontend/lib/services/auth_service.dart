@@ -30,9 +30,10 @@ class AuthService {
     return data['token'] as String;
   }
 
-  /// Récupère l'utilisateur authentifié.
-  static Future<User> utilisateurCourant() async {
-    final data = await ApiClient.instance.get('/user') as Map<String, dynamic>;
+  /// Récupère l'utilisateur authentifié (token explicit ou session en cours).
+  static Future<User> utilisateurCourant({String? token}) async {
+    final data =
+        await ApiClient.instance.get('/user', null, token) as Map<String, dynamic>;
     final userData = data['data'] is Map<String, dynamic>
         ? data['data'] as Map<String, dynamic>
         : data;

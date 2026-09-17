@@ -73,11 +73,11 @@ DB_PASSWORD=root1234   # à changer en production
 ### Migrations
 Le schéma complet est implémenté : utilisateurs (avec rôle `contributeur`/`admin`), jetons Sanctum, **marchés**, **produits**, **relevés de prix** (contrainte unique `un_releve_par_jour_par_contributeur`) et **signalements** d'anomalies.
 
-### API REST (20 routes)
+### API REST (21 routes)
 - **Publique** : `GET /api/marches`, `GET /api/produits`, `GET /api/produits/{id}/comparaison` (prix triés + écarts %), `GET /api/produits/{id}/historique` (points pour `fl_chart`, filtre `marche_id`).
 - **Authentification** (Sanctum) : `POST /api/register`, `POST /api/login`, `POST /api/logout`, `GET /api/user`.
-- **Contributeur** : `POST /api/releves` (anti-doublon 1/jour, détection automatique prix anormal > ±40 %).
-- **Admin** : gestion des marchés et produits, `GET /api/signalements`, `POST /api/signalements/detecter-obsoletes` (prix > 14 jours).
+- **Contributeur** : `POST /api/releves` (anti-doublon 1/jour, détection automatique prix anormal > ±40 %), `GET /api/mes-releves` (historique personnel, lecture seule).
+- **Admin** : gestion des marchés et produits (créer, modifier, désactiver, **réactiver**), `GET /api/signalements`, `POST /api/signalements/detecter-obsoletes` (prix > 14 jours).
 
 > Le CORS est activé (`config/cors.php`) pour permettre à l'application Flutter Web d'appeler l'API pendant le développement.
 
@@ -86,8 +86,8 @@ Le schéma complet est implémenté : utilisateurs (avec rôle `contributeur`/`a
 Application mobile Android (+ Web) pour la consultation et la contribution.
 
 - **Consultation publique** (sans compte) : marchés, produits, comparaison des prix par marché (graphique en barres + écarts en %) et évolution historique (courbe `fl_chart`, modes moyenne/min/max).
-- **Espace contributeur** : inscription, connexion, saisie de relevé de prix (avec sélecteur de date et détection du prix anormal).
-- **Espace admin** : vue des signalements (détection des prix obsolètes), création/désactivation de marchés et produits.
+- **Espace contributeur** : inscription, connexion, saisie de relevé de prix (avec sélecteur de date et détection du prix anormal), consultation de son historique personnel (statut valide/signalé).
+- **Espace admin** : vue des signalements (détection des prix obsolètes), gestion complète des marchés et produits (créer, modifier, désactiver, réactiver).
 
 ```bash
 cd frontend

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/api_client.dart';
 import '../services/auth_service.dart';
 import '../services/session.dart';
 
@@ -38,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      final user = await AuthService.utilisateurCourant();
+      final user = await AuthService.utilisateurCourant(token: token);
       await Session.instance.connecter(token, user);
       if (!mounted) {
         return;
@@ -56,10 +57,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   String _messageErreur(Object e) {
-    final s = e.toString();
-    return s.startsWith('ApiException')
-        ? s.replaceFirst('ApiException: ', '')
-        : 'Connexion impossible. Vérifiez votre réseau.';
+    if (e is ApiException) {
+      return e.message;
+    }
+    return 'Connexion impossible. Vérifiez votre réseau.';
   }
 
   @override

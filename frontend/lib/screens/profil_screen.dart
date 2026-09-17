@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/session.dart';
 import 'admin_gestion_screen.dart';
+import 'mes_releves_screen.dart';
 import 'saisie_releve_screen.dart';
 import 'signalements_screen.dart';
 
@@ -111,6 +112,16 @@ class _ProfilScreenState extends State<ProfilScreen> {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const SaisieReleveScreen()),
+              );
+            },
+          ),
+          _ActionTile(
+            icone: Icons.history,
+            titre: 'Mes relevés',
+            sousTitre: 'Consulter l’historique de vos relevés',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const MesRelevesScreen()),
               );
             },
           ),

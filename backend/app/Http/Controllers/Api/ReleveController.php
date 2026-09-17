@@ -68,6 +68,21 @@ class ReleveController extends Controller
     }
 
     /**
+     * Historique personnel : les relevés de l'utilisateur connecté.
+     * Lecture seule (les relevés sont immuables par conception).
+     */
+    public function mesReleves(Request $request): AnonymousResourceCollection
+    {
+        $releves = RelevePrix::query()
+            ->with(['produit', 'marche', 'signalements'])
+            ->where('utilisateur_id', $request->user()->id)
+            ->orderByDesc('date_releve')
+            ->paginate($request->integer('per_page', 50) ?: 50);
+
+        return RelevePrixResource::collection($releves);
+    }
+
+    /**
      * Export CSV de tous les relevés (réservé aux administrateurs),
      * utile pour l'analyse des données dans le mémoire.
      */

@@ -46,22 +46,26 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
 
   Future<void> _creer() async {
     if (_estMarches) {
-      await _dialogAjoutMarche();
+      await _dialogMarche();
     } else {
-      await _dialogAjoutProduit();
+      await _dialogProduit();
     }
   }
 
-  Future<void> _desactiver(dynamic element) async {
-    final confirme = await showDialog<bool>(
+  Future<void> _modifier(dynamic element) async {
+    if (_estMarches) {
+      await _dialogMarche(existant: element as Marche);
+    } else {
+      await _dialogProduit(existant: element as Produit);
+    }
+  }
+
+  Future<bool?> _confirmer(String titre, String message, String action) {
+    return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Désactiver'),
-        content: Text(
-          _estMarches
-              ? 'Désactiver le marché « ${(element as Marche).nom} » ?'
-              : 'Désactiver le produit « ${(element as Produit).nom} » ?',
-        ),
+        title: Text(titre),
+        content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -69,10 +73,22 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Désactiver'),
+            child: Text(action),
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _desactiver(dynamic element) async {
+    final nom = _estMarches
+        ? (element as Marche).nom
+        : (element as Produit).nom;
+    final confirme = await _confirmer(
+      'Désactiver',
+      'Désactiver ${_estMarches ? 'le marché' : 'le produit'} « $nom » ? '
+          'Il ne sera plus visible dans la consultation publique.',
+      'Désactiver',
     );
     if (confirme != true) {
       return;
@@ -101,16 +117,56 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
     }
   }
 
-  Future<void> _dialogAjoutMarche() async {
-    final nomController = TextEditingController();
-    final localisationController = TextEditingController();
-    final descriptionController = TextEditingController();
+  Future<void> _reactiver(dynamic element) async {
+    final nom = _estMarches
+        ? (element as Marche).nom
+        : (element as Produit).nom;
+    final confirme = await _confirmer(
+      'Réactiver',
+      'Réactiver ${_estMarches ? 'le marché' : 'le produit'} « $nom » ? '
+          'Il redeviendra visible dans la consultation publique.',
+      'Réactiver',
+    );
+    if (confirme != true) {
+      return;
+    }
+
+    try {
+      if (_estMarches) {
+        await MarcheService.reactiver((element as Marche).id);
+      } else {
+        await ProduitService.reactiver((element as Produit).id);
+      }
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Élément réactivé.')),
+      );
+      await _recharger();
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('ApiException: ', ''))),
+      );
+    }
+  }
+
+  Future<void> _dialogMarche({Marche? existant}) async {
+    final estModification = existant != null;
+    final nomController = TextEditingController(text: existant?.nom);
+    final localisationController =
+        TextEditingController(text: existant?.localisation);
+    final descriptionController =
+        TextEditingController(text: existant?.description);
     final formulaire = GlobalKey<FormState>();
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nouveau marché'),
+        title: Text(estModification ? 'Modifier le marché' : 'Nouveau marché'),
         content: Form(
           key: formulaire,
           child: Column(
@@ -151,7 +207,7 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
                 Navigator.of(context).pop(true);
               }
             },
-            child: const Text('Créer'),
+            child: Text(estModification ? 'Enregistrer' : 'Créer'),
           ),
         ],
       ),
@@ -160,19 +216,33 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
     if (ok != true) {
       return;
     }
+
+    final nom = nomController.text.trim();
+    final localisation = localisationController.text.trim();
+    final description = descriptionController.text.trim().isEmpty
+        ? null
+        : descriptionController.text.trim();
+
     try {
-      await MarcheService.creer(
-        nom: nomController.text.trim(),
-        localisation: localisationController.text.trim(),
-        description: descriptionController.text.trim().isEmpty
-            ? null
-            : descriptionController.text.trim(),
-      );
+      if (estModification) {
+        await MarcheService.modifier(
+          id: existant.id,
+          nom: nom,
+          localisation: localisation,
+          description: description,
+        );
+      } else {
+        await MarcheService.creer(
+          nom: nom,
+          localisation: localisation,
+          description: description,
+        );
+      }
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Marché créé.')),
+        SnackBar(content: Text(estModification ? 'Marché modifié.' : 'Marché créé.')),
       );
       await _recharger();
     } catch (e) {
@@ -185,16 +255,17 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
     }
   }
 
-  Future<void> _dialogAjoutProduit() async {
-    final nomController = TextEditingController();
-    final uniteController = TextEditingController();
-    final categorieController = TextEditingController();
+  Future<void> _dialogProduit({Produit? existant}) async {
+    final estModification = existant != null;
+    final nomController = TextEditingController(text: existant?.nom);
+    final uniteController = TextEditingController(text: existant?.uniteMesure);
+    final categorieController = TextEditingController(text: existant?.categorie);
     final formulaire = GlobalKey<FormState>();
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nouveau produit'),
+        title: Text(estModification ? 'Modifier le produit' : 'Nouveau produit'),
         content: Form(
           key: formulaire,
           child: Column(
@@ -213,8 +284,9 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
                   labelText: 'Unité de mesure',
                   hintText: 'kilo, litre, unité…',
                 ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Unité requise.' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Unité requise.'
+                    : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -237,7 +309,7 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
                 Navigator.of(context).pop(true);
               }
             },
-            child: const Text('Créer'),
+            child: Text(estModification ? 'Enregistrer' : 'Créer'),
           ),
         ],
       ),
@@ -246,19 +318,33 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
     if (ok != true) {
       return;
     }
+
+    final nom = nomController.text.trim();
+    final uniteMesure = uniteController.text.trim();
+    final categorie = categorieController.text.trim().isEmpty
+        ? null
+        : categorieController.text.trim();
+
     try {
-      await ProduitService.creer(
-        nom: nomController.text.trim(),
-        uniteMesure: uniteController.text.trim(),
-        categorie: categorieController.text.trim().isEmpty
-            ? null
-            : categorieController.text.trim(),
-      );
+      if (estModification) {
+        await ProduitService.modifier(
+          id: existant.id,
+          nom: nom,
+          uniteMesure: uniteMesure,
+          categorie: categorie,
+        );
+      } else {
+        await ProduitService.creer(
+          nom: nom,
+          uniteMesure: uniteMesure,
+          categorie: categorie,
+        );
+      }
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Produit créé.')),
+        SnackBar(content: Text(estModification ? 'Produit modifié.' : 'Produit créé.')),
       );
       await _recharger();
     } catch (e) {
@@ -325,22 +411,52 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
                   child: ListTile(
                     leading: Icon(
                       _estMarches ? Icons.storefront : Icons.category,
+                      color: actif ? null : Colors.grey,
                     ),
                     title: Text(nom),
-                    subtitle: Text(sousTitre),
-                    trailing: actif
-                        ? TextButton(
-                            onPressed: () => _desactiver(element),
-                            child: const Text(
-                              'Désactiver',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          )
-                        : const Chip(
-                            label: Text('Inactif'),
-                            backgroundColor: Colors.grey,
-                            labelStyle: TextStyle(color: Colors.white),
+                    subtitle: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          actif ? Icons.check_circle_outline : Icons.cancel_outlined,
+                          size: 14,
+                          color: actif ? Colors.green : Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          actif ? 'Actif' : 'Inactif',
+                          style: TextStyle(
+                            color: actif ? Colors.green : Colors.grey,
+                            fontSize: 12,
                           ),
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            sousTitre,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Modifier',
+                          icon: const Icon(Icons.edit_outlined),
+                          onPressed: () => _modifier(element),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              actif ? _desactiver(element) : _reactiver(element),
+                          style: TextButton.styleFrom(
+                            foregroundColor: actif ? Colors.red : Colors.green,
+                          ),
+                          child: Text(actif ? 'Désactiver' : 'Réactiver'),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },

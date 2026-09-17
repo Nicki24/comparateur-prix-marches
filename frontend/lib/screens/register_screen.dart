@@ -44,7 +44,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: _passwordController.text,
         passwordConfirmation: _confirmController.text,
       );
-      final user = await AuthService.utilisateurCourant();
+      final user = await AuthService.utilisateurCourant(token: token);
       await Session.instance.connecter(token, user);
       if (!mounted) {
         return;
