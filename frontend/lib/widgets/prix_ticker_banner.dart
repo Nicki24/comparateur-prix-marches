@@ -129,10 +129,8 @@ class _PrixTickerBannerState extends State<PrixTickerBanner> {
   }
 }
 
-/// Coin droit du bandeau : rappel de la dernière mise à jour + bouton
-/// de rafraîchissement, sur un dégradé pour rester lisible au-dessus
-/// du défilement.
-class _PanneauMaj extends StatelessWidget {
+/// Coin droit du bandeau : horloge temps réel + dernière MAJ données + bouton refresh.
+class _PanneauMaj extends StatefulWidget {
   const _PanneauMaj({
     required this.enRefresh,
     required this.derniereMaj,
@@ -144,8 +142,32 @@ class _PanneauMaj extends StatelessWidget {
   final VoidCallback onRafraichir;
 
   @override
+  State<_PanneauMaj> createState() => _PanneauMajState();
+}
+
+class _PanneauMajState extends State<_PanneauMaj> {
+  Timer? _timer;
+  late DateTime _now;
+
+  @override
+  void initState() {
+    super.initState();
+    _now = DateTime.now();
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+      setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final maj = derniereMaj;
+    final maj = widget.derniereMaj;
     return Container(
       padding: const EdgeInsets.only(left: 24),
       decoration: BoxDecoration(
@@ -162,6 +184,19 @@ class _PanneauMaj extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Horloge temps réel
+          Text(
+            formaterHeure(_now),
+            style: const TextStyle(
+              fontFamily: AppFonts.mono,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF6FD98C),
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Dernière MAJ des données
           if (maj != null) ...[
             Text(
               'MAJ ${formaterHeure(maj)}',
@@ -180,7 +215,7 @@ class _PanneauMaj extends StatelessWidget {
             child: SizedBox(
               width: 30,
               height: 30,
-              child: enRefresh
+              child: widget.enRefresh
                   ? const Padding(
                       padding: EdgeInsets.all(7),
                       child: CircularProgressIndicator(
@@ -195,7 +230,7 @@ class _PanneauMaj extends StatelessWidget {
                         Icons.refresh_rounded,
                         color: AppColors.greenLight,
                       ),
-                      onPressed: onRafraichir,
+                      onPressed: widget.onRafraichir,
                     ),
             ),
           ),
