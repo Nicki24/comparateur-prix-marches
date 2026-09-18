@@ -4,7 +4,9 @@ import '../models/marche.dart';
 import '../models/produit.dart';
 import '../services/marche_service.dart';
 import '../services/produit_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/etats.dart';
+import '../widgets/statut_badge.dart';
 
 enum AdminGestionType { marches, produits }
 
@@ -411,30 +413,28 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
                   child: ListTile(
                     leading: Icon(
                       _estMarches ? Icons.storefront : Icons.category,
-                      color: actif ? null : Colors.grey,
+                      color: actif
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.grey,
                     ),
-                    title: Text(nom),
+                    title: Text(
+                      nom,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: actif ? null : Colors.grey,
+                      ),
+                    ),
                     subtitle: Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          actif ? Icons.check_circle_outline : Icons.cancel_outlined,
-                          size: 14,
-                          color: actif ? Colors.green : Colors.grey,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          actif ? 'Actif' : 'Inactif',
-                          style: TextStyle(
-                            color: actif ? Colors.green : Colors.grey,
-                            fontSize: 12,
-                          ),
-                        ),
+                        actif
+                            ? const StatutBadge.ok('Actif')
+                            : const StatutBadge.neutre('Inactif'),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
                             sousTitre,
                             overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: Colors.grey),
                           ),
                         ),
                       ],
@@ -451,7 +451,8 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
                           onPressed: () =>
                               actif ? _desactiver(element) : _reactiver(element),
                           style: TextButton.styleFrom(
-                            foregroundColor: actif ? Colors.red : Colors.green,
+                            foregroundColor:
+                                actif ? Colors.red : AppColors.green,
                           ),
                           child: Text(actif ? 'Désactiver' : 'Réactiver'),
                         ),

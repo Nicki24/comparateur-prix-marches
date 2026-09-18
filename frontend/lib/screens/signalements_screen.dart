@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../models/signalement.dart';
 import '../services/signalement_service.dart';
+import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/etats.dart';
+import '../widgets/statut_badge.dart';
 
 class SignalementsScreen extends StatefulWidget {
   const SignalementsScreen({super.key});
@@ -56,7 +58,6 @@ class _SignalementsScreenState extends State<SignalementsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Signalements'),
@@ -112,15 +113,15 @@ class _SignalementsScreenState extends State<SignalementsScreen> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: estPrixAnormal
-                          ? theme.colorScheme.errorContainer
-                          : theme.colorScheme.secondaryContainer,
+                          ? AppColors.alertBg
+                          : AppColors.staleBg,
                       child: Icon(
                         estPrixAnormal
                             ? Icons.warning_amber
                             : Icons.hourglass_empty,
                         color: estPrixAnormal
-                            ? theme.colorScheme.error
-                            : theme.colorScheme.secondary,
+                            ? AppColors.alertFg
+                            : AppColors.staleFg,
                       ),
                     ),
                     title: Text(s.libelleType),
@@ -128,13 +129,19 @@ class _SignalementsScreenState extends State<SignalementsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (releve?.produit != null)
-                          Text('${releve!.produit!.nom} — ${formaterPrix(releve.valeur)}'),
+                          Text(
+                            '${releve!.produit!.nom} — '
+                            '${formaterPrix(releve.valeur)}',
+                          ),
                         if (releve?.marche != null)
                           Text(releve!.marche!.nom),
                         Text('Détecté le ${formaterDate(s.dateDetection)}'),
                       ],
                     ),
                     isThreeLine: true,
+                    trailing: estPrixAnormal
+                        ? const StatutBadge.alerte('Écart')
+                        : const StatutBadge.obsolete('Obsolète'),
                   ),
                 );
               },

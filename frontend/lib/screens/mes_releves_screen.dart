@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../models/releve_prix.dart';
 import '../services/releve_service.dart';
+import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/etats.dart';
+import '../widgets/statut_badge.dart';
 
 /// Historique personnel des relevés de l'utilisateur connecté.
 /// Lecture seule : un relevé est immuable après envoi (règle métier).
@@ -32,7 +34,6 @@ class _MesRelevesScreenState extends State<MesRelevesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Mes relevés')),
       body: FutureBuilder<List<RelevePrix>>(
@@ -70,17 +71,32 @@ class _MesRelevesScreenState extends State<MesRelevesScreen> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: r.estSignale
-                          ? theme.colorScheme.errorContainer
-                          : theme.colorScheme.primaryContainer,
+                          ? AppColors.alertBg
+                          : AppColors.okBg,
                       child: Icon(
                         r.estSignale ? Icons.warning_amber : Icons.payments,
                         color: r.estSignale
-                            ? theme.colorScheme.error
-                            : theme.colorScheme.primary,
+                            ? AppColors.alertFg
+                            : AppColors.okFg,
                       ),
                     ),
-                    title: Text(
-                      '${r.produit?.nom ?? 'Produit'} — ${formaterPrix(r.valeur)}',
+                    title: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '${r.produit?.nom ?? 'Produit'} — ',
+                          ),
+                          TextSpan(
+                            text: formaterPrix(r.valeur),
+                            style: stylePrix(
+                              taille: 15,
+                              couleur: r.estSignale
+                                  ? AppColors.alertFg
+                                  : AppColors.green,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,18 +112,9 @@ class _MesRelevesScreenState extends State<MesRelevesScreen> {
                       ],
                     ),
                     isThreeLine: true,
-                    trailing: Chip(
-                      label: Text(r.estSignale ? 'Signalé' : 'Validé'),
-                      backgroundColor: r.estSignale
-                          ? theme.colorScheme.errorContainer
-                          : theme.colorScheme.primaryContainer,
-                      labelStyle: TextStyle(
-                        fontSize: 12,
-                        color: r.estSignale
-                            ? theme.colorScheme.error
-                            : theme.colorScheme.primary,
-                      ),
-                    ),
+                    trailing: r.estSignale
+                        ? const StatutBadge.alerte('Signalé')
+                        : const StatutBadge.ok('Validé'),
                   ),
                 );
               },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/prix_ticker_banner.dart';
 import 'compte_screen.dart';
 import 'marches_screen.dart';
 import 'produits_screen.dart';
@@ -23,7 +24,16 @@ class _AccueilScreenState extends State<AccueilScreen> {
     ];
 
     return Scaffold(
-      body: IndexedStack(index: _index, children: ecrans),
+      body: Column(
+        children: [
+          // ─── Bandeau ticker défilant ───────────────────────────────────
+          const PrixTickerBanner(),
+          // ─── Contenu principal ─────────────────────────────────────────
+          Expanded(
+            child: IndexedStack(index: _index, children: ecrans),
+          ),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() => _index = value),
@@ -39,8 +49,8 @@ class _AccueilScreenState extends State<AccueilScreen> {
             label: 'Produits',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
             label: 'Compte',
           ),
         ],

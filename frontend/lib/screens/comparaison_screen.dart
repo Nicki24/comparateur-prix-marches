@@ -5,6 +5,7 @@ import '../models/comparaison.dart';
 import '../models/historique_point.dart';
 import '../models/produit.dart';
 import '../services/comparison_service.dart';
+import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/etats.dart';
 
@@ -87,7 +88,6 @@ class _ComparaisonTabState extends State<_ComparaisonTab> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return FutureBuilder<Comparaison>(
       future: _futur,
       builder: (context, snapshot) {
@@ -102,7 +102,12 @@ class _ComparaisonTabState extends State<_ComparaisonTab> {
         }
 
         final comparaison = snapshot.data!;
-        if (comparaison.prixParMarche.isEmpty) {
+        final paire = comparaison.prixParMarche
+            .where((p) => p.dernierPrix != null)
+            .toList()
+            ..sort((a, b) => a.dernierPrix!.compareTo(b.dernierPrix!));
+
+        if (paire.isEmpty) {
           return const ContenuVide(
             message: 'Aucun prix relevé pour ce produit pour le moment.',
             icone: Icons.show_chart,
@@ -117,21 +122,39 @@ class _ComparaisonTabState extends State<_ComparaisonTab> {
             children: [
               _CarteMeilleurPrix(comparaison: comparaison),
               const SizedBox(height: 16),
+              const _TitreGraphique(
+                titre: 'Prix par marché',
+                sousTitre: 'Dernier relevé observé sur chaque marché',
+              ),
+              const SizedBox(height: 8),
               Card(
                 clipBehavior: Clip.antiAlias,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 24, 16, 8),
-                  child: _BarChartPrix(comparaison: comparaison),
+                  padding: const EdgeInsets.fromLTRB(8, 24, 16, 14),
+                  child: Column(
+                    children: [
+                      _BarChartPrix(paire: paire),
+                      const SizedBox(height: 18),
+                      const _LegendeBar(),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              ...comparaison.prixParMarche.map(
-                (p) => _LignePrixMarche(
-                  prixParMarche: p,
-                  estLeMoinsCher: comparaison.prixMinimum != null &&
-                      p.dernierPrix != null &&
-                      p.dernierPrix == comparaison.prixMinimum,
-                  colorTheme: theme.colorScheme,
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < paire.length; i++)
+                        _RangPrixMarche(
+                          prixParMarche: paire[i],
+                          rang: i,
+                          total: paire.length,
+                          prixMax: paire.last.dernierPrix!,
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -142,7 +165,7 @@ class _ComparaisonTabState extends State<_ComparaisonTab> {
   }
 }
 
-/// Encart « meilleur prix ».
+/// Encart « meilleur prix » sur fond encre, prix en vert tendre.
 class _CarteMeilleurPrix extends StatelessWidget {
   const _CarteMeilleurPrix({required this.comparaison});
 
@@ -156,32 +179,92 @@ class _CarteMeilleurPrix extends StatelessWidget {
         .where((p) => p.dernierPrix != null)
         .reduce((a, b) => (a.dernierPrix! <= b.dernierPrix!) ? a : b);
 
-    return Card(
-      color: theme.colorScheme.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.ink, AppColors.ink2],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'MEILLEUR PRIX',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: const Color(0xFFBFE3CC),
+                    letterSpacing: 1.1,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const _BadgeMeilleureAffaire(),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            prixMin != null ? formaterPrix(prixMin) : '—',
+            style: stylePrix(
+              taille: 34,
+              couleur: AppColors.greenLight,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Chez ${meilleur.marche.nom}',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFFCFE7D8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Badge animé « Meilleure affaire » (apparition en échelle).
+class _BadgeMeilleureAffaire extends StatelessWidget {
+  const _BadgeMeilleureAffaire();
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.easeOutBack,
+      builder: (context, v, child) => Opacity(
+        opacity: v.clamp(0.0, 1.0),
+        child: Transform.scale(scale: 0.8 + 0.2 * v, child: child),
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.greenLight, AppColors.green],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(99),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
+            Icon(Icons.whatshot_rounded, size: 13, color: Colors.white),
+            SizedBox(width: 4),
             Text(
-              'Meilleur prix',
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              prixMin != null ? formaterPrix(prixMin) : '—',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Chez ${meilleur.marche.nom}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer,
+              'Meilleure affaire',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: 0.3,
               ),
             ),
           ],
@@ -191,23 +274,17 @@ class _CarteMeilleurPrix extends StatelessWidget {
   }
 }
 
-/// Graphique en barres des derniers prix par marché.
+/// Graphique en barres des derniers prix par marché, classés du moins cher
+/// au plus cher (vert tendre → safran → terracotta).
 class _BarChartPrix extends StatelessWidget {
-  const _BarChartPrix({required this.comparaison});
+  const _BarChartPrix({required this.paire});
 
-  final Comparaison comparaison;
+  final List<PrixParMarche> paire;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final paire = comparaison.prixParMarche
-        .where((p) => p.dernierPrix != null)
-        .toList();
-
-    final maxPrix = paire
-            .map((p) => p.dernierPrix!)
-            .reduce((a, b) => a > b ? a : b) *
-        1.1;
+    final maxPrix = paire.last.dernierPrix! * 1.1;
 
     return SizedBox(
       height: 220,
@@ -222,9 +299,9 @@ class _BarChartPrix extends StatelessWidget {
                   BarChartRodData(
                     toY: paire[i].dernierPrix!,
                     width: 22,
-                    color: theme.colorScheme.primary,
+                    color: _couleurBar(i, paire.length),
                     borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(4),
+                      top: Radius.circular(5),
                     ),
                   ),
                 ],
@@ -240,11 +317,13 @@ class _BarChartPrix extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 44,
+                reservedSize: 48,
                 getTitlesWidget: (value, meta) {
                   return Text(
                     '${value.toInt()}',
-                    style: theme.textTheme.bodySmall,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontFamily: AppFonts.mono,
+                    ),
                   );
                 },
               ),
@@ -252,14 +331,14 @@ class _BarChartPrix extends StatelessWidget {
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 30,
+                reservedSize: 34,
                 getTitlesWidget: (value, meta) {
                   final index = value.toInt();
                   if (index < 0 || index >= paire.length) {
                     return const SizedBox.shrink();
                   }
                   return Padding(
-                    padding: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       _nomCourt(paire[index].marche.nom),
                       style: theme.textTheme.bodySmall,
@@ -274,6 +353,7 @@ class _BarChartPrix extends StatelessWidget {
           borderData: FlBorderData(show: false),
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
+              getTooltipColor: (_) => AppColors.ink,
               fitInsideHorizontally: true,
               fitInsideVertically: true,
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
@@ -282,6 +362,7 @@ class _BarChartPrix extends StatelessWidget {
                   '$nom\n${formaterPrix(rod.toY)}',
                   theme.textTheme.bodySmall!.copyWith(
                     color: Colors.white,
+                    fontFamily: AppFonts.sans,
                     fontWeight: FontWeight.bold,
                   ),
                 );
@@ -294,50 +375,152 @@ class _BarChartPrix extends StatelessWidget {
   }
 
   String _nomCourt(String nom) {
-    final tronque = nom.length > 12 ? nom.substring(0, 12) : nom;
-    return tronque;
+    return nom.length > 12 ? nom.substring(0, 12) : nom;
   }
 }
 
-/// Ligne « prix par marché » avec écart en %.
-class _LignePrixMarche extends StatelessWidget {
-  const _LignePrixMarche({
+/// Ligne comparative façon tableau de bord : point de couleur, nom du marché,
+/// barre relative, prix (mono) et écart.
+class _RangPrixMarche extends StatelessWidget {
+  const _RangPrixMarche({
     required this.prixParMarche,
-    required this.estLeMoinsCher,
-    required this.colorTheme,
+    required this.rang,
+    required this.total,
+    required this.prixMax,
   });
 
   final PrixParMarche prixParMarche;
-  final bool estLeMoinsCher;
-  final ColorScheme colorTheme;
+  final int rang;
+  final int total;
+  final double prixMax;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final prix = prixParMarche.dernierPrix;
+    final prix = prixParMarche.dernierPrix!;
     final ecart = prixParMarche.ecartPourcentage;
+    final estLeMoinsCher = rang == 0;
+    final couleur = _couleurBar(rang, total);
+    final largeurBarre = (prix / prixMax).clamp(0.08, 1.0);
 
-    return Card(
-      child: ListTile(
-        leading: Icon(
-          estLeMoinsCher ? Icons.emoji_events : Icons.storefront,
-          color: estLeMoinsCher ? Colors.amber[700] : colorTheme.primary,
-        ),
-        title: Text(prixParMarche.marche.nom),
-        subtitle: Text(
-          prix != null ? formaterPrix(prix) : 'Aucun relevé récent',
-        ),
-        trailing: ecart != null && ecart > 0
-            ? Text(
-                '+${ecart.toStringAsFixed(1)} %',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.error,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 116,
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: couleur,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              )
-            : const Icon(Icons.check_circle, color: Colors.green),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    prixParMarche.marche.nom,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Container(
+              height: 7,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: largeurBarre,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: couleur,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          SizedBox(
+            width: 84,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  formaterPrix(prix),
+                  style: stylePrix(taille: 14.5),
+                ),
+                const SizedBox(height: 2),
+                if (estLeMoinsCher)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.okBg,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          size: 10,
+                          color: AppColors.okFg,
+                        ),
+                        SizedBox(width: 3),
+                        Text(
+                          'Meilleur prix',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.okFg,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (ecart != null && ecart > 0)
+                  Text(
+                    '+${ecart.toStringAsFixed(1)} %',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.alertFg,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+/// Couleur de barre selon le rang : moins cher (vert tendre), plus cher
+/// (terracotta), intermédiaires (safran).
+Color _couleurBar(int rang, int total) {
+  if (total <= 1) {
+    return AppColors.green;
+  }
+  if (rang == 0) {
+    return AppColors.greenLight;
+  }
+  if (rang == total - 1) {
+    return AppColors.terracotta;
+  }
+  return AppColors.saffron;
 }
 
 /// Onglet « Historique » : évolution du prix avec un line chart.
@@ -392,14 +575,27 @@ class _HistoriqueTabState extends State<_HistoriqueTab>
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          child: SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'moyenne', label: Text('Moyenne')),
-              ButtonSegment(value: 'min', label: Text('Min')),
-              ButtonSegment(value: 'max', label: Text('Max')),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _TitreGraphique(
+                titre: 'Évolution du prix',
+                sousTitre: '${_intituleMode()} sur la période',
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'moyenne', label: Text('Moyenne')),
+                    ButtonSegment(value: 'min', label: Text('Min')),
+                    ButtonSegment(value: 'max', label: Text('Max')),
+                  ],
+                  selected: {_mode},
+                  onSelectionChanged: (selection) => _changerMode(selection.first),
+                ),
+              ),
             ],
-            selected: {_mode},
-            onSelectionChanged: (selection) => _changerMode(selection.first),
           ),
         ),
         Expanded(
@@ -428,22 +624,26 @@ class _HistoriqueTabState extends State<_HistoriqueTab>
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(16),
                   children: [
-                    Card(
-                      clipBehavior: Clip.antiAlias,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: _LineChartPrix(points: points),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text(
-                          '${_intituleMode()} des prix relevés : '
-                          '${_variation(points)}',
-                          textAlign: TextAlign.center,
-                        ),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 500),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      child: Column(
+                        key: ValueKey(_mode),
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Card(
+                            clipBehavior: Clip.antiAlias,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: _LineChartPrix(points: points),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Card(
+                            child: _VariationPanel(points: points),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -465,19 +665,6 @@ class _HistoriqueTabState extends State<_HistoriqueTab>
       default:
         return 'Moyenne';
     }
-  }
-
-  String _variation(List<HistoriquePoint> points) {
-    if (points.length < 2) {
-      return '${formaterPrix(points.first.valeur)} (début de suivi)';
-    }
-    final premier = points.first.valeur;
-    final dernier = points.last.valeur;
-    final variation = dernier - premier;
-    final signe = variation >= 0 ? '+' : '';
-    final pct = premier != 0 ? (variation / premier * 100).toStringAsFixed(1) : '0';
-    return '${formaterPrix(premier)} → ${formaterPrix(dernier)} '
-        '($signe$pct %)';
   }
 }
 
@@ -512,12 +699,12 @@ class _LineChartPrix extends StatelessWidget {
             LineChartBarData(
               spots: spots,
               isCurved: true,
-              color: theme.colorScheme.primary,
+              color: AppColors.green,
               barWidth: 3,
               dotData: const FlDotData(show: false),
               belowBarData: BarAreaData(
                 show: true,
-                color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                color: AppColors.green.withValues(alpha: 0.14),
               ),
             ),
           ],
@@ -531,11 +718,13 @@ class _LineChartPrix extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 44,
+                reservedSize: 48,
                 getTitlesWidget: (value, meta) {
                   return Text(
                     '${value.toInt()}',
-                    style: theme.textTheme.bodySmall,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontFamily: AppFonts.mono,
+                    ),
                   );
                 },
               ),
@@ -565,6 +754,7 @@ class _LineChartPrix extends StatelessWidget {
           borderData: FlBorderData(show: false),
           lineTouchData: LineTouchData(
             touchTooltipData: LineTouchTooltipData(
+              getTooltipColor: (_) => AppColors.ink,
               getTooltipItems: (touchedSpots) {
                 return touchedSpots
                     .map(
@@ -573,6 +763,7 @@ class _LineChartPrix extends StatelessWidget {
                         '${formaterPrix(spot.y)}',
                         theme.textTheme.bodySmall!.copyWith(
                           color: Colors.white,
+                          fontFamily: AppFonts.sans,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -583,6 +774,193 @@ class _LineChartPrix extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Panneau de synthèse de la variation de prix sur la période suivie.
+class _VariationPanel extends StatelessWidget {
+  const _VariationPanel({required this.points});
+
+  final List<HistoriquePoint> points;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (points.length < 2) {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text(
+          '${formaterPrix(points.first.valeur)} — début de suivi',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+
+    final premier = points.first.valeur;
+    final dernier = points.last.valeur;
+    final variation = dernier - premier;
+    final baisse = variation < 0;
+    final pct = premier != 0
+        ? (variation / premier * 100).toStringAsFixed(1)
+        : '0';
+    final couleur = baisse ? AppColors.okFg : AppColors.alertFg;
+    final fondCouleur = baisse ? AppColors.okBg : AppColors.alertBg;
+    final affichage = '${baisse ? '−' : '+'}${pct.replaceFirst('-', '')} %';
+
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: fondCouleur,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              baisse ? Icons.trending_down_rounded : Icons.trending_up_rounded,
+              color: couleur,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  baisse ? 'Le prix a baissé depuis le début du suivi' : 'Le prix a évolué depuis le début du suivi',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${formaterPrix(premier)} → ${formaterPrix(dernier)}',
+                  style: stylePrix(taille: 14),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            affichage,
+            style: TextStyle(
+              fontFamily: AppFonts.mono,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: couleur,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Titre d'un graphique façon tableau de bord : barre d'accent + titre
+/// (Space Grotesk) + sous-titre (muted).
+class _TitreGraphique extends StatelessWidget {
+  const _TitreGraphique({required this.titre, required this.sousTitre});
+
+  final String titre;
+  final String sousTitre;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 34,
+          decoration: BoxDecoration(
+            color: AppColors.green,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                titre,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontFamily: AppFonts.display,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                sousTitre,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Légende du graphique en barres : moins cher → plus cher.
+class _LegendeBar extends StatelessWidget {
+  const _LegendeBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 16,
+      runSpacing: 6,
+      alignment: WrapAlignment.center,
+      children: const [
+        _ItemLegende(couleur: AppColors.greenLight, libelle: 'Moins cher'),
+        _ItemLegende(couleur: AppColors.saffron, libelle: 'Intermédiaire'),
+        _ItemLegende(couleur: AppColors.terracotta, libelle: 'Plus cher'),
+      ],
+    );
+  }
+}
+
+class _ItemLegende extends StatelessWidget {
+  const _ItemLegende({required this.couleur, required this.libelle});
+
+  final Color couleur;
+  final String libelle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: couleur,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          libelle,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontSize: 11.5,
+          ),
+        ),
+      ],
     );
   }
 }

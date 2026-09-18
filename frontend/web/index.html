@@ -1,38 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="MarketScope — Comparez les prix des marchés locaux de Toliara (Madagascar).">
+  <meta name="theme-color" content="#0E2A38">
 
-  <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="comparateur_prix_app">
+  <meta name="apple-mobile-web-app-title" content="MarketScope">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>comparateur_prix_app</title>
+  <title>MarketScope</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    :root { --ink: #0E2A38; --green: #63E49D; --paper: #E8F5E9; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; background: var(--ink); font-family: "Space Grotesk", system-ui, sans-serif; }
+    #loading {
+      display: flex; align-items: center; justify-content: center; height: 100vh;
+      background: var(--ink); color: var(--paper);
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    #loading.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .spinner {
+      width: 48px; height: 48px; border: 3px solid var(--paper);
+      border-top-color: var(--green); border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .brand { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .wordmark { font-weight: 700; font-size: 22px; letter-spacing: -0.3px; }
+    .wordmark span:last-child { color: var(--green); }
+    .tagline { font-size: 13px; color: var(--paper); opacity: 0.7; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 500; }
+  </style>
 </head>
 <body>
+  <div id="loading" class="brand">
+    <div class="spinner" aria-hidden="true"></div>
+    <div class="wordmark">Market<span>Scope</span></div>
+    <div class="tagline">Chargement…</div>
+  </div>
+  <script>
+    document.addEventListener('flutter-first-frame', function() {
+      var el = document.getElementById('loading');
+      if (el) el.classList.add('hidden');
+    });
+    setTimeout(function() {
+      var el = document.getElementById('loading');
+      if (el) el.classList.add('hidden');
+    }, 8000);
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
