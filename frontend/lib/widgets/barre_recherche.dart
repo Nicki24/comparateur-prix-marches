@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// Champ de recherche compact, style MarketScope (fond surface, focus vert).
 class BarreRecherche extends StatelessWidget {
   const BarreRecherche({
     super.key,
@@ -10,56 +9,71 @@ class BarreRecherche extends StatelessWidget {
     required this.onChange,
     this.hint = 'Rechercher…',
     this.autofocus = false,
+    this.enabled = true,
+    this.onSubmitted,
   });
 
   final TextEditingController controleur;
   final ValueChanged<String> onChange;
   final String hint;
   final bool autofocus;
+  final bool enabled;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      margin: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.xs),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: enabled
+            ? (isDark ? theme.colorScheme.surface : theme.colorScheme.surface)
+            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: isDark ? AppColors.darkLine : AppColors.line,
+          color: isDark ? theme.dividerColor : theme.dividerColor,
         ),
+        boxShadow: enabled ? theme.cardShadows : [],
       ),
       child: TextField(
         controller: controleur,
         autofocus: autofocus,
+        enabled: enabled,
         textInputAction: TextInputAction.search,
-        style: const TextStyle(fontFamily: AppFonts.sans, fontSize: 14),
+        style: theme.textTheme.bodyMedium?.copyWith(fontFamily: AppFonts.sans),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: AppColors.textMuted),
-          prefixIcon: const Icon(
+          hintStyle: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+            fontFamily: AppFonts.sans,
+          ),
+          prefixIcon: Icon(
             Icons.search_rounded,
             size: 20,
-            color: AppColors.textMuted,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
           suffixIcon: controleur.text.isEmpty
               ? null
               : IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.close_rounded,
                     size: 18,
-                    color: AppColors.textMuted,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                   onPressed: () {
                     controleur.clear();
                     onChange('');
                   },
+                  tooltip: 'Effacer',
                 ),
           border: InputBorder.none,
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
         onChanged: onChange,
+        onSubmitted: onSubmitted,
       ),
     );
   }

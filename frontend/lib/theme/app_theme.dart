@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Jetons de la charte graphique MarketScope (v1).
 abstract final class AppColors {
   static const ink = Color(0xFF0E2A38);
   static const ink2 = Color(0xFF163A4A);
@@ -15,7 +14,6 @@ abstract final class AppColors {
   static const textMuted = Color(0xFF5A6D66);
   static const white = Color(0xFFFFFFFF);
 
-  // Badges de statut.
   static const okBg = Color(0xFFE4F5E9);
   static const okFg = Color(0xFF166B3A);
   static const alertBg = Color(0xFFFBE7E0);
@@ -23,24 +21,204 @@ abstract final class AppColors {
   static const staleBg = Color(0xFFFCF0DC);
   static const staleFg = Color(0xFF8A5E15);
 
-  // Variantes sombres (préférence système).
-  static const darkPaper = Color(0xFF0B1B22);
-  static const darkPaper2 = Color(0xFF102630);
-  static const darkLine = Color(0xFF1E3944);
-  static const darkText = Color(0xFFEAF3EE);
-  static const darkTextMuted = Color(0xFF9FB6AE);
-  static const darkSurface = Color(0xFF0F262E);
+  static const darkPaper = Color(0xFF0E2A38);
+  static const darkPaper2 = Color(0xFF163A4A);
+  static const darkLine = Color(0xFF2A4A57);
+  static const darkText = Color(0xFFF6FAF7);
+  static const darkTextMuted = Color(0xFFB9C9C3);
+  static const darkSurface = Color(0xFF163A4A);
+  static const darkGreen = Color(0xFF2FAE68);
+  static const darkGreenLight = Color(0xFF6FD98C);
+  static const darkTerracotta = Color(0xFFE07350);
+  static const darkSaffron = Color(0xFFF0B65A);
+  static const darkOkBg = Color(0xFF1A3D2E);
+  static const darkOkFg = Color(0xFF6FD98C);
+  static const darkAlertBg = Color(0xFF4A1A14);
+  static const darkAlertFg = Color(0xFFE07350);
+  static const darkStaleBg = Color(0xFF3D3214);
+  static const darkStaleFg = Color(0xFFF0B65A);
 }
 
-/// Familles de la charte : Space Grotesk (titres), Inter (interface),
-/// IBM Plex Mono (prix et données).
 abstract final class AppFonts {
   static const display = 'Space Grotesk';
   static const sans = 'Inter';
   static const mono = 'IBM Plex Mono';
 }
 
-/// Style des prix chiffrés (effet « ticker de marché »).
+abstract final class AppSpacing {
+  static const xs = 4.0;
+  static const sm = 8.0;
+  static const md = 16.0;
+  static const lg = 24.0;
+  static const xl = 32.0;
+  static const xxl = 48.0;
+}
+
+abstract final class AppRadius {
+  static const chip = 8.0;
+  static const card = 12.0;
+  static const sheet = 16.0;
+  static const pill = 999.0;
+}
+
+abstract final class AppShadow {
+  static const card = [
+    BoxShadow(
+      color: Color(0x140E2A38),
+      blurRadius: 12,
+      offset: Offset(0, 4),
+      spreadRadius: -2,
+    ),
+  ];
+  static const cardHover = [
+    BoxShadow(
+      color: Color(0x1E0E2A38),
+      blurRadius: 24,
+      offset: Offset(0, 8),
+      spreadRadius: -4,
+    ),
+  ];
+  static const sheet = [
+    BoxShadow(
+      color: Color(0x1A0E2A38),
+      blurRadius: 32,
+      offset: Offset(0, 12),
+      spreadRadius: -6,
+    ),
+  ];
+  static const darkCard = [
+    BoxShadow(
+      color: Color(0x33000000),
+      blurRadius: 12,
+      offset: Offset(0, 4),
+      spreadRadius: -2,
+    ),
+  ];
+  static const darkCardHover = [
+    BoxShadow(
+      color: Color(0x40000000),
+      blurRadius: 24,
+      offset: Offset(0, 8),
+      spreadRadius: -4,
+    ),
+  ];
+}
+
+abstract final class AppTextStyles {
+  static const displayLarge = TextStyle(
+    fontFamily: AppFonts.display,
+    fontWeight: FontWeight.w700,
+    fontSize: 32,
+    height: 1.15,
+    letterSpacing: -0.5,
+  );
+  static const displayMedium = TextStyle(
+    fontFamily: AppFonts.display,
+    fontWeight: FontWeight.w700,
+    fontSize: 28,
+    height: 1.2,
+    letterSpacing: -0.5,
+  );
+  static const displaySmall = TextStyle(
+    fontFamily: AppFonts.display,
+    fontWeight: FontWeight.w700,
+    fontSize: 24,
+    height: 1.25,
+    letterSpacing: -0.3,
+  );
+  static const headlineLarge = TextStyle(
+    fontFamily: AppFonts.display,
+    fontWeight: FontWeight.w700,
+    fontSize: 22,
+    height: 1.3,
+  );
+  static const headlineMedium = TextStyle(
+    fontFamily: AppFonts.display,
+    fontWeight: FontWeight.w600,
+    fontSize: 20,
+    height: 1.3,
+  );
+  static const headlineSmall = TextStyle(
+    fontFamily: AppFonts.display,
+    fontWeight: FontWeight.w600,
+    fontSize: 18,
+    height: 1.35,
+  );
+  static const titleLarge = TextStyle(
+    fontFamily: AppFonts.display,
+    fontWeight: FontWeight.w700,
+    fontSize: 16,
+    height: 1.4,
+  );
+  static const titleMedium = TextStyle(
+    fontFamily: AppFonts.sans,
+    fontWeight: FontWeight.w600,
+    fontSize: 15,
+    height: 1.4,
+  );
+  static const titleSmall = TextStyle(
+    fontFamily: AppFonts.sans,
+    fontWeight: FontWeight.w600,
+    fontSize: 14,
+    height: 1.4,
+  );
+  static const bodyLarge = TextStyle(
+    fontFamily: AppFonts.sans,
+    fontWeight: FontWeight.w400,
+    fontSize: 16,
+    height: 1.5,
+  );
+  static const bodyMedium = TextStyle(
+    fontFamily: AppFonts.sans,
+    fontWeight: FontWeight.w400,
+    fontSize: 14,
+    height: 1.5,
+  );
+  static const bodySmall = TextStyle(
+    fontFamily: AppFonts.sans,
+    fontWeight: FontWeight.w400,
+    fontSize: 12.5,
+    height: 1.5,
+  );
+  static const labelLarge = TextStyle(
+    fontFamily: AppFonts.sans,
+    fontWeight: FontWeight.w600,
+    fontSize: 14,
+    height: 1.4,
+  );
+  static const labelMedium = TextStyle(
+    fontFamily: AppFonts.sans,
+    fontWeight: FontWeight.w500,
+    fontSize: 12.5,
+    height: 1.4,
+  );
+  static const labelSmall = TextStyle(
+    fontFamily: AppFonts.mono,
+    fontWeight: FontWeight.w600,
+    fontSize: 11.5,
+    height: 1.3,
+    letterSpacing: 0.8,
+  );
+  static const priceLarge = TextStyle(
+    fontFamily: AppFonts.mono,
+    fontWeight: FontWeight.w700,
+    fontSize: 24,
+    height: 1.2,
+  );
+  static const priceMedium = TextStyle(
+    fontFamily: AppFonts.mono,
+    fontWeight: FontWeight.w600,
+    fontSize: 18,
+    height: 1.2,
+  );
+  static const priceSmall = TextStyle(
+    fontFamily: AppFonts.mono,
+    fontWeight: FontWeight.w600,
+    fontSize: 14.5,
+    height: 1.2,
+  );
+}
+
 TextStyle stylePrix({
   double taille = 16,
   Color? couleur,
@@ -54,7 +232,6 @@ TextStyle stylePrix({
   );
 }
 
-/// Thème MarketScope respectant la charte graphique.
 abstract final class AppTheme {
   static ThemeData get light => _construire(
         brightness: Brightness.light,
@@ -83,30 +260,36 @@ abstract final class AppTheme {
         bordure: AppColors.line,
         texte: AppColors.text,
         texteAttenue: AppColors.textMuted,
+        okBg: AppColors.okBg,
+        okFg: AppColors.okFg,
+        alertBg: AppColors.alertBg,
+        alertFg: AppColors.alertFg,
+        staleBg: AppColors.staleBg,
+        staleFg: AppColors.staleFg,
       );
 
   static ThemeData get dark => _construire(
         brightness: Brightness.dark,
         scheme: ColorScheme.fromSeed(
-          seedColor: AppColors.green,
+          seedColor: AppColors.darkGreen,
           brightness: Brightness.dark,
         ).copyWith(
-          primary: AppColors.greenLight,
+          primary: AppColors.darkGreenLight,
           onPrimary: AppColors.darkPaper,
           primaryContainer: AppColors.ink,
           onPrimaryContainer: AppColors.paper,
-          secondary: AppColors.greenLight,
+          secondary: AppColors.darkGreenLight,
           onSecondary: AppColors.darkPaper,
           secondaryContainer: AppColors.darkPaper2,
           onSecondaryContainer: AppColors.darkText,
-          tertiary: AppColors.terracotta,
+          tertiary: AppColors.darkTerracotta,
           onTertiary: AppColors.white,
           surface: AppColors.darkSurface,
           onSurface: AppColors.darkText,
           onSurfaceVariant: AppColors.darkTextMuted,
           outline: AppColors.darkLine,
           outlineVariant: AppColors.darkLine,
-          error: AppColors.terracotta,
+          error: AppColors.darkTerracotta,
           onError: AppColors.white,
         ),
         fond: AppColors.darkPaper,
@@ -115,6 +298,12 @@ abstract final class AppTheme {
         bordure: AppColors.darkLine,
         texte: AppColors.darkText,
         texteAttenue: AppColors.darkTextMuted,
+        okBg: AppColors.darkOkBg,
+        okFg: AppColors.darkOkFg,
+        alertBg: AppColors.darkAlertBg,
+        alertFg: AppColors.darkAlertFg,
+        staleBg: AppColors.darkStaleBg,
+        staleFg: AppColors.darkStaleFg,
       );
 
   static ThemeData _construire({
@@ -126,49 +315,32 @@ abstract final class AppTheme {
     required Color bordure,
     required Color texte,
     required Color texteAttenue,
+    required Color okBg,
+    required Color okFg,
+    required Color alertBg,
+    required Color alertFg,
+    required Color staleBg,
+    required Color staleFg,
   }) {
     final base = ThemeData(brightness: brightness).textTheme;
 
     final textTheme = base
         .copyWith(
-          displayLarge: base.displayLarge?.copyWith(
-            fontFamily: AppFonts.display,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
-          ),
-          displayMedium: base.displayMedium?.copyWith(
-            fontFamily: AppFonts.display,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
-          ),
-          displaySmall: base.displaySmall?.copyWith(
-            fontFamily: AppFonts.display,
-            fontWeight: FontWeight.w700,
-          ),
-          headlineLarge: base.headlineLarge?.copyWith(
-            fontFamily: AppFonts.display,
-            fontWeight: FontWeight.w700,
-          ),
-          headlineMedium: base.headlineMedium?.copyWith(
-            fontFamily: AppFonts.display,
-            fontWeight: FontWeight.w600,
-          ),
-          headlineSmall: base.headlineSmall?.copyWith(
-            fontFamily: AppFonts.display,
-            fontWeight: FontWeight.w600,
-          ),
-          titleLarge: base.titleLarge?.copyWith(
-            fontFamily: AppFonts.display,
-            fontWeight: FontWeight.w700,
-          ),
-          titleMedium: base.titleMedium?.copyWith(
-            fontFamily: AppFonts.sans,
-            fontWeight: FontWeight.w600,
-          ),
-          titleSmall: base.titleSmall?.copyWith(
-            fontFamily: AppFonts.sans,
-            fontWeight: FontWeight.w600,
-          ),
+          displayLarge: AppTextStyles.displayLarge.copyWith(color: texte),
+          displayMedium: AppTextStyles.displayMedium.copyWith(color: texte),
+          displaySmall: AppTextStyles.displaySmall.copyWith(color: texte),
+          headlineLarge: AppTextStyles.headlineLarge.copyWith(color: texte),
+          headlineMedium: AppTextStyles.headlineMedium.copyWith(color: texte),
+          headlineSmall: AppTextStyles.headlineSmall.copyWith(color: texte),
+          titleLarge: AppTextStyles.titleLarge.copyWith(color: texte),
+          titleMedium: AppTextStyles.titleMedium.copyWith(color: texte),
+          titleSmall: AppTextStyles.titleSmall.copyWith(color: texte),
+          bodyLarge: AppTextStyles.bodyLarge.copyWith(color: texte),
+          bodyMedium: AppTextStyles.bodyMedium.copyWith(color: texte),
+          bodySmall: AppTextStyles.bodySmall.copyWith(color: texteAttenue),
+          labelLarge: AppTextStyles.labelLarge.copyWith(color: texte),
+          labelMedium: AppTextStyles.labelMedium.copyWith(color: texte),
+          labelSmall: AppTextStyles.labelSmall.copyWith(color: texteAttenue),
         )
         .apply(
           fontFamily: AppFonts.sans,
@@ -176,14 +348,23 @@ abstract final class AppTheme {
           displayColor: texte,
         );
 
-    final styleBouton = TextStyle(
+    final buttonTextStyle = TextStyle(
       fontFamily: AppFonts.sans,
       fontWeight: FontWeight.w600,
       fontSize: 14.5,
     );
     final formePilule = StadiumBorder();
     const padragePilule = EdgeInsets.symmetric(horizontal: 20, vertical: 14);
-    const rayonChamp = 12.0;
+    const rayonChamp = AppRadius.card;
+    const rayonCarte = AppRadius.card;
+    const rayonSheet = AppRadius.sheet;
+
+    final shadows = brightness == Brightness.dark
+        ? AppShadow.darkCard
+        : AppShadow.card;
+    final shadowsHover = brightness == Brightness.dark
+        ? AppShadow.darkCardHover
+        : AppShadow.cardHover;
 
     return ThemeData(
       useMaterial3: true,
@@ -203,7 +384,11 @@ abstract final class AppTheme {
           TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
         },
       ),
-      dividerTheme: DividerThemeData(color: bordure, thickness: 1, space: 1),
+      dividerTheme: DividerThemeData(
+        color: bordure,
+        thickness: 1,
+        space: 1,
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.ink,
         foregroundColor: AppColors.paper,
@@ -223,13 +408,17 @@ abstract final class AppTheme {
         color: surface,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(rayonCarte),
           side: BorderSide(color: bordure),
         ),
+        shadowColor: Colors.transparent,
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface2,
-        indicatorColor: AppColors.green.withValues(alpha: 0.16),
+        indicatorColor: (brightness == Brightness.dark
+                ? AppColors.darkGreenLight
+                : AppColors.green)
+            .withValues(alpha: 0.16),
         height: 68,
         labelTextStyle: WidgetStatePropertyAll(
           TextStyle(
@@ -242,13 +431,20 @@ abstract final class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.green,
-          foregroundColor: AppColors.white,
-          disabledBackgroundColor:
-              AppColors.green.withValues(alpha: 0.4),
+          backgroundColor: brightness == Brightness.dark
+              ? AppColors.darkGreenLight
+              : AppColors.green,
+          foregroundColor: brightness == Brightness.dark
+              ? AppColors.darkPaper
+              : AppColors.white,
+          disabledBackgroundColor: (brightness == Brightness.dark
+                  ? AppColors.darkGreenLight
+                  : AppColors.green)
+              .withValues(alpha: 0.4),
           shape: formePilule,
           padding: padragePilule,
-          textStyle: styleBouton,
+          textStyle: buttonTextStyle,
+          elevation: 0,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -257,14 +453,16 @@ abstract final class AppTheme {
           side: BorderSide(color: bordure),
           shape: formePilule,
           padding: padragePilule,
-          textStyle: styleBouton,
+          textStyle: buttonTextStyle,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.green,
+          foregroundColor: brightness == Brightness.dark
+              ? AppColors.darkGreenLight
+              : AppColors.green,
           shape: formePilule,
-          textStyle: styleBouton,
+          textStyle: buttonTextStyle,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -283,18 +481,33 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(rayonChamp),
-          borderSide: BorderSide(color: AppColors.green, width: 1.6),
+          borderSide: BorderSide(
+            color: brightness == Brightness.dark
+                ? AppColors.darkGreenLight
+                : AppColors.green,
+            width: 1.6,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(rayonChamp),
-          borderSide: BorderSide(color: AppColors.terracotta),
+          borderSide: BorderSide(
+            color: brightness == Brightness.dark
+                ? AppColors.darkAlertFg
+                : AppColors.terracotta,
+          ),
         ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(rayonChamp),
+          borderSide: BorderSide(color: bordure.withValues(alpha: 0.5)),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: surface2,
         side: BorderSide(color: bordure),
         shape: StadiumBorder(),
         labelStyle: TextStyle(fontSize: 12.5, color: texte),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.ink,
@@ -304,17 +517,24 @@ abstract final class AppTheme {
         ),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.sheet),
         ),
       ),
       listTileTheme: ListTileThemeData(
         textColor: texte,
         iconColor: texteAttenue,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
+        tileColor: Colors.transparent,
       ),
       tabBarTheme: TabBarThemeData(
         labelColor: AppColors.paper,
         unselectedLabelColor: AppColors.paper.withValues(alpha: 0.7),
-        indicatorColor: AppColors.greenLight,
+        indicatorColor: brightness == Brightness.dark
+            ? AppColors.darkGreenLight
+            : AppColors.greenLight,
         indicatorSize: TabBarIndicatorSize.label,
         dividerColor: Colors.transparent,
         labelStyle: TextStyle(
@@ -325,14 +545,124 @@ abstract final class AppTheme {
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: SegmentedButton.styleFrom(
           foregroundColor: texte,
-          selectedForegroundColor: AppColors.white,
-          selectedBackgroundColor: AppColors.green,
+          selectedForegroundColor: brightness == Brightness.dark
+              ? AppColors.darkPaper
+              : AppColors.white,
+          selectedBackgroundColor: brightness == Brightness.dark
+              ? AppColors.darkGreenLight
+              : AppColors.green,
           side: BorderSide(color: bordure),
         ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: AppColors.green,
+        color: brightness == Brightness.dark ? AppColors.darkGreenLight : AppColors.green,
       ),
+      extensions: <ThemeExtension<dynamic>>[
+        _MarketScopeTokens(
+          okBg: okBg,
+          okFg: okFg,
+          alertBg: alertBg,
+          alertFg: alertFg,
+          staleBg: staleBg,
+          staleFg: staleFg,
+          shadows: shadows,
+          shadowsHover: shadowsHover,
+          rayonCarte: rayonCarte,
+          rayonSheet: rayonSheet,
+          rayonChamp: rayonChamp,
+        ),
+      ],
     );
   }
+}
+
+@immutable
+class _MarketScopeTokens extends ThemeExtension<_MarketScopeTokens> {
+  const _MarketScopeTokens({
+    required this.okBg,
+    required this.okFg,
+    required this.alertBg,
+    required this.alertFg,
+    required this.staleBg,
+    required this.staleFg,
+    required this.shadows,
+    required this.shadowsHover,
+    required this.rayonCarte,
+    required this.rayonSheet,
+    required this.rayonChamp,
+  });
+
+  final Color okBg;
+  final Color okFg;
+  final Color alertBg;
+  final Color alertFg;
+  final Color staleBg;
+  final Color staleFg;
+  final List<BoxShadow> shadows;
+  final List<BoxShadow> shadowsHover;
+  final double rayonCarte;
+  final double rayonSheet;
+  final double rayonChamp;
+
+  @override
+  _MarketScopeTokens copyWith({
+    Color? okBg,
+    Color? okFg,
+    Color? alertBg,
+    Color? alertFg,
+    Color? staleBg,
+    Color? staleFg,
+    List<BoxShadow>? shadows,
+    List<BoxShadow>? shadowsHover,
+    double? rayonCarte,
+    double? rayonSheet,
+    double? rayonChamp,
+  }) {
+    return _MarketScopeTokens(
+      okBg: okBg ?? this.okBg,
+      okFg: okFg ?? this.okFg,
+      alertBg: alertBg ?? this.alertBg,
+      alertFg: alertFg ?? this.alertFg,
+      staleBg: staleBg ?? this.staleBg,
+      staleFg: staleFg ?? this.staleFg,
+      shadows: shadows ?? this.shadows,
+      shadowsHover: shadowsHover ?? this.shadowsHover,
+      rayonCarte: rayonCarte ?? this.rayonCarte,
+      rayonSheet: rayonSheet ?? this.rayonSheet,
+      rayonChamp: rayonChamp ?? this.rayonChamp,
+    );
+  }
+
+  @override
+  _MarketScopeTokens lerp(ThemeExtension<_MarketScopeTokens>? other, double t) {
+    if (other is! _MarketScopeTokens) return this;
+    return _MarketScopeTokens(
+      okBg: Color.lerp(okBg, other.okBg, t)!,
+      okFg: Color.lerp(okFg, other.okFg, t)!,
+      alertBg: Color.lerp(alertBg, other.alertBg, t)!,
+      alertFg: Color.lerp(alertFg, other.alertFg, t)!,
+      staleBg: Color.lerp(staleBg, other.staleBg, t)!,
+      staleFg: Color.lerp(staleFg, other.staleFg, t)!,
+      shadows: shadows,
+      shadowsHover: shadowsHover,
+      rayonCarte: rayonCarte,
+      rayonSheet: rayonSheet,
+      rayonChamp: rayonChamp,
+    );
+  }
+}
+
+extension MarketScopeTheme on ThemeData {
+  _MarketScopeTokens get msTokens => extension<_MarketScopeTokens>()!;
+  Color get okBg => msTokens.okBg;
+  Color get okFg => msTokens.okFg;
+  Color get alertBg => msTokens.alertBg;
+  Color get alertFg => msTokens.alertFg;
+  Color get staleBg => msTokens.staleBg;
+  Color get staleFg => msTokens.staleFg;
+  List<BoxShadow> get cardShadows => msTokens.shadows;
+  List<BoxShadow> get cardShadowsHover => msTokens.shadowsHover;
+  double get cardRadius => msTokens.rayonCarte;
+  double get sheetRadius => msTokens.rayonSheet;
+  double get fieldRadius => msTokens.rayonChamp;
 }

@@ -9,6 +9,10 @@ import '../services/releve_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/etats.dart';
+import '../widgets/ms_anim.dart';
+import '../widgets/ms_button.dart';
+import '../widgets/ms_card.dart';
+import '../widgets/ms_decor.dart';
 
 /// Formulaire de saisie d'un relevé de prix (contributeur).
 class SaisieReleveScreen extends StatefulWidget {
@@ -127,153 +131,223 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Saisir un relevé')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // ─── Info-card en dégradé ─────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.ink, AppColors.ink2],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      appBar: AppBar(title: const Text('Nouveau relevé')),
+      body: MsDecorFond(
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          children: [
+            MsApparition(
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.ink, AppColors.ink2],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius:
+                      BorderRadius.circular(AppRadius.sheet),
+                ),
+                child: const Stack(
+                  children: [
+                    Positioned(
+                      top: -40,
+                      right: -30,
+                      child: _HaloSaisie(),
+                    ),
+                    Row(
+                      children: [
+                        _IconeSaisie(),
+                        SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Un relevé par produit, marché et jour',
+                                style: TextStyle(
+                                  color: Color(0xFFEAF3EE),
+                                  fontFamily: AppFonts.sans,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Si vous avez déjà enregistré ce produit dans ce marché aujourd’hui, le serveur vous le signalera.',
+                                style: TextStyle(
+                                  color: Color(0xFF9FB6AE),
+                                  fontSize: 12.5,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.ink.withValues(alpha: 0.2),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.green.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
+            const SizedBox(height: 8),
+            Form(
+              key: _formulaire,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _SectionReleve(
+                      etape: '1',
+                      titre: 'Quel produit ? Dans quel marché ?'),
+                  MsApparition(
+                    child: _ChampProduit(
+                      futurProduits: _futurProduits,
+                      produit: _produitChoisi,
+                      onChanged: (p) =>
+                          setState(() => _produitChoisi = p),
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.receipt_long_outlined,
-                    color: AppColors.greenLight,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Un relevé par produit, marché et jour',
-                        style: TextStyle(
-                          color: Color(0xFFEAF3EE),
-                          fontFamily: AppFonts.sans,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Vous pouvez soumettre au maximum un prix par produit, '
-                        'par marché et par jour.',
-                        style: TextStyle(
-                          color: const Color(0xFF9FB6AE),
-                          fontSize: 12.5,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Form(
-            key: _formulaire,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const _SectionReleve(etape: '1', titre: 'Produit et marché'),
-                _ChampProduit(
-                  futurProduits: _futurProduits,
-                  produit: _produitChoisi,
-                  onChanged: (p) => setState(() => _produitChoisi = p),
-                ),
-                const SizedBox(height: 16),
-                _ChampMarche(
-                  futurMarches: _futurMarches,
-                  marche: _marcheChoisi,
-                  onChanged: (m) => setState(() => _marcheChoisi = m),
-                ),
-                const _SectionReleve(etape: '2', titre: 'Prix et date'),
-                TextFormField(
-                  controller: _prixController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Prix observé (Ariary)',
-                    hintText: 'Ex. 3200',
-                    prefixIcon: const Icon(Icons.payments_outlined),
-                    suffixText: _produitChoisi?.uniteMesure,
-                  ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Veuillez saisir le prix.';
-                    }
-                    final prix = double.tryParse(v.trim().replaceAll(',', '.'));
-                    if (prix == null || prix <= 0) {
-                      return 'Le prix doit être supérieur à 0.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.event),
-                  title: const Text('Date du relevé'),
-                  subtitle: Text(formaterDate(_date)),
-                  trailing: TextButton(
-                    onPressed: _choisirDate,
-                    child: const Text('Modifier'),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const _SectionReleve(etape: '3', titre: 'Détails'),
-                TextField(
-                  controller: _commentaireController,
-                  decoration: const InputDecoration(
-                    labelText: 'Commentaire (facultatif)',
-                    hintText: 'État du produit, précisions…',
-                  ),
-                  maxLines: 2,
-                ),
-                if (_erreur != null) ...[
                   const SizedBox(height: 12),
-                  Text(
-                    _erreur!,
-                    style: TextStyle(color: theme.colorScheme.error),
+                  MsApparition(
+                    delai: Duration(milliseconds: 60),
+                    child: _ChampMarche(
+                      futurMarches: _futurMarches,
+                      marche: _marcheChoisi,
+                      onChanged: (m) =>
+                          setState(() => _marcheChoisi = m),
+                    ),
                   ),
+                  const _SectionReleve(
+                      etape: '2', titre: 'Quel prix ? Quelle date ?'),
+                  MsApparition(
+                    child: TextFormField(
+                      controller: _prixController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: 'Prix observé (Ariary)',
+                        hintText: 'Ex. 3200',
+                        prefixIcon: const Icon(
+                            Icons.payments_outlined),
+                        suffixText:
+                            _produitChoisi?.uniteMesure.isNotEmpty ==
+                                    true
+                                ? '/ ${_produitChoisi!.uniteMesure}'
+                                : null,
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) {
+                          return 'Veuillez saisir le prix observé.';
+                        }
+                        final prix = double.tryParse(v
+                            .trim()
+                            .replaceAll(',', '.'));
+                        if (prix == null || prix <= 0) {
+                          return 'Le prix doit être un nombre supérieur à 0.';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  MsApparition(
+                    child: MarketScopeCard(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: 6),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withValues(alpha: 0.10),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.event_rounded,
+                              size: 19,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Date du relevé',
+                                  style: TextStyle(
+                                      fontWeight:
+                                          FontWeight.w600,
+                                      fontSize: 13.5),
+                                ),
+                                Text(
+                                  formaterDate(_date),
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.mono,
+                                    fontSize: 12.5,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _choisirDate,
+                            child: const Text('Modifier'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const _SectionReleve(
+                      etape: '3',
+                      titre: 'Précisions (facultatif)'),
+                  TextField(
+                    controller: _commentaireController,
+                    textInputAction: TextInputAction.done,
+                    decoration: const InputDecoration(
+                      labelText: 'Commentaire',
+                      hintText:
+                          'État du produit, qualité, précisions…',
+                      prefixIcon:
+                          Icon(Icons.notes_rounded),
+                    ),
+                    maxLines: 2,
+                  ),
+                  if (_erreur != null) ...[
+                    const SizedBox(height: 12),
+                    MarketScopeErrorBanner(
+                        message: _erreur!),
+                  ],
+                  const SizedBox(height: 20),
+                  MarketScopeButton(
+                    label: 'Envoyer le relevé',
+                    icone: Icons.send_rounded,
+                    enChargement: _enChargement,
+                    onPressed:
+                        _enChargement ? null : _soumettre,
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
                 ],
-                const SizedBox(height: 24),
-                _BoutonEnvoyer(
-                  enChargement: _enChargement,
-                  onPressed: _soumettre,
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -375,81 +449,50 @@ class _SectionReleve extends StatelessWidget {
   }
 }
 
-/// Bouton d'envoi : dégradé vert → encre, ombre portée, icône dans une
-/// pastille translucide.
-class _BoutonEnvoyer extends StatelessWidget {
-  const _BoutonEnvoyer({
-    required this.enChargement,
-    required this.onPressed,
-  });
-
-  final bool enChargement;
-  final VoidCallback onPressed;
+class _HaloSaisie extends StatelessWidget {
+  const _HaloSaisie();
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: 150,
+      height: 150,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.green, AppColors.ink],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.green.withValues(alpha: 0.35),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(30),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(30),
-          onTap: enChargement ? null : onPressed,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: enChargement
-                      ? const Padding(
-                          padding: EdgeInsets.all(6),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.send_rounded, size: 16, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Envoyer le relevé',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: AppFonts.sans,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            AppColors.greenLight.withValues(alpha: 0.14),
+            AppColors.greenLight.withValues(alpha: 0.0),
+          ],
         ),
       ),
     );
   }
 }
+
+class _IconeSaisie extends StatelessWidget {
+  const _IconeSaisie();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.green.withValues(alpha: 0.2),
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(
+        Icons.receipt_long_outlined,
+        color: AppColors.greenLight,
+        size: 22,
+      ),
+    );
+  }
+}
+
+// Bouton d'envoi : désormais MarketScopeButton (vert uni).
+// L'ancien dégradé vert→encre a été supprimé (charte sobre).
 
 class _ChampMarche extends StatelessWidget {
   const _ChampMarche({

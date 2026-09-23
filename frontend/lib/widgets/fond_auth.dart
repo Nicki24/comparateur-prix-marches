@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// Teintes du fond encre de la charte, lisibles quel que soit le thème.
+/// Teintes lisibles sur le fond encre de la charte, quel que soit le thème.
 const surEncre = Color(0xFFEAF3EE);
 const attenueEncre = Color(0xFF9FB6AE);
 
-/// Fond lisse en dégradé (encre → encre foncée) avec halos colorés,
-/// utilisé sur les écrans d'authentification.
 class FondEncre extends StatelessWidget {
   const FondEncre({super.key});
 
@@ -39,7 +37,6 @@ class FondEncre extends StatelessWidget {
   }
 }
 
-/// Halo décoratif doux (dégradé radial).
 class HaloAuth extends StatelessWidget {
   const HaloAuth({super.key, required this.couleur, required this.taille});
 
@@ -64,8 +61,6 @@ class HaloAuth extends StatelessWidget {
   }
 }
 
-/// Décoration des champs authentification : fond blanc sur l'encre,
-/// focus au vert charte.
 InputDecoration decoAuth({
   required IconData icone,
   required String label,
@@ -81,20 +76,25 @@ InputDecoration decoAuth({
     labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
     hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.7)),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       borderSide: const BorderSide(color: AppColors.line),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       borderSide: const BorderSide(color: AppColors.line),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       borderSide: const BorderSide(color: AppColors.green, width: 1.8),
     ),
     errorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       borderSide: const BorderSide(color: AppColors.terracotta),
     ),
+    disabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      borderSide: BorderSide(color: AppColors.line.withValues(alpha: 0.5)),
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
   );
 }

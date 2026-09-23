@@ -12,19 +12,26 @@ import 'profil_screen.dart';
 import 'register_screen.dart';
 
 class CompteScreen extends StatelessWidget {
-  const CompteScreen({super.key});
+  const CompteScreen(
+      {super.key, this.onThemeModeChanged, this.currentThemeMode});
+
+  final void Function(ThemeMode)? onThemeModeChanged;
+  final ThemeMode? currentThemeMode;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const MarqueHeader(titre: 'Mon compte'),
+        title: const MarqueHeader(titre: 'Profil'),
       ),
       body: ListenableBuilder(
         listenable: Session.instance,
         builder: (context, _) {
           if (Session.instance.estConnecte) {
-            return const ProfilScreen();
+            return ProfilScreen(
+              onThemeModeChanged: onThemeModeChanged,
+              currentThemeMode: currentThemeMode,
+            );
           }
           return const _DeconnecteView();
         },

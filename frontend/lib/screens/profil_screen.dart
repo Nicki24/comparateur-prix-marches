@@ -7,6 +7,9 @@ import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/compteur_anime.dart';
 import '../widgets/logo.dart';
+import '../widgets/ms_anim.dart';
+import '../widgets/ms_card.dart';
+import '../widgets/ms_decor.dart';
 import 'admin_gestion_screen.dart';
 import 'mes_releves_screen.dart';
 import 'saisie_releve_screen.dart';
@@ -14,7 +17,11 @@ import 'signalements_screen.dart';
 
 /// Vue de l'utilisateur connecté : profil + actions selon le rôle.
 class ProfilScreen extends StatefulWidget {
-  const ProfilScreen({super.key});
+  const ProfilScreen(
+      {super.key, this.onThemeModeChanged, this.currentThemeMode});
+
+  final void Function(ThemeMode)? onThemeModeChanged;
+  final ThemeMode? currentThemeMode;
 
   @override
   State<ProfilScreen> createState() => _ProfilScreenState();
@@ -38,109 +45,302 @@ class _ProfilScreenState extends State<ProfilScreen> {
     final user = Session.instance.user!;
     final estAdmin = Session.instance.user!.estAdmin;
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const SizedBox(height: 16),
-        const Center(child: LogoMarque(taille: 88, ombre: true)),
-        const SizedBox(height: 12),
-        Center(
-          child: Text(
-            user.name,
-            style: theme.textTheme.titleLarge,
-          ),
-        ),
-        Center(
-          child: Text(
-            user.email,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+    return MsDecorFond(
+      densite: 0.7,
+      child: ListView(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        children: [
+          const SizedBox(height: 8),
+          MsApparition(
+            child: MarketScopeCard(
+              child: Row(
+                children: [
+                  const LogoMarque(taille: 64, ombre: true),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontFamily: AppFonts.display,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          user.email,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme
+                                .colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: (estAdmin
+                                    ? AppColors.saffron
+                                    : theme.colorScheme.primary)
+                                .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(
+                                AppRadius.pill),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                estAdmin
+                                    ? Icons.admin_panel_settings_rounded
+                                    : Icons.eco_rounded,
+                                size: 13,
+                                color: estAdmin
+                                    ? AppColors.saffron
+                                    : theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                estAdmin
+                                    ? 'Administrateur'
+                                    : 'Contributeur actif',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: estAdmin
+                                      ? AppColors.saffron
+                                      : theme.colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Center(
-          child: Chip(
-            avatar: Icon(
-              estAdmin ? Icons.admin_panel_settings : Icons.person,
-              size: 18,
+          const SizedBox(height: AppSpacing.md),
+          const MsApparition(
+            delai: Duration(milliseconds: 60),
+            child: _StatsContributeur(),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          MsApparition(
+            delai: const Duration(milliseconds: 120),
+            child: MarketScopeSectionTitle(
+              titre: 'Contributions',
+              icone: Icons.receipt_long_rounded,
             ),
-            label: Text(estAdmin ? 'Administrateur' : 'Contributeur'),
           ),
-        ),
-        const SizedBox(height: 24),
-        const _StatsContributeur(),
-        const SizedBox(height: 24),
-        if (estAdmin) ...[
-          _ActionTile(
-            icone: Icons.report_problem_outlined,
-            titre: 'Signalements',
-            sousTitre: 'Anomalies de prix détectées',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const SignalementsScreen()),
-              );
-            },
+          const SizedBox(height: AppSpacing.sm),
+          MsCascade(
+            index: 1,
+            child: _ActionTile(
+              icone: Icons.add_chart_rounded,
+              titre: 'Saisir un relevé de prix',
+              sousTitre:
+                  'Quel produit ? Dans quel marché ? À quel prix ?',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                      builder: (_) => const SaisieReleveScreen()),
+                );
+              },
+            ),
           ),
-          _ActionTile(
-            icone: Icons.storefront_outlined,
-            titre: 'Gestion des marchés',
-            sousTitre: 'Créer et désactiver des marchés',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const AdminGestionScreen(type: AdminGestionType.marches),
-                ),
-              );
-            },
+          const SizedBox(height: 8),
+          MsCascade(
+            index: 2,
+            child: _ActionTile(
+              icone: Icons.history_rounded,
+              titre: 'Mes relevés',
+              sousTitre: 'Produit · marché · prix · date · statut',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                      builder: (_) => const MesRelevesScreen()),
+                );
+              },
+            ),
           ),
-          _ActionTile(
-            icone: Icons.category_outlined,
-            titre: 'Gestion des produits',
-            sousTitre: 'Créer et désactiver des produits',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const AdminGestionScreen(type: AdminGestionType.produits),
-                ),
-              );
-            },
+          const SizedBox(height: AppSpacing.lg),
+          const MsApparition(
+            child: MarketScopeSectionTitle(
+              titre: 'Préférences',
+              icone: Icons.settings_outlined,
+            ),
           ),
-        ] else ...[
-          _ActionTile(
-            icone: Icons.add_chart,
-            titre: 'Saisir un relevé de prix',
-            sousTitre: 'Partagez les prix observés sur un marché',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const SaisieReleveScreen()),
-              );
-            },
+          const SizedBox(height: AppSpacing.sm),
+          MsApparition(
+            child: MarketScopeCard(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md, vertical: 6),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary
+                              .withValues(alpha: 0.10),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Theme.of(context).brightness ==
+                                  Brightness.dark
+                              ? Icons.dark_mode_rounded
+                              : Icons.light_mode_rounded,
+                          size: 19,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Apparence',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14),
+                            ),
+                            Text(
+                              'Mode clair / sombre',
+                              style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: AppColors.textMuted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SegmentedButton<ThemeMode>(
+                        segments: const [
+                          ButtonSegment(
+                            value: ThemeMode.light,
+                            icon: Icon(Icons.light_mode_rounded,
+                                size: 16),
+                          ),
+                          ButtonSegment(
+                            value: ThemeMode.dark,
+                            icon: Icon(Icons.dark_mode_rounded,
+                                size: 16),
+                          ),
+                          ButtonSegment(
+                            value: ThemeMode.system,
+                            icon: Icon(Icons.settings_suggest_rounded,
+                                size: 16),
+                          ),
+                        ],
+                        selected: {
+                          widget.currentThemeMode ?? ThemeMode.system
+                        },
+                        showSelectedIcon: false,
+                        style: SegmentedButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        onSelectionChanged: (s) =>
+                            widget.onThemeModeChanged
+                                ?.call(s.first),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
-          _ActionTile(
-            icone: Icons.history,
-            titre: 'Mes relevés',
-            sousTitre: 'Consulter l’historique de vos relevés',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const MesRelevesScreen()),
-              );
-            },
+          if (estAdmin) ...[
+            const SizedBox(height: AppSpacing.lg),
+            const MarketScopeSectionTitle(
+              titre: 'Administration',
+              icone: Icons.admin_panel_settings_outlined,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            MsCascade(
+              index: 3,
+              child: _ActionTile(
+                icone: Icons.report_problem_outlined,
+                titre: 'Relevés signalés',
+                sousTitre:
+                    'Prix anormaux · prix obsolètes · écarts',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                        builder: (_) =>
+                            const SignalementsScreen()),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            MsCascade(
+              index: 4,
+              child: _ActionTile(
+                icone: Icons.storefront_outlined,
+                titre: 'Gestion des marchés',
+                sousTitre: 'Créer · modifier · désactiver',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AdminGestionScreen(
+                          type: AdminGestionType.marches),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            MsCascade(
+              index: 5,
+              child: _ActionTile(
+                icone: Icons.category_outlined,
+                titre: 'Gestion des produits',
+                sousTitre: 'Créer · modifier · désactiver',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AdminGestionScreen(
+                          type: AdminGestionType.produits),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.lg),
+          OutlinedButton.icon(
+            onPressed: _enDeconnexion ? null : _deconnecter,
+            icon: _enDeconnexion
+                ? const SizedBox(
+                    height: 16,
+                    width: 16,
+                    child:
+                        CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.logout_rounded, size: 18),
+            label: const Text('Se déconnecter'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(48, 50),
+              foregroundColor: theme.colorScheme.error,
+              side: BorderSide(
+                  color: theme.colorScheme.error
+                      .withValues(alpha: 0.4)),
+            ),
           ),
+          const SizedBox(height: AppSpacing.xl),
         ],
-        const SizedBox(height: 24),
-        OutlinedButton.icon(
-          onPressed: _enDeconnexion ? null : _deconnecter,
-          icon: _enDeconnexion
-              ? const SizedBox(
-                  height: 16,
-                  width: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.logout),
-          label: const Text('Se déconnecter'),
-        ),
-      ],
+      ),
     );
   }
 }

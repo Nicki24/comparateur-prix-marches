@@ -8,6 +8,11 @@ import '../services/comparison_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/etats.dart';
+import '../widgets/ms_anim.dart';
+import '../widgets/ms_badge.dart';
+import '../widgets/ms_card.dart';
+import '../widgets/ms_decor.dart';
+import '../widgets/produit_icone.dart';
 
 /// Écran de comparaison d'un produit : prix par marché (bar chart)
 /// et évolution historique (line chart) avec fl_chart.
@@ -40,7 +45,41 @@ class _ComparaisonScreenState extends State<ComparaisonScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.produit.nom),
+        title: Row(
+          children: [
+            ProduitIcone(
+              nom: widget.produit.nom,
+              categorie: widget.produit.categorie,
+              taille: 32,
+              tailleIcone: 16,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.produit.nom,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (widget.produit.categorie != null)
+                    Text(
+                      widget.produit.categorie!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF9FB6AE),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -114,50 +153,107 @@ class _ComparaisonTabState extends State<_ComparaisonTab> {
           );
         }
 
+        // Synthèse min / moyenne / max.
+        final prix = paire.map((p) => p.dernierPrix!).toList();
+        final min = prix.reduce((a, b) => a < b ? a : b);
+        final max = prix.reduce((a, b) => a > b ? a : b);
+        final moy =
+            prix.fold<double>(0, (a, b) => a + b) / prix.length;
+
         return RefreshIndicator(
+          color: AppColors.green,
           onRefresh: _recharger,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-              _CarteMeilleurPrix(comparaison: comparaison),
-              const SizedBox(height: 16),
-              const _TitreGraphique(
-                titre: 'Prix par marché',
-                sousTitre: 'Dernier relevé observé sur chaque marché',
-              ),
-              const SizedBox(height: 8),
-              Card(
-                clipBehavior: Clip.antiAlias,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 24, 16, 14),
-                  child: Column(
+          child: MsDecorFond(
+            densite: 0.5,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              children: [
+                MsApparition(
+                    child: _CarteMeilleurPrix(
+                        comparaison: comparaison)),
+                const SizedBox(height: 12),
+                MsApparition(
+                  delai: const Duration(milliseconds: 60),
+                  child: Row(
                     children: [
-                      _BarChartPrix(paire: paire),
-                      const SizedBox(height: 18),
-                      const _LegendeBar(),
+                      Expanded(
+                          child: _MiniStat(
+                              label: 'Minimum',
+                              valeur: formaterPrix(min),
+                              couleur: AppColors.green)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                          child: _MiniStat(
+                              label: 'Moyenne',
+                              valeur: formaterPrix(moy),
+                              couleur: AppColors.saffron)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                          child: _MiniStat(
+                              label: 'Maximum',
+                              valeur: formaterPrix(max),
+                              couleur: AppColors.terracotta)),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    children: [
-                      for (var i = 0; i < paire.length; i++)
-                        _RangPrixMarche(
-                          prixParMarche: paire[i],
-                          rang: i,
-                          total: paire.length,
-                          prixMax: paire.last.dernierPrix!,
+                const SizedBox(height: 16),
+                MsApparition(
+                  child: MarketScopeChartCard(
+                    titre: 'Prix par marché',
+                    sousTitre:
+                        'Dernier relevé observé · du moins cher au plus cher',
+                    child: Column(
+                      children: [
+                        _BarChartPrix(paire: paire),
+                        const SizedBox(height: 14),
+                        const _LegendeBar(),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                MsApparition(
+                  delai: const Duration(milliseconds: 80),
+                  child: MarketScopeCard(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 4, horizontal: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                              12, 10, 12, 4),
+                          child: Text(
+                            'Où trouver ce produit au meilleur prix ?',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontFamily: AppFonts.display,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
                         ),
-                    ],
+                        for (var i = 0; i < paire.length; i++)
+                          MsCascade(
+                            index: i,
+                            child: _RangPrixMarche(
+                              prixParMarche: paire[i],
+                              rang: i,
+                              total: paire.length,
+                              prixMax:
+                                  paire.last.dernierPrix!,
+                              prixMin:
+                                  paire.first.dernierPrix!,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -229,6 +325,64 @@ class _CarteMeilleurPrix extends StatelessWidget {
   }
 }
 
+/// Mini-stat min / moyenne / max (cartes légères, responsive).
+class _MiniStat extends StatelessWidget {
+  const _MiniStat(
+      {required this.label, required this.valeur, required this.couleur});
+
+  final String label;
+  final String valeur;
+  final Color couleur;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return MarketScopeCard(
+      padding: const EdgeInsets.symmetric(
+          horizontal: 10, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                      color: couleur, shape: BoxShape.circle)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontFamily: AppFonts.mono,
+                    fontSize: 10,
+                    letterSpacing: 0.8,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            valeur,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.priceSmall.copyWith(
+              fontSize: 13,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Badge animé « Meilleure affaire » (apparition en échelle).
 class _BadgeMeilleureAffaire extends StatelessWidget {
   const _BadgeMeilleureAffaire();
@@ -284,10 +438,14 @@ class _BarChartPrix extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final maxPrix = paire.last.dernierPrix! * 1.1;
+    final maxPrix = paire.last.dernierPrix! * 1.12;
+    // Évite les labels qui se chevauchent : 1 sur 2 si > 6 marchés,
+    // inclinaison à 45° pour les noms longs, taille adaptative.
+    final dense = paire.length > 6;
+    final hauteur = paire.length > 4 ? 240.0 : 220.0;
 
     return SizedBox(
-      height: 220,
+      height: hauteur,
       child: BarChart(
         BarChartData(
           maxY: maxPrix > 0 ? maxPrix : 1,
@@ -298,7 +456,7 @@ class _BarChartPrix extends StatelessWidget {
                 barRods: [
                   BarChartRodData(
                     toY: paire[i].dernierPrix!,
-                    width: 22,
+                    width: paire.length > 6 ? 14 : 22,
                     color: _couleurBar(i, paire.length),
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(5),
@@ -317,12 +475,13 @@ class _BarChartPrix extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 48,
+                reservedSize: 44,
                 getTitlesWidget: (value, meta) {
                   return Text(
                     '${value.toInt()}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontFamily: AppFonts.mono,
+                      fontSize: 10,
                     ),
                   );
                 },
@@ -331,25 +490,53 @@ class _BarChartPrix extends StatelessWidget {
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 34,
+                reservedSize: 54,
                 getTitlesWidget: (value, meta) {
                   final index = value.toInt();
                   if (index < 0 || index >= paire.length) {
                     return const SizedBox.shrink();
                   }
+                  // Réduit le nombre de labels si dense.
+                  if (dense && index % 2 == 1) {
+                    return const SizedBox.shrink();
+                  }
+                  final nom =
+                      _nomCourt(paire[index].marche.nom);
+                  final long = nom.length > 7;
+                  final txt = Text(
+                    nom,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 10,
+                    ),
+                  );
+                  if (!long) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: txt,
+                    );
+                  }
+                  // Incline les labels longs pour rester lisible.
                   return Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      _nomCourt(paire[index].marche.nom),
-                      style: theme.textTheme.bodySmall,
-                      overflow: TextOverflow.ellipsis,
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Transform.rotate(
+                      angle: -0.5,
+                      child: SizedBox(width: 52, child: txt),
                     ),
                   );
                 },
               ),
             ),
           ),
-          gridData: const FlGridData(drawVerticalLine: false),
+          gridData: FlGridData(
+            drawVerticalLine: false,
+            getDrawingHorizontalLine: (_) => FlLine(
+              color: theme.dividerColor.withValues(alpha: 0.6),
+              strokeWidth: 1,
+            ),
+          ),
           borderData: FlBorderData(show: false),
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
@@ -375,24 +562,36 @@ class _BarChartPrix extends StatelessWidget {
   }
 
   String _nomCourt(String nom) {
-    return nom.length > 12 ? nom.substring(0, 12) : nom;
+    final t = nom.trim();
+    if (t.length <= 12) return t;
+    return t.substring(0, 11).trimRight();
   }
 }
 
-/// Ligne comparative façon tableau de bord : point de couleur, nom du marché,
-/// barre relative, prix (mono) et écart.
+/// Ligne comparative : marché · prix (mono) · écart % · date MàJ.
+/// Marchés classés du moins cher au plus cher, badges min/max.
 class _RangPrixMarche extends StatelessWidget {
   const _RangPrixMarche({
     required this.prixParMarche,
     required this.rang,
     required this.total,
     required this.prixMax,
+    required this.prixMin,
   });
 
   final PrixParMarche prixParMarche;
   final int rang;
   final int total;
   final double prixMax;
+  final double prixMin;
+
+  String _dateMaj() {
+    final brut = prixParMarche.dateDernierReleve;
+    if (brut == null || brut.isEmpty) return '';
+    final d = DateTime.tryParse(brut);
+    if (d == null) return brut;
+    return 'MàJ ${formaterDateCourte(d)}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -400,108 +599,116 @@ class _RangPrixMarche extends StatelessWidget {
     final prix = prixParMarche.dernierPrix!;
     final ecart = prixParMarche.ecartPourcentage;
     final estLeMoinsCher = rang == 0;
+    final estLePlusCher = rang == total - 1 && total > 1;
     final couleur = _couleurBar(rang, total);
     final largeurBarre = (prix / prixMax).clamp(0.08, 1.0);
+    final dateTxt = _dateMaj();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      child: Row(
+      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 116,
-            child: Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: couleur,
-                    shape: BoxShape.circle,
-                  ),
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: couleur,
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    prixParMarche.marche.nom,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Container(
-              height: 7,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(4),
               ),
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: largeurBarre,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  prixParMarche.marche.nom,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5),
+                ),
+              ),
+              if (estLeMoinsCher)
+                const MarketScopeRangBadge.meilleur()
+              else if (estLePlusCher)
+                const MarketScopeRangBadge.cher()
+              else if (ecart != null && ecart.abs() >= 0.05)
+                Text(
+                  '${ecart > 0 ? '+' : '−'}${ecart.abs().toStringAsFixed(1)} %',
+                  style: TextStyle(
+                    fontFamily: AppFonts.mono,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: ecart > 0
+                        ? theme.alertFg
+                        : theme.okFg,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 7),
+          Row(
+            children: [
+              Expanded(
                 child: Container(
+                  height: 7,
                   decoration: BoxDecoration(
-                    color: couleur,
+                    color: theme
+                        .colorScheme.secondaryContainer,
                     borderRadius: BorderRadius.circular(4),
                   ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: largeurBarre,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: couleur,
+                        borderRadius:
+                            BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    formaterPrix(prix),
+                    style: AppTextStyles.priceSmall.copyWith(
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  if (dateTxt.isNotEmpty)
+                    Text(
+                      dateTxt,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(
+                        fontSize: 10.5,
+                        color: theme
+                            .colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          if (prixParMarche.nbReleves > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Text(
+                '${prixParMarche.nbReleves} relevé${prixParMarche.nbReleves > 1 ? 's' : ''}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 10.5,
+                  color: theme.colorScheme.onSurfaceVariant
+                      .withValues(alpha: 0.75),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 14),
-          SizedBox(
-            width: 84,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  formaterPrix(prix),
-                  style: stylePrix(taille: 14.5),
-                ),
-                const SizedBox(height: 2),
-                if (estLeMoinsCher)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.okBg,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.check_circle_rounded,
-                          size: 10,
-                          color: AppColors.okFg,
-                        ),
-                        SizedBox(width: 3),
-                        Text(
-                          'Meilleur prix',
-                          style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.okFg,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else if (ecart != null && ecart > 0)
-                  Text(
-                    '+${ecart.toStringAsFixed(1)} %',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.alertFg,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -618,35 +825,105 @@ class _HistoriqueTabState extends State<_HistoriqueTab>
                   icone: Icons.timeline,
                 );
               }
+              // Synthèse période : min / max / moyenne / variation.
+              final vals =
+                  points.map((p) => p.valeur).toList();
+              final vMin = vals.reduce((a, b) => a < b ? a : b);
+              final vMax = vals.reduce((a, b) => a > b ? a : b);
+              final vMoy =
+                  vals.fold<double>(0, (a, b) => a + b) /
+                      vals.length;
+              final periode =
+                  '${formaterDateCourte(points.first.date)} → ${formaterDateCourte(points.last.date)}';
+
               return RefreshIndicator(
+                color: AppColors.green,
                 onRefresh: _recharger,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 500),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
-                      child: Column(
-                        key: ValueKey(_mode),
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Card(
-                            clipBehavior: Clip.antiAlias,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: _LineChartPrix(points: points),
+                child: MsDecorFond(
+                  densite: 0.5,
+                  child: ListView(
+                    physics:
+                        const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    children: [
+                      AnimatedSwitcher(
+                        duration:
+                            const Duration(milliseconds: 400),
+                        switchInCurve: Curves.easeOutCubic,
+                        switchOutCurve: Curves.easeInCubic,
+                        child: Column(
+                          key: ValueKey(_mode),
+                          crossAxisAlignment:
+                              CrossAxisAlignment.stretch,
+                          children: [
+                            MarketScopeCard(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          'Synthèse · $periode',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(
+                                                fontFamily:
+                                                    AppFonts.mono,
+                                                letterSpacing: 0.6,
+                                                color: Theme.of(
+                                                        context)
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                          child: _HistoStat(
+                                              label: 'Min',
+                                              valeur: formaterPrix(
+                                                  vMin))),
+                                      Expanded(
+                                          child: _HistoStat(
+                                              label: 'Moyenne',
+                                              valeur: formaterPrix(
+                                                  vMoy))),
+                                      Expanded(
+                                          child: _HistoStat(
+                                              label: 'Max',
+                                              valeur: formaterPrix(
+                                                  vMax))),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Card(
-                            child: _VariationPanel(points: points),
-                          ),
-                        ],
+                            const SizedBox(height: 12),
+                            MarketScopeChartCard(
+                              titre: 'Évolution du prix',
+                              sousTitre:
+                                  '${_intituleMode()} · $periode · ${points.length} points',
+                              child: _LineChartPrix(
+                                  points: points),
+                            ),
+                            const SizedBox(height: 12),
+                            MarketScopeCard(
+                              padding: const EdgeInsets.all(12),
+                              child: _VariationPanel(
+                                  points: points),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },
@@ -733,17 +1010,29 @@ class _LineChartPrix extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 30,
-                interval: 1,
+                // Une date sur 3–5 si beaucoup de points (pas de chevauchement).
+                interval: points.length > 18
+                    ? (points.length / 6).ceilToDouble()
+                    : (points.length > 10 ? 2 : 1),
                 getTitlesWidget: (value, meta) {
                   final index = value.toInt();
                   if (index < 0 || index >= points.length) {
+                    return const SizedBox.shrink();
+                  }
+                  final pas = points.length > 18
+                      ? (points.length / 6).ceil()
+                      : (points.length > 10 ? 2 : 1);
+                  if (index % pas != 0 &&
+                      index != points.length - 1) {
                     return const SizedBox.shrink();
                   }
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       formaterDateCourte(points[index].date),
-                      style: theme.textTheme.bodySmall,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 10,
+                      ),
                     ),
                   );
                 },
@@ -774,6 +1063,41 @@ class _LineChartPrix extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Stat compacte pour la synthèse historique.
+class _HistoStat extends StatelessWidget {
+  const _HistoStat({required this.label, required this.valeur});
+
+  final String label;
+  final String valeur;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontSize: 11,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          valeur,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTextStyles.priceSmall.copyWith(
+            fontSize: 13,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -12,6 +12,7 @@ void main() {
     await tester.pump();
 
     expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.byType(NavigationDestination), findsNWidgets(3));
+    // Navigation V2 : Accueil · Marchés · Produits · Relevés · Profil.
+    expect(find.byType(NavigationDestination), findsNWidgets(5));
   });
 }

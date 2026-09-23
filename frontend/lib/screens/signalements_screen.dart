@@ -5,6 +5,10 @@ import '../services/signalement_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/etats.dart';
+import '../widgets/ms_anim.dart';
+import '../widgets/ms_card.dart';
+import '../widgets/ms_decor.dart';
+import '../widgets/produit_icone.dart';
 import '../widgets/statut_badge.dart';
 
 class SignalementsScreen extends StatefulWidget {
@@ -99,52 +103,120 @@ class _SignalementsScreenState extends State<SignalementsScreen> {
           }
 
           return RefreshIndicator(
+            color: AppColors.green,
             onRefresh: _recharger,
-            child: ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(12),
-              itemCount: signalements.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final s = signalements[index];
-                final releve = s.releve;
-                final estPrixAnormal = s.typeAnomalie == 'prix_anormal';
-                return Card(
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: estPrixAnormal
-                          ? AppColors.alertBg
-                          : AppColors.staleBg,
-                      child: Icon(
-                        estPrixAnormal
-                            ? Icons.warning_amber
-                            : Icons.hourglass_empty,
-                        color: estPrixAnormal
-                            ? AppColors.alertFg
-                            : AppColors.staleFg,
+            child: MsDecorFond(
+              densite: 0.5,
+              child: ListView.separated(
+                physics:
+                    const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.sm,
+                    AppSpacing.md,
+                    AppSpacing.xl),
+                itemCount: signalements.length,
+                separatorBuilder: (_, __) =>
+                    const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final s = signalements[index];
+                  final releve = s.releve;
+                  final estPrixAnormal =
+                      s.typeAnomalie == 'prix_anormal';
+                  final theme = Theme.of(context);
+                  return MsCascade(
+                    index: index % 7,
+                    child: MarketScopeCard(
+                      padding: const EdgeInsets.all(
+                          AppSpacing.md),
+                      child: Row(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          ProduitIcone(
+                            nom: releve?.produit?.nom ?? '',
+                            categorie: releve
+                                ?.produit?.categorie,
+                            taille: 42,
+                            tailleIcone: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        s.libelleType,
+                                        maxLines: 1,
+                                        overflow: TextOverflow
+                                            .ellipsis,
+                                        style: theme
+                                            .textTheme.titleSmall
+                                            ?.copyWith(
+                                          fontWeight:
+                                              FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    estPrixAnormal
+                                        ? const StatutBadge
+                                            .alerte('Écart')
+                                        : const StatutBadge
+                                            .obsolete(
+                                            'Obsolète'),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                if (releve?.produit != null)
+                                  Text(
+                                    '${releve!.produit!.nom} — ${formaterPrix(releve.valeur)}',
+                                    maxLines: 1,
+                                    overflow:
+                                        TextOverflow.ellipsis,
+                                    style: AppTextStyles
+                                        .priceSmall
+                                        .copyWith(
+                                      fontSize: 12.5,
+                                      color: theme.colorScheme
+                                          .onSurface,
+                                    ),
+                                  ),
+                                if (releve?.marche != null)
+                                  Text(
+                                    releve!.marche!.nom,
+                                    maxLines: 1,
+                                    overflow:
+                                        TextOverflow.ellipsis,
+                                    style: theme
+                                        .textTheme.bodySmall
+                                        ?.copyWith(
+                                      color: theme.colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                                  ),
+                                Text(
+                                  'Détecté le ${formaterDate(s.dateDetection)}',
+                                  style: theme.textTheme.bodySmall
+                                      ?.copyWith(
+                                    fontSize: 11.5,
+                                    color: theme.colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    title: Text(s.libelleType),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (releve?.produit != null)
-                          Text(
-                            '${releve!.produit!.nom} — '
-                            '${formaterPrix(releve.valeur)}',
-                          ),
-                        if (releve?.marche != null)
-                          Text(releve!.marche!.nom),
-                        Text('Détecté le ${formaterDate(s.dateDetection)}'),
-                      ],
-                    ),
-                    isThreeLine: true,
-                    trailing: estPrixAnormal
-                        ? const StatutBadge.alerte('Écart')
-                        : const StatutBadge.obsolete('Obsolète'),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           );
         },

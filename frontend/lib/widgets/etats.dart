@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-// ===========================================================================
-// CHARGEMENT
-// ===========================================================================
-
-/// Indicateur de chargement MarketScope : shimmer de cartes squelette.
 class Chargement extends StatelessWidget {
   const Chargement({super.key, this.nombreCartes = 4});
 
@@ -16,38 +11,36 @@ class Chargement extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.separated(
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.md),
       itemCount: nombreCartes,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (_, __) => const _CarteSqelette(),
+      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+      itemBuilder: (_, __) => const _CarteSquelette(),
     );
   }
 }
 
-/// Indicateur de chargement centré (pour les vues non-liste).
 class ChargementCentre extends StatelessWidget {
   const ChargementCentre({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: CircularProgressIndicator(
-        color: AppColors.green,
+        color: Theme.of(context).colorScheme.primary,
         strokeWidth: 2.5,
       ),
     );
   }
 }
 
-/// Carte squelette animée avec effet shimmer.
-class _CarteSqelette extends StatefulWidget {
-  const _CarteSqelette();
+class _CarteSquelette extends StatefulWidget {
+  const _CarteSquelette();
 
   @override
-  State<_CarteSqelette> createState() => _CarteSqeletteState();
+  State<_CarteSquelette> createState() => _CarteSqueletteState();
 }
 
-class _CarteSqeletteState extends State<_CarteSqelette>
+class _CarteSqueletteState extends State<_CarteSquelette>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final Animation<double> _animation;
@@ -71,36 +64,37 @@ class _CarteSqeletteState extends State<_CarteSqelette>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, _) {
         final baseColor = isDark
-            ? Color.lerp(AppColors.darkPaper2, AppColors.darkLine, _animation.value)!
-            : Color.lerp(AppColors.paper2, AppColors.line, _animation.value)!;
+            ? Color.lerp(theme.colorScheme.surface, theme.dividerColor, _animation.value)!
+            : Color.lerp(theme.colorScheme.surface, theme.dividerColor, _animation.value)!;
 
         return Container(
           height: 72,
           decoration: BoxDecoration(
             color: baseColor,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: isDark ? AppColors.darkLine : AppColors.line),
+            borderRadius: BorderRadius.circular(theme.cardRadius),
+            border: Border.all(color: theme.dividerColor),
+            boxShadow: theme.cardShadows,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           child: Row(
             children: [
-              // Avatar squelette
               Container(
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
                   color: isDark
-                      ? Color.lerp(AppColors.darkLine, AppColors.darkPaper2, _animation.value)!
-                      : Color.lerp(AppColors.line, AppColors.paper2, _animation.value)!,
+                      ? Color.lerp(theme.dividerColor, theme.colorScheme.surface, _animation.value)!
+                      : Color.lerp(theme.dividerColor, theme.colorScheme.surface, _animation.value)!,
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 14),
-              // Lignes squelette
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,20 +105,20 @@ class _CarteSqeletteState extends State<_CarteSqelette>
                       width: double.infinity,
                       decoration: BoxDecoration(
                         color: isDark
-                            ? Color.lerp(AppColors.darkLine, AppColors.darkPaper2, _animation.value)!
-                            : Color.lerp(AppColors.line, AppColors.paper2, _animation.value)!,
-                        borderRadius: BorderRadius.circular(6),
+                            ? Color.lerp(theme.dividerColor, theme.colorScheme.surface, _animation.value)!
+                            : Color.lerp(theme.dividerColor, theme.colorScheme.surface, _animation.value)!,
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.xs),
                     Container(
                       height: 11,
                       width: 160,
                       decoration: BoxDecoration(
                         color: isDark
-                            ? Color.lerp(AppColors.darkLine, AppColors.darkPaper2, _animation.value)!
-                            : Color.lerp(AppColors.line, AppColors.paper2, _animation.value)!,
-                        borderRadius: BorderRadius.circular(6),
+                            ? Color.lerp(theme.dividerColor, theme.colorScheme.surface, _animation.value)!
+                            : Color.lerp(theme.dividerColor, theme.colorScheme.surface, _animation.value)!,
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                       ),
                     ),
                   ],
@@ -138,11 +132,6 @@ class _CarteSqeletteState extends State<_CarteSqelette>
   }
 }
 
-// ===========================================================================
-// ERREUR
-// ===========================================================================
-
-/// Message d'erreur avec bouton « Réessayer », style MarketScope.
 class ErreurMessage extends StatelessWidget {
   const ErreurMessage({super.key, required this.message, this.onReessayer});
 
@@ -154,7 +143,7 @@ class ErreurMessage extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: _Apparition(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -163,26 +152,26 @@ class ErreurMessage extends StatelessWidget {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: AppColors.alertBg,
+                  color: theme.alertBg,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.alertFg.withValues(alpha: 0.25),
+                    color: theme.alertFg.withValues(alpha: 0.25),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.alertFg.withValues(alpha: 0.14),
+                      color: theme.alertFg.withValues(alpha: 0.14),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.cloud_off_rounded,
                   size: 34,
-                  color: AppColors.alertFg,
+                  color: theme.alertFg,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.lg),
               Text(
                 'Connexion impossible',
                 style: theme.textTheme.titleMedium?.copyWith(
@@ -190,7 +179,7 @@ class ErreurMessage extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 message,
                 textAlign: TextAlign.center,
@@ -199,7 +188,7 @@ class ErreurMessage extends StatelessWidget {
                 ),
               ),
               if (onReessayer != null) ...[
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.lg),
                 FilledButton.icon(
                   onPressed: onReessayer,
                   icon: const Icon(Icons.refresh_rounded, size: 18),
@@ -214,11 +203,6 @@ class ErreurMessage extends StatelessWidget {
   }
 }
 
-// ===========================================================================
-// CONTENU VIDE
-// ===========================================================================
-
-/// État vide enrichi avec icône stylée et message contextualisé.
 class ContenuVide extends StatelessWidget {
   const ContenuVide({
     super.key,
@@ -241,7 +225,7 @@ class ContenuVide extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: _Apparition(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -252,18 +236,18 @@ class ContenuVide extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: isDark
-                        ? [AppColors.darkPaper2, AppColors.darkSurface]
-                        : [AppColors.paper2, AppColors.white],
+                        ? [theme.colorScheme.surfaceContainerHighest, theme.colorScheme.surface]
+                        : [theme.colorScheme.surfaceContainerHighest, theme.colorScheme.surface],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isDark ? AppColors.darkLine : AppColors.line,
+                    color: theme.dividerColor,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.ink.withValues(alpha: 0.1),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 18,
                       offset: const Offset(0, 8),
                     ),
@@ -272,10 +256,10 @@ class ContenuVide extends StatelessWidget {
                 child: Icon(
                   icone,
                   size: 36,
-                  color: AppColors.textMuted,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.lg),
               if (titre != null) ...[
                 Text(
                   titre!,
@@ -284,7 +268,7 @@ class ContenuVide extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
               ],
               Text(
                 message,
@@ -294,7 +278,7 @@ class ContenuVide extends StatelessWidget {
                 ),
               ),
               if (cta != null && onCta != null) ...[
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.lg),
                 FilledButton(
                   onPressed: onCta,
                   child: Text(cta!),
@@ -308,7 +292,6 @@ class ContenuVide extends StatelessWidget {
   }
 }
 
-/// Fondu + glissement doux à l'apparition des états (erreur, vide…).
 class _Apparition extends StatelessWidget {
   const _Apparition({required this.child});
 

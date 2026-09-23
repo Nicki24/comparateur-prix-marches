@@ -6,6 +6,8 @@ import '../theme/app_theme.dart';
 import '../widgets/barre_recherche.dart';
 import '../widgets/etats.dart';
 import '../widgets/logo.dart';
+import '../widgets/ms_anim.dart';
+import '../widgets/ms_decor.dart';
 import '../widgets/tap_scale.dart';
 import 'produits_screen.dart';
 
@@ -78,125 +80,158 @@ class _MarchesScreenState extends State<MarchesScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            transitionBuilder: (child, anim) => SizeTransition(
-              sizeFactor: anim,
-              axisAlignment: -1,
-              child: FadeTransition(opacity: anim, child: child),
+      body: MsDecorFond(
+        densite: 0.6,
+        child: Column(
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              transitionBuilder: (child, anim) => SizeTransition(
+                sizeFactor: anim,
+                axisAlignment: -1,
+                child: FadeTransition(opacity: anim, child: child),
+              ),
+              child: _rechercheActive
+                  ? BarreRecherche(
+                      key: const ValueKey('recherche-marches'),
+                      controleur: _controleurRecherche,
+                      onChange: (v) =>
+                          setState(() => _requete = v.toLowerCase()),
+                      hint: 'Nom du marché ou localisation',
+                      autofocus: true,
+                    )
+                  : const SizedBox.shrink(
+                      key: ValueKey('cache-recherche')),
             ),
-            child: _rechercheActive
-                ? BarreRecherche(
-                    key: const ValueKey('recherche-marches'),
-                    controleur: _controleurRecherche,
-                    onChange: (v) => setState(() => _requete = v.toLowerCase()),
-                    hint: 'Nom du marché ou localisation',
-                    autofocus: true,
-                  )
-                : const SizedBox.shrink(key: ValueKey('cache-recherche')),
-          ),
-          Expanded(
-            child: FutureBuilder<List<Marche>>(
-              future: _futur,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState != ConnectionState.done) {
-                  return const Chargement(nombreCartes: 5);
-                }
-                if (snapshot.hasError) {
-                  return ErreurMessage(
-                    message: snapshot.error.toString(),
-                    onReessayer: _recharger,
-                  );
-                }
+            Expanded(
+              child: FutureBuilder<List<Marche>>(
+                future: _futur,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState !=
+                      ConnectionState.done) {
+                    return const Chargement(nombreCartes: 5);
+                  }
+                  if (snapshot.hasError) {
+                    return ErreurMessage(
+                      message: snapshot.error.toString(),
+                      onReessayer: _recharger,
+                    );
+                  }
 
-                final marches = snapshot.data ?? [];
-                if (marches.isEmpty) {
-                  return const ContenuVide(
-                    titre: 'Aucun marché',
-                    message: 'Aucun marché n\'est encore disponible.\n'
-                        'Revenez bientôt !',
-                    icone: Icons.storefront_rounded,
-                  );
-                }
+                  final marches = snapshot.data ?? [];
+                  if (marches.isEmpty) {
+                    return const ContenuVide(
+                      titre: 'Aucun marché',
+                      message:
+                          'Aucun marché n\'est encore disponible.\n'
+                          'Revenez bientôt !',
+                      icone: Icons.storefront_rounded,
+                    );
+                  }
 
-                final villes = marches
-                    .map((m) => m.localisation)
-                    .where((v) => v.isNotEmpty)
-                    .toSet()
-                    .toList()
-                  ..sort();
+                  final villes = marches
+                      .map((m) => m.localisation)
+                      .where((v) => v.isNotEmpty)
+                      .toSet()
+                      .toList()
+                    ..sort();
 
-                // Filtre texte + ville.
-                final filtrees = marches.where((m) {
-                  final okVille = _villeFiltre == null ||
-                      m.localisation == _villeFiltre;
-                  final nom = m.nom.toLowerCase();
-                  final loc = m.localisation.toLowerCase();
-                  final okTexte = _requete.isEmpty ||
-                      nom.contains(_requete) ||
-                      loc.contains(_requete);
-                  return okVille && okTexte;
-                }).toList();
+                  final filtrees = marches.where((m) {
+                    final okVille = _villeFiltre == null ||
+                        m.localisation == _villeFiltre;
+                    final nom = m.nom.toLowerCase();
+                    final loc = m.localisation.toLowerCase();
+                    final okTexte = _requete.isEmpty ||
+                        nom.contains(_requete) ||
+                        loc.contains(_requete);
+                    return okVille && okTexte;
+                  }).toList();
 
-                if (filtrees.isEmpty) {
-                  return ContenuVide(
-                    titre: 'Aucun résultat',
-                    message: 'Aucun marché ne correspond à '
-                        '« ${_controleurRecherche.text} ».',
-                    icone: Icons.search_off_rounded,
-                    cta: 'Effacer la recherche',
-                    onCta: _effacerFiltres,
-                  );
-                }
+                  if (filtrees.isEmpty) {
+                    return ContenuVide(
+                      titre: 'Aucun résultat',
+                      message: 'Aucun marché ne correspond à '
+                          '« ${_controleurRecherche.text} ».',
+                      icone: Icons.search_off_rounded,
+                      cta: 'Effacer la recherche',
+                      onCta: _effacerFiltres,
+                    );
+                  }
 
-                // Tri par nom ou par ville.
-                if (_tri == 'ville') {
-                  filtrees.sort((a, b) => a.localisation.compareTo(b.localisation));
-                } else {
-                  filtrees.sort(
-                    (a, b) => a.nom.toLowerCase().compareTo(b.nom.toLowerCase()),
-                  );
-                }
+                  if (_tri == 'ville') {
+                    filtrees.sort((a, b) =>
+                        a.localisation.compareTo(b.localisation));
+                  } else {
+                    filtrees.sort((a, b) => a.nom
+                        .toLowerCase()
+                        .compareTo(b.nom.toLowerCase()));
+                  }
 
-                return Column(
-                  children: [
-                    _FiltresMarche(
-                      tri: _tri,
-                      villes: villes,
-                      villeFiltre: _villeFiltre,
-                      onTri: (tri) => setState(() => _tri = tri),
-                      onVille: (ville) =>
-                          setState(() => _villeFiltre = ville),
-                    ),
-                    Expanded(
-                      child: RefreshIndicator(
-                        color: AppColors.green,
-                        onRefresh: _recharger,
-                        child: GridView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-                          gridDelegate:
-                              const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 340,
-                            mainAxisSpacing: 10,
-                            crossAxisSpacing: 10,
-                            mainAxisExtent: 158,
-                          ),
-                          itemCount: filtrees.length,
-                          itemBuilder: (context, index) => TapScale(
-                            child: _CarteMarche(marche: filtrees[index]),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.md,
+                            AppSpacing.sm,
+                            AppSpacing.md,
+                            2),
+                        child: Text(
+                          '${filtrees.length} marché${filtrees.length > 1 ? 's' : ''} suivi${filtrees.length > 1 ? 's' : ''}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                        ),
+                      ),
+                      _FiltresMarche(
+                        tri: _tri,
+                        villes: villes,
+                        villeFiltre: _villeFiltre,
+                        onTri: (tri) =>
+                            setState(() => _tri = tri),
+                        onVille: (ville) => setState(
+                            () => _villeFiltre = ville),
+                      ),
+                      Expanded(
+                        child: RefreshIndicator(
+                          color: AppColors.green,
+                          onRefresh: _recharger,
+                          child: GridView.builder(
+                            physics:
+                                const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(
+                                16, 12, 16, 24),
+                            gridDelegate:
+                                const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 360,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              mainAxisExtent: 172,
+                            ),
+                            itemCount: filtrees.length,
+                            itemBuilder: (context, index) =>
+                                MsCascade(
+                              index: index,
+                              child: TapScale(
+                                child: _CarteMarche(
+                                    marche: filtrees[index]),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
+                    ],
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -340,22 +375,13 @@ class _CarteMarcheState extends State<_CarteMarche> {
       transform: Matrix4.translationValues(0, _survole ? -2 : 0, 0),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : AppColors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
           color: _survole
-              ? AppColors.greenLight.withValues(alpha: 0.5)
+              ? AppColors.green.withValues(alpha: 0.5)
               : (isDark ? AppColors.darkLine : AppColors.line),
         ),
-        boxShadow: _survole
-            ? [
-                BoxShadow(
-                  color: AppColors.ink.withValues(alpha: isDark ? 0.4 : 0.12),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                  spreadRadius: -4,
-                )
-              ]
-            : [],
+        boxShadow: _survole ? theme.cardShadowsHover : theme.cardShadows,
       ),
       clipBehavior: Clip.antiAlias,
       child: Material(
@@ -364,100 +390,161 @@ class _CarteMarcheState extends State<_CarteMarche> {
           onTap: () => _ouvrirMarche(context),
           onHover: (val) => setState(() => _survole = val),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    // ── Avatar localisation ──────────────────────────────
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 42,
+                      height: 42,
                       decoration: BoxDecoration(
-                        color: AppColors.green.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
+                        color: AppColors.green
+                            .withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.storefront_rounded,
                         color: AppColors.green,
-                        size: 20,
+                        size: 21,
                       ),
                     ),
                     const SizedBox(width: 10),
-                    // ── Nom ──────────────────────────────────────────────
                     Expanded(
-                      child: Text(
-                        widget.marche.nom,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontFamily: AppFonts.display,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.2,
-                          height: 1.2,
-                        ),
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.marche.nom,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall
+                                ?.copyWith(
+                              fontFamily: AppFonts.display,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Container(
+                            padding:
+                                const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 2),
+                            decoration: BoxDecoration(
+                              color: widget.marche.actif
+                                  ? theme.okBg
+                                  : theme.staleBg,
+                              borderRadius:
+                                  BorderRadius.circular(99),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: widget.marche.actif
+                                        ? theme.okFg
+                                        : theme.staleFg,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  widget.marche.actif
+                                      ? 'Actif'
+                                      : 'Inactif',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: widget.marche.actif
+                                        ? theme.okFg
+                                        : theme.staleFg,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                // ── Localisation ─────────────────────────────────────────
                 Row(
                   children: [
                     Icon(
                       Icons.location_on_rounded,
                       size: 13,
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: theme
+                          .colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 3),
                     Expanded(
                       child: Text(
-                        widget.marche.localisation,
+                        widget.marche.localisation.isEmpty
+                            ? 'Localisation non renseignée'
+                            : widget.marche.localisation,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(
+                          color: theme.colorScheme
+                              .onSurfaceVariant,
                         ),
                       ),
                     ),
                   ],
                 ),
-                // ── Description ──────────────────────────────────────────
-                if (widget.marche.description != null) ...[
-                  const SizedBox(height: 5),
+                if (widget.marche.description != null &&
+                    widget.marche.description!
+                        .isNotEmpty) ...[
+                  const SizedBox(height: 4),
                   Text(
                     widget.marche.description!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant
-                          .withValues(alpha: 0.7),
+                          .withValues(alpha: 0.75),
                       fontSize: 11.5,
                     ),
                   ),
                 ],
                 const Spacer(),
-                // ── Indication de navigation ─────────────────────────────
                 Row(
                   children: [
                     Icon(
                       Icons.compare_arrows_rounded,
-                      size: 14,
+                      size: 15,
                       color: _survole
                           ? AppColors.green
                           : theme.colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 5),
                     Text(
-                      'Comparer les produits',
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      'Voir les prix du marché',
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(
                         color: _survole
                             ? AppColors.green
                             : theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
-                        fontSize: 11.5,
+                        fontSize: 12,
                       ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: theme
+                          .colorScheme.onSurfaceVariant
+                          .withValues(alpha: 0.6),
                     ),
                   ],
                 ),

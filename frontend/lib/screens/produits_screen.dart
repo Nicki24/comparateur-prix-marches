@@ -6,6 +6,10 @@ import '../theme/app_theme.dart';
 import '../widgets/barre_recherche.dart';
 import '../widgets/etats.dart';
 import '../widgets/logo.dart';
+import '../widgets/ms_anim.dart';
+import '../widgets/ms_card.dart';
+import '../widgets/ms_decor.dart';
+import '../widgets/produit_icone.dart';
 import '../widgets/tap_scale.dart';
 import 'comparaison_screen.dart';
 
@@ -73,137 +77,186 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            transitionBuilder: (child, anim) => SizeTransition(
-              sizeFactor: anim,
-              axisAlignment: -1,
-              child: FadeTransition(opacity: anim, child: child),
+      body: MsDecorFond(
+        densite: 0.6,
+        child: Column(
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              transitionBuilder: (child, anim) => SizeTransition(
+                sizeFactor: anim,
+                axisAlignment: -1,
+                child: FadeTransition(opacity: anim, child: child),
+              ),
+              child: _rechercheActive
+                  ? BarreRecherche(
+                      key: const ValueKey('recherche-produits'),
+                      controleur: _controleurRecherche,
+                      onChange: (v) =>
+                          setState(() => _requete = v.toLowerCase()),
+                      hint: 'Nom du produit ou catégorie',
+                      autofocus: true,
+                    )
+                  : const SizedBox.shrink(
+                      key: ValueKey('cache-recherche')),
             ),
-            child: _rechercheActive
-                ? BarreRecherche(
-                    key: const ValueKey('recherche-produits'),
-                    controleur: _controleurRecherche,
-                    onChange: (v) => setState(() => _requete = v.toLowerCase()),
-                    hint: 'Nom du produit ou catégorie',
-                    autofocus: true,
-                  )
-                : const SizedBox.shrink(key: ValueKey('cache-recherche')),
-          ),
-          Expanded(
-            child: FutureBuilder<List<Produit>>(
-              future: _futur,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState != ConnectionState.done) {
-                  return const Chargement(nombreCartes: 6);
-                }
-                if (snapshot.hasError) {
-                  return ErreurMessage(
-                    message: snapshot.error.toString(),
-                    onReessayer: _recharger,
+            Expanded(
+              child: FutureBuilder<List<Produit>>(
+                future: _futur,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState !=
+                      ConnectionState.done) {
+                    return const Chargement(nombreCartes: 6);
+                  }
+                  if (snapshot.hasError) {
+                    return ErreurMessage(
+                      message: snapshot.error.toString(),
+                      onReessayer: _recharger,
+                    );
+                  }
+
+                  final produits = snapshot.data ?? [];
+                  if (produits.isEmpty) {
+                    return const ContenuVide(
+                      titre: 'Aucun produit',
+                      message:
+                          'Aucun produit n\'est encore suivi.\n'
+                          'Revenez bientôt !',
+                      icone: Icons.shopping_basket_rounded,
+                    );
+                  }
+
+                  final filtrees = _requete.isEmpty
+                      ? produits
+                      : produits.where((p) {
+                          final nom = p.nom.toLowerCase();
+                          final cat =
+                              (p.categorie ?? '').toLowerCase();
+                          return nom.contains(_requete) ||
+                              cat.contains(_requete);
+                        }).toList();
+
+                  if (filtrees.isEmpty) {
+                    return ContenuVide(
+                      titre: 'Aucun résultat',
+                      message: 'Aucun produit ne correspond à '
+                          '« ${_controleurRecherche.text} ».',
+                      icone: Icons.search_off_rounded,
+                      cta: 'Effacer la recherche',
+                      onCta: _effacerRecherche,
+                    );
+                  }
+
+                  final categories =
+                      <String, List<Produit>>{};
+                  for (final p in filtrees) {
+                    final cat = p.categorie ?? 'Autres';
+                    categories.putIfAbsent(cat, () => []).add(p);
+                  }
+
+                  final allItems = <Object>[];
+                  var compteur = 0;
+                  for (final entry in categories.entries) {
+                    allItems.add(entry.key);
+                    allItems.addAll(entry.value);
+                  }
+
+                  return RefreshIndicator(
+                    color: AppColors.green,
+                    onRefresh: _recharger,
+                    child: ListView.builder(
+                      physics:
+                          const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md,
+                          AppSpacing.sm,
+                          AppSpacing.md,
+                          AppSpacing.xl),
+                      itemCount: allItems.length,
+                      itemBuilder: (context, index) {
+                        final item = allItems[index];
+                        if (item is String) {
+                          return _EnteteCat(
+                              categorie: item,
+                              compteur: categories[item]
+                                      ?.length ??
+                                  0);
+                        }
+                        final produit = item as Produit;
+                        final isLast = index ==
+                                allItems.length - 1 ||
+                            allItems[index + 1] is String;
+                        compteur++;
+                        return Padding(
+                          padding: EdgeInsets.only(
+                              bottom: isLast ? 0 : 8),
+                          child: MsCascade(
+                            index: compteur % 7,
+                            child: TapScale(
+                              child: _CarteProduit(
+                                  produit: produit),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   );
-                }
-
-                final produits = snapshot.data ?? [];
-                if (produits.isEmpty) {
-                  return const ContenuVide(
-                    titre: 'Aucun produit',
-                    message: 'Aucun produit n\'est encore suivi.\n'
-                        'Revenez bientôt !',
-                    icone: Icons.shopping_basket_rounded,
-                  );
-                }
-
-                // Filtre client : nom du produit ou catégorie.
-                final filtrees = _requete.isEmpty
-                    ? produits
-                    : produits.where((p) {
-                        final nom = p.nom.toLowerCase();
-                        final cat = (p.categorie ?? '').toLowerCase();
-                        return nom.contains(_requete) || cat.contains(_requete);
-                      }).toList();
-
-                if (filtrees.isEmpty) {
-                  return ContenuVide(
-                    titre: 'Aucun résultat',
-                    message: 'Aucun produit ne correspond à '
-                        '« ${_controleurRecherche.text} ».',
-                    icone: Icons.search_off_rounded,
-                    cta: 'Effacer la recherche',
-                    onCta: _effacerRecherche,
-                  );
-                }
-
-                // Groupement par catégorie pour un affichage plus riche.
-                final categories = <String, List<Produit>>{};
-                for (final p in filtrees) {
-                  final cat = p.categorie ?? 'Autres';
-                  categories.putIfAbsent(cat, () => []).add(p);
-                }
-
-                // Aplatissement des sections (en-tête + produits) une seule fois.
-                final allItems = <Object>[];
-                for (final entry in categories.entries) {
-                  allItems.add(entry.key); // en-tête catégorie
-                  allItems.addAll(entry.value); // produits
-                }
-
-                return RefreshIndicator(
-                  color: AppColors.green,
-                  onRefresh: _recharger,
-                  child: ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),
-                    itemCount: allItems.length,
-                    itemBuilder: (context, index) {
-                      final item = allItems[index];
-                      if (item is String) {
-                        return _EnteteCat(categorie: item);
-                      }
-                      final produit = item as Produit;
-                      final isLast =
-                          index == allItems.length - 1 ||
-                          allItems[index + 1] is String;
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
-                        child: TapScale(
-                          child: _CarteProduit(produit: produit),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// En-tête de catégorie
+// En-tête de catégorie : label mono + compteur
 // ---------------------------------------------------------------------------
 class _EnteteCat extends StatelessWidget {
-  const _EnteteCat({required this.categorie});
+  const _EnteteCat({required this.categorie, this.compteur = 0});
   final String categorie;
+  final int compteur;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
-      child: Text(
-        categorie.toUpperCase(),
-        style: theme.textTheme.labelSmall?.copyWith(
-          fontFamily: AppFonts.mono,
-          color: AppColors.textMuted,
-          letterSpacing: 1.2,
-          fontWeight: FontWeight.w600,
-        ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              categorie.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontFamily: AppFonts.mono,
+                color: theme.colorScheme.onSurfaceVariant,
+                letterSpacing: 1.2,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(99),
+            ),
+            child: Text(
+              '$compteur',
+              style: TextStyle(
+                fontFamily: AppFonts.mono,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSecondaryContainer,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -226,129 +279,99 @@ class _CarteProduitState extends State<_CarteProduit> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final couleurIcone = _couleurCategorie(widget.produit.categorie);
+    final style = ProduitStyle.resoudre(
+        widget.produit.nom, widget.produit.categorie);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      transform: Matrix4.translationValues(0, _survole ? -2 : 0, 0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _survole
-              ? AppColors.green.withValues(alpha: 0.4)
-              : (isDark ? AppColors.darkLine : AppColors.line),
-        ),
-        boxShadow: _survole
-            ? [
-                BoxShadow(
-                  color: AppColors.green.withValues(alpha: 0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                  spreadRadius: -2,
-                ),
-              ]
-            : [],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () => _ouvrirComparaison(context),
-          onHover: (val) => setState(() => _survole = val),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _survole = true),
+      onExit: (_) => setState(() => _survole = false),
+      child: MarketScopeCard(
+      padding:
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      onTap: () => _ouvrirComparaison(context),
+      child: Row(
+        children: [
+          ProduitIcone(
+            nom: widget.produit.nom,
+            categorie: widget.produit.categorie,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Icône catégorie colorée ──────────────────────────────
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: couleurIcone.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _iconeCategorie(widget.produit.categorie),
-                    color: couleurIcone,
-                    size: 22,
+                Text(
+                  widget.produit.nom,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontFamily: AppFonts.display,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
                   ),
                 ),
-                const SizedBox(width: 14),
-                // ── Nom + détails ────────────────────────────────────────
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.produit.nom,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontFamily: AppFonts.display,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.2,
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    if (widget.produit.categorie != null)
+                      Flexible(
+                        child: _BadgeCat(
+                          texte: widget.produit.categorie!,
+                          couleur: style.couleur,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          if (widget.produit.categorie != null) ...[
-                            _BadgeCat(
-                              texte: widget.produit.categorie!,
-                              couleur: couleurIcone,
-                            ),
-                            const SizedBox(width: 6),
-                          ],
-                          Text(
-                            '/ ${widget.produit.uniteMesure}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontFamily: AppFonts.mono,
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: 11.5,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(width: 6),
+                    Text(
+                      '/ ${widget.produit.uniteMesure}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontFamily: AppFonts.mono,
+                        color: theme
+                            .colorScheme.onSurfaceVariant,
+                        fontSize: 11.5,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                // ── CTA "Comparer" ───────────────────────────────────────
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // ── CTA "Comparer" bien visible ──────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: _survole
+                  ? AppColors.green
+                  : AppColors.green.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(99),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.bar_chart_rounded,
+                  size: 15,
+                  color:
+                      _survole ? Colors.white : AppColors.green,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Comparer',
+                  style: TextStyle(
+                    fontFamily: AppFonts.sans,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                     color: _survole
-                        ? AppColors.green.withValues(alpha: 0.1)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.bar_chart_rounded,
-                        size: 16,
-                        color: _survole ? AppColors.green : AppColors.textMuted,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Comparer',
-                        style: TextStyle(
-                          fontFamily: AppFonts.sans,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: _survole ? AppColors.green : AppColors.textMuted,
-                        ),
-                      ),
-                    ],
+                        ? Colors.white
+                        : AppColors.green,
                   ),
                 ),
               ],
             ),
           ),
-        ),
+        ],
+      ),
       ),
     );
   }
@@ -359,45 +382,6 @@ class _CarteProduitState extends State<_CarteProduit> {
         builder: (_) => ComparaisonScreen(produit: widget.produit),
       ),
     );
-  }
-
-  /// Couleur associée à la catégorie du produit.
-  Color _couleurCategorie(String? categorie) {
-    if (categorie == null) return AppColors.textMuted;
-    final cat = categorie.toLowerCase();
-    if (cat.contains('alimentaire') || cat.contains('aliment') || cat.contains('épicerie')) {
-      return AppColors.green;
-    }
-    if (cat.contains('hygièn') || cat.contains('nettoyage') || cat.contains('savon')) {
-      return AppColors.saffron;
-    }
-    if (cat.contains('légume') || cat.contains('fruit') || cat.contains('produit frais')) {
-      return const Color(0xFF2DA44E);
-    }
-    if (cat.contains('céréale') || cat.contains('riz') || cat.contains('farine')) {
-      return AppColors.saffron;
-    }
-    if (cat.contains('viande') || cat.contains('poisson')) {
-      return AppColors.terracotta;
-    }
-    return AppColors.green;
-  }
-
-  /// Icône associée à la catégorie.
-  IconData _iconeCategorie(String? categorie) {
-    if (categorie == null) return Icons.inventory_2_rounded;
-    final cat = categorie.toLowerCase();
-    if (cat.contains('légume') || cat.contains('fruit')) return Icons.eco_rounded;
-    if (cat.contains('viande') || cat.contains('poisson')) return Icons.set_meal_rounded;
-    if (cat.contains('céréale') || cat.contains('riz') || cat.contains('farine')) {
-      return Icons.grain_rounded;
-    }
-    if (cat.contains('hygièn') || cat.contains('savon') || cat.contains('nettoyage')) {
-      return Icons.soap_rounded;
-    }
-    if (cat.contains('boisson') || cat.contains('eau')) return Icons.local_drink_rounded;
-    if (cat.contains('épice') || cat.contains('condiment')) return Icons.spa_rounded;
-    return Icons.shopping_basket_rounded;
   }
 }
 
@@ -417,6 +401,8 @@ class _BadgeCat extends StatelessWidget {
       ),
       child: Text(
         texte,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontFamily: AppFonts.sans,
           fontSize: 11,

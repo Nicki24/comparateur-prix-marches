@@ -6,6 +6,9 @@ import '../services/marche_service.dart';
 import '../services/produit_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/etats.dart';
+import '../widgets/ms_anim.dart';
+import '../widgets/ms_card.dart';
+import '../widgets/ms_decor.dart';
 import '../widgets/statut_badge.dart';
 
 enum AdminGestionType { marches, produits }
@@ -391,76 +394,143 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
           }
 
           return RefreshIndicator(
+            color: AppColors.green,
             onRefresh: _recharger,
-            child: ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(12),
-              itemCount: elements.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final element = elements[index];
-                final actif = _estMarches
-                    ? (element as Marche).actif
-                    : (element as Produit).actif;
-                final nom = _estMarches
-                    ? (element as Marche).nom
-                    : (element as Produit).nom;
-                final sousTitre = _estMarches
-                    ? (element as Marche).localisation
-                    : (element as Produit).uniteMesure;
+            child: MsDecorFond(
+              densite: 0.5,
+              child: ListView.separated(
+                physics:
+                    const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.sm,
+                    AppSpacing.md,
+                    AppSpacing.xl),
+                itemCount: elements.length,
+                separatorBuilder: (_, __) =>
+                    const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final element = elements[index];
+                  final actif = _estMarches
+                      ? (element as Marche).actif
+                      : (element as Produit).actif;
+                  final nom = _estMarches
+                      ? (element as Marche).nom
+                      : (element as Produit).nom;
+                  final sousTitre = _estMarches
+                      ? (element as Marche).localisation
+                      : (element as Produit).uniteMesure;
+                  final theme = Theme.of(context);
 
-                return Card(
-                  child: ListTile(
-                    leading: Icon(
-                      _estMarches ? Icons.storefront : Icons.category,
-                      color: actif
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.grey,
-                    ),
-                    title: Text(
-                      nom,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: actif ? null : Colors.grey,
+                  return MsCascade(
+                    index: index % 7,
+                    child: MarketScopeCard(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 6),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: (actif
+                                      ? theme.colorScheme
+                                          .primary
+                                      : theme.colorScheme
+                                          .onSurfaceVariant)
+                                  .withValues(alpha: 0.10),
+                              borderRadius:
+                                  BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              _estMarches
+                                  ? Icons.storefront_rounded
+                                  : Icons.category_rounded,
+                              size: 20,
+                              color: actif
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme
+                                      .onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  nom,
+                                  maxLines: 1,
+                                  overflow:
+                                      TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13.5,
+                                    color: actif
+                                        ? null
+                                        : theme.colorScheme
+                                            .onSurfaceVariant,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    actif
+                                        ? const StatutBadge.ok(
+                                            'Actif')
+                                        : const StatutBadge
+                                            .neutre('Inactif'),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        sousTitre,
+                                        maxLines: 1,
+                                        overflow: TextOverflow
+                                            .ellipsis,
+                                        style: theme
+                                            .textTheme.bodySmall
+                                            ?.copyWith(
+                                          color: theme
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Modifier',
+                            icon: const Icon(
+                                Icons.edit_outlined,
+                                size: 19),
+                            onPressed: () =>
+                                _modifier(element),
+                          ),
+                          TextButton(
+                            onPressed: () => actif
+                                ? _desactiver(element)
+                                : _reactiver(element),
+                            style: TextButton.styleFrom(
+                              foregroundColor: actif
+                                  ? theme.colorScheme.error
+                                  : AppColors.green,
+                              visualDensity:
+                                  VisualDensity.compact,
+                            ),
+                            child: Text(actif
+                                ? 'Désactiver'
+                                : 'Réactiver'),
+                          ),
+                        ],
                       ),
                     ),
-                    subtitle: Row(
-                      children: [
-                        actif
-                            ? const StatutBadge.ok('Actif')
-                            : const StatutBadge.neutre('Inactif'),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            sousTitre,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          tooltip: 'Modifier',
-                          icon: const Icon(Icons.edit_outlined),
-                          onPressed: () => _modifier(element),
-                        ),
-                        TextButton(
-                          onPressed: () =>
-                              actif ? _desactiver(element) : _reactiver(element),
-                          style: TextButton.styleFrom(
-                            foregroundColor:
-                                actif ? Colors.red : AppColors.green,
-                          ),
-                          child: Text(actif ? 'Désactiver' : 'Réactiver'),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           );
         },
