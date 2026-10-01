@@ -28,7 +28,13 @@ class ReleveService {
   }
 
   /// Historique personnel : les relevés de l'utilisateur connecté.
-  static Future<List<RelevePrix>> mesReleves() async {
+  static Future<List<RelevePrix>> mesReleves() async =>
+      (await mesRelevesAvecTotal()).releves;
+
+  /// Les 100 relevés les plus récents de l'utilisateur, avec le nombre
+  /// total réel (métadonnée de pagination : peut dépasser 100).
+  static Future<({List<RelevePrix> releves, int total})>
+      mesRelevesAvecTotal() async {
     final data = await ApiClient.instance.get('/mes-releves', {
       'per_page': '100',
     }) as Map<String, dynamic>;
@@ -36,9 +42,14 @@ class ReleveService {
     final items = data['data'] is List<dynamic>
         ? data['data'] as List<dynamic>
         : data['data']?['data'] as List<dynamic>;
-    return items
+    final releves = items
         .map((e) => RelevePrix.fromJson(e as Map<String, dynamic>))
         .toList();
+    final meta = data['meta'];
+    final total = meta is Map<String, dynamic> && meta['total'] is num
+        ? (meta['total'] as num).toInt()
+        : releves.length;
+    return (releves: releves, total: total);
   }
 
   /// Historique des relevés par produit (filtrable par marché).

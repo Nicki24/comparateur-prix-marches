@@ -9,6 +9,7 @@ import '../services/releve_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/etats.dart';
+import '../widgets/marketscope_header.dart';
 import '../widgets/ms_anim.dart';
 import '../widgets/ms_button.dart';
 import '../widgets/ms_card.dart';
@@ -132,7 +133,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nouveau relevé')),
+      appBar: const MarketScopeHeader(titre: 'Nouveau relevé de prix'),
       body: MsDecorFond(
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),

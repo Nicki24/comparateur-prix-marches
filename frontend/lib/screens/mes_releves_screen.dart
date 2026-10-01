@@ -5,6 +5,7 @@ import '../services/releve_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/etats.dart';
+import '../widgets/marketscope_header.dart';
 import '../widgets/ms_anim.dart';
 import '../widgets/ms_card.dart';
 import '../widgets/ms_decor.dart';
@@ -21,17 +22,17 @@ class MesRelevesScreen extends StatefulWidget {
 }
 
 class _MesRelevesScreenState extends State<MesRelevesScreen> {
-  late Future<List<RelevePrix>> _futur;
+  late Future<({List<RelevePrix> releves, int total})> _futur;
 
   @override
   void initState() {
     super.initState();
-    _futur = ReleveService.mesReleves();
+    _futur = ReleveService.mesRelevesAvecTotal();
   }
 
   Future<void> _recharger() async {
     setState(() {
-      _futur = ReleveService.mesReleves();
+      _futur = ReleveService.mesRelevesAvecTotal();
     });
     await _futur;
   }
@@ -40,10 +41,10 @@ class _MesRelevesScreenState extends State<MesRelevesScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Mes relevés')),
+      appBar: const MarketScopeHeader(),
       body: MsDecorFond(
         densite: 0.6,
-        child: FutureBuilder<List<RelevePrix>>(
+        child: FutureBuilder<({List<RelevePrix> releves, int total})>(
           future: _futur,
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
@@ -56,7 +57,8 @@ class _MesRelevesScreenState extends State<MesRelevesScreen> {
               );
             }
 
-            final releves = snapshot.data ?? [];
+            final releves = snapshot.data?.releves ?? const <RelevePrix>[];
+            final total = snapshot.data?.total ?? releves.length;
             if (releves.isEmpty) {
               return const ContenuVide(
                 titre: 'Aucun relevé',
@@ -70,7 +72,7 @@ class _MesRelevesScreenState extends State<MesRelevesScreen> {
                 releves.where((r) => r.estSignale).length;
 
             return RefreshIndicator(
-              color: AppColors.green,
+              color: theme.marque,
               onRefresh: _recharger,
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -84,16 +86,30 @@ class _MesRelevesScreenState extends State<MesRelevesScreen> {
                     const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   if (index == 0) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text(
-                        '${releves.length} relevé${releves.length > 1 ? 's' : ''}'
-                        '${nbSignales > 0 ? ' · $nbSignales signalé${nbSignales > 1 ? 's' : ''}' : ''}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme
-                              .colorScheme.onSurfaceVariant,
+                    return Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        const MarketScopeSectionTitle(
+                          titre: 'Mes relevés',
+                          padding: EdgeInsets.zero,
                         ),
-                      ),
+                        const SizedBox(height: 2),
+                        Padding(
+                          padding:
+                              const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            '${formaterNombre(total)} relevé${total > 1 ? 's' : ''}'
+                            '${total > releves.length ? ' · ${releves.length} plus récents affichés' : ''}'
+                            '${nbSignales > 0 ? ' · $nbSignales signalé${nbSignales > 1 ? 's' : ''}' : ''}',
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(
+                              color: theme.colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
                     );
                   }
                   final r = releves[index - 1];

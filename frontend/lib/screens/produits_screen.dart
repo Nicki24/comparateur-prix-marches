@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../models/comparaison.dart';
 import '../models/produit.dart';
+import '../services/comparison_service.dart';
 import '../services/produit_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/formats.dart';
 import '../widgets/barre_recherche.dart';
 import '../widgets/etats.dart';
-import '../widgets/logo.dart';
 import '../widgets/ms_anim.dart';
 import '../widgets/ms_card.dart';
-import '../widgets/ms_decor.dart';
 import '../widgets/produit_icone.dart';
-import '../widgets/tap_scale.dart';
+import '../widgets/marketscope_header.dart';
 import 'comparaison_screen.dart';
 
 class ProduitsScreen extends StatefulWidget {
@@ -26,10 +27,37 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
   bool _rechercheActive = false;
   String _requete = '';
 
+  /// Meilleur prix actuel par produit (chargé en parallèle, facultatif).
+  Map<int, PrixParMarche> _meilleurs = const {};
+
   @override
   void initState() {
     super.initState();
-    _futur = ProduitService.lister();
+    _futur = _charger();
+  }
+
+  Future<List<Produit>> _charger({bool forcer = false}) async {
+    final produits = await ProduitService.lister();
+    _chargerMeilleursPrix(produits, forcer: forcer);
+    return produits;
+  }
+
+  Future<void> _chargerMeilleursPrix(List<Produit> produits,
+      {bool forcer = false}) async {
+    final comparaisons = await Future.wait(produits.map((p) =>
+        ComparisonService.comparer(p.id, forcer: forcer)
+            .then<Comparaison?>((c) => c, onError: (Object _) => null)));
+    final meilleurs = <int, PrixParMarche>{};
+    for (var i = 0; i < produits.length; i++) {
+      for (final ppm in comparaisons[i]?.prixParMarche ?? const <PrixParMarche>[]) {
+        if (ppm.dernierPrix == null) continue;
+        final actuel = meilleurs[produits[i].id];
+        if (actuel == null || ppm.dernierPrix! < actuel.dernierPrix!) {
+          meilleurs[produits[i].id] = ppm;
+        }
+      }
+    }
+    if (mounted) setState(() => _meilleurs = meilleurs);
   }
 
   @override
@@ -40,7 +68,7 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
 
   Future<void> _recharger() async {
     setState(() {
-      _futur = ProduitService.lister();
+      _futur = _charger(forcer: true);
     });
     await _futur;
   }
@@ -63,8 +91,7 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const MarqueHeader(titre: 'Produits'),
+      appBar: MarketScopeHeader(
         actions: [
           IconButton(
             tooltip: _rechercheActive
@@ -77,10 +104,12 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
           ),
         ],
       ),
-      body: MsDecorFond(
-        densite: 0.6,
-        child: Column(
+      body: Column(
           children: [
+            const Padding(
+              padding: EdgeInsets.only(top: AppSpacing.sm),
+              child: MarketScopeSectionTitle(titre: 'Produits'),
+            ),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               transitionBuilder: (child, anim) => SizeTransition(
@@ -162,7 +191,7 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
                   }
 
                   return RefreshIndicator(
-                    color: AppColors.green,
+                    color: Theme.of(context).marque,
                     onRefresh: _recharger,
                     child: ListView.builder(
                       physics:
@@ -192,9 +221,15 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
                               bottom: isLast ? 0 : 8),
                           child: MsCascade(
                             index: compteur % 7,
-                            child: TapScale(
-                              child: _CarteProduit(
-                                  produit: produit),
+                            child: _CarteProduit(
+                              produit: produit,
+                              meilleur: _meilleurs[produit.id],
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) =>
+                                      ComparaisonScreen(produit: produit),
+                                ),
+                              ),
                             ),
                           ),
                         );
@@ -206,7 +241,6 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
             ),
           ],
         ),
-      ),
     );
   }
 }
@@ -240,8 +274,7 @@ class _EnteteCat extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 8, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
               color: theme.colorScheme.secondaryContainer,
               borderRadius: BorderRadius.circular(99),
@@ -263,152 +296,83 @@ class _EnteteCat extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Carte Produit enrichie
+// Carte Produit : nom, meilleur prix actuel et marché correspondant
 // ---------------------------------------------------------------------------
-class _CarteProduit extends StatefulWidget {
-  const _CarteProduit({required this.produit});
+class _CarteProduit extends StatelessWidget {
+  const _CarteProduit({
+    required this.produit,
+    required this.meilleur,
+    required this.onTap,
+  });
+
   final Produit produit;
-
-  @override
-  State<_CarteProduit> createState() => _CarteProduitState();
-}
-
-class _CarteProduitState extends State<_CarteProduit> {
-  bool _survole = false;
+  final PrixParMarche? meilleur;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final style = ProduitStyle.resoudre(
-        widget.produit.nom, widget.produit.categorie);
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _survole = true),
-      onExit: (_) => setState(() => _survole = false),
-      child: MarketScopeCard(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      onTap: () => _ouvrirComparaison(context),
+    final m = meilleur;
+    return MarketScopeCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
         children: [
-          ProduitIcone(
-            nom: widget.produit.nom,
-            categorie: widget.produit.categorie,
-          ),
+          ProduitIcone(nom: produit.nom, categorie: produit.categorie),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.produit.nom,
+                  produit.nom,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontFamily: AppFonts.display,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: -0.2,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    if (widget.produit.categorie != null)
-                      Flexible(
-                        child: _BadgeCat(
-                          texte: widget.produit.categorie!,
-                          couleur: style.couleur,
-                        ),
-                      ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '/ ${widget.produit.uniteMesure}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontFamily: AppFonts.mono,
-                        color: theme
-                            .colorScheme.onSurfaceVariant,
-                        fontSize: 11.5,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 2),
+                Text(
+                  m == null
+                      ? 'Vendu au ${produit.uniteMesure}'
+                      : 'Chez ${nomCourtMarche(m.marche.nom)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall,
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          // ── CTA "Comparer" bien visible ──────────────────────
-          Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: _survole
-                  ? AppColors.green
-                  : AppColors.green.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(99),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+          if (m != null)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Icon(
-                  Icons.bar_chart_rounded,
-                  size: 15,
-                  color:
-                      _survole ? Colors.white : AppColors.green,
-                ),
-                const SizedBox(width: 4),
                 Text(
-                  'Comparer',
-                  style: TextStyle(
-                    fontFamily: AppFonts.sans,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: _survole
-                        ? Colors.white
-                        : AppColors.green,
+                  'dès',
+                  style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
+                ),
+                Text(
+                  formaterPrix(m.dernierPrix!),
+                  style: AppTextStyles.priceSmall.copyWith(
+                    color: theme.marque,
                   ),
                 ),
+                if (produit.uniteMesure.isNotEmpty)
+                  Text(
+                    'par ${produit.uniteMesure}',
+                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
+                  ),
               ],
             ),
+          const SizedBox(width: 2),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ],
-      ),
-      ),
-    );
-  }
-
-  void _ouvrirComparaison(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ComparaisonScreen(produit: widget.produit),
-      ),
-    );
-  }
-}
-
-/// Badge de catégorie inline.
-class _BadgeCat extends StatelessWidget {
-  const _BadgeCat({required this.texte, required this.couleur});
-  final String texte;
-  final Color couleur;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: couleur.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(99),
-      ),
-      child: Text(
-        texte,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontFamily: AppFonts.sans,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: couleur,
-        ),
       ),
     );
   }

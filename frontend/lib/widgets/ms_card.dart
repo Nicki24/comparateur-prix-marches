@@ -203,6 +203,8 @@ class MarketScopeSectionTitle extends StatelessWidget {
     this.icone,
     this.actionLabel,
     this.onAction,
+    this.padding =
+        const EdgeInsets.symmetric(horizontal: AppSpacing.md),
   });
 
   final String titre;
@@ -210,11 +212,14 @@ class MarketScopeSectionTitle extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
 
+  /// Marge externe (zéro si le parent padde déjà, ex. item de ListView).
+  final EdgeInsetsGeometry padding;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      padding: padding,
       child: Row(
         children: [
           Container(

@@ -1,28 +1,31 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
-import '../models/produit.dart';
+import '../models/comparaison.dart';
 import '../services/comparison_service.dart';
 import '../services/produit_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 
-/// Bandeau horizontal défilant affichant les derniers prix par marché,
-/// exactement comme dans la charte graphique MarketScope.
+/// Bandeau « meilleurs prix du moment » : pour chaque produit, le prix le
+/// plus bas relevé et le marché où il a été observé.
 ///
-/// Fond [AppColors.ink] · texte IBM Plex Mono vert tendre · défilement continu.
+/// Uniquement des données réelles : si l'API ne répond pas ou qu'aucun
+/// relevé n'existe, le bandeau affiche un message neutre (jamais de prix
+/// fictifs). Défilement continu, figé si l'utilisateur a demandé la
+/// réduction des animations.
 class PrixTickerBanner extends StatefulWidget {
   const PrixTickerBanner({super.key});
+
+  static const double hauteur = 32;
 
   @override
   State<PrixTickerBanner> createState() => _PrixTickerBannerState();
 }
 
 class _PrixTickerBannerState extends State<PrixTickerBanner> {
-  List<_TickerItem> _items = [];
+  List<_TickerItem> _items = const [];
   bool _chargement = true;
-  bool _enRefresh = false;
-  DateTime? _derniereMaj;
 
   @override
   void initState() {
@@ -30,222 +33,163 @@ class _PrixTickerBannerState extends State<PrixTickerBanner> {
     _charger();
   }
 
-  Future<void> _rafraichir() async {
-    if (_enRefresh) return;
-    setState(() => _enRefresh = true);
-    await _charger();
-    if (mounted) setState(() => _enRefresh = false);
-  }
-
-  Future<void> _charger() async {
+  Future<void> _charger({bool forcer = false}) async {
+    setState(() => _chargement = true);
+    List<_TickerItem> items = const [];
     try {
       final produits = await ProduitService.lister();
-      if (!mounted) return;
-
-      final items = <_TickerItem>[];
-
-      // On récupère les comparaisons des 5 premiers produits max.
-      final cibles = produits.take(5).toList();
-      for (final produit in cibles) {
-        try {
-          final cmp = await ComparisonService.comparer(produit.id);
-          for (final ppm in cmp.prixParMarche) {
-            if (ppm.dernierPrix != null) {
-              items.add(_TickerItem(
-                produit: produit,
-                marcheNom: ppm.marche.nom,
-                prix: ppm.dernierPrix!,
-              ));
-            }
-          }
-        } catch (_) {
-          // Produit sans relevé → on ignore.
-        }
-      }
-
-      if (!mounted) return;
-      setState(() {
-        _items = items.isEmpty ? _itemsDemoFallback() : items;
-        _chargement = false;
-        if (items.isNotEmpty) _derniereMaj = DateTime.now();
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _items = _itemsDemoFallback();
-        _chargement = false;
-      });
-    }
-  }
-
-  /// Données de démonstration si l'API n'est pas disponible.
-  List<_TickerItem> _itemsDemoFallback() => [
-        _TickerItem(produit: null, marcheNom: 'Marché du Sud', prix: 4200, nomManuel: 'RIZ'),
-        _TickerItem(produit: null, marcheNom: 'Bazar Be', prix: 10500, nomManuel: 'HUILE'),
-        _TickerItem(produit: null, marcheNom: 'Marché Analakely', prix: 3800, nomManuel: 'SUCRE'),
-        _TickerItem(produit: null, marcheNom: 'Marché du Sud', prix: 1200, nomManuel: 'SAVON'),
-        _TickerItem(produit: null, marcheNom: 'Bazar Be', prix: 2900, nomManuel: 'FARINE'),
-      ];
-
-  @override
-  Widget build(BuildContext context) {
-    // Hauteur fixe du bandeau.
-    const double hauteur = 34;
-
-    if (_chargement || _items.isEmpty) {
-      return Container(
-        height: hauteur,
-        color: AppColors.ink,
+      final comparaisons = await Future.wait(
+        produits.map((p) => ComparisonService.comparer(p.id, forcer: forcer)
+            .then<Comparaison?>((c) => c)
+            .catchError((Object _) => null)),
       );
+      items = [
+        for (final c in comparaisons)
+          if (c != null) ?_meilleur(c),
+      ];
+    } catch (_) {
+      items = const [];
     }
-
-    // On duplique les items pour l'effet de boucle seamless.
-    final double? reduced = MediaQuery.of(context).accessibleNavigation ? 1 : null;
-    final bool animationDesactivee = reduced != null;
-
-    return Container(
-      height: hauteur,
-      color: AppColors.ink,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: animationDesactivee
-                ? _BandeauStatique(items: _items)
-                : _BandeauDefilant(items: _items),
-          ),
-          Positioned(
-            right: 0,
-            top: 0,
-            bottom: 0,
-            child: _PanneauMaj(
-              enRefresh: _enRefresh,
-              derniereMaj: _derniereMaj,
-              onRafraichir: _rafraichir,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Coin droit du bandeau : horloge temps réel + dernière MAJ données + bouton refresh.
-class _PanneauMaj extends StatefulWidget {
-  const _PanneauMaj({
-    required this.enRefresh,
-    required this.derniereMaj,
-    required this.onRafraichir,
-  });
-
-  final bool enRefresh;
-  final DateTime? derniereMaj;
-  final VoidCallback onRafraichir;
-
-  @override
-  State<_PanneauMaj> createState() => _PanneauMajState();
-}
-
-class _PanneauMajState extends State<_PanneauMaj> {
-  Timer? _timer;
-  late DateTime _now;
-
-  @override
-  void initState() {
-    super.initState();
-    _now = DateTime.now();
-    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (!mounted) return;
-      setState(() => _now = DateTime.now());
+    if (!mounted) return;
+    setState(() {
+      _items = items;
+      _chargement = false;
     });
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  _TickerItem? _meilleur(Comparaison c) {
+    PrixParMarche? min;
+    for (final p in c.prixParMarche) {
+      if (p.dernierPrix == null) continue;
+      if (min == null || p.dernierPrix! < min.dernierPrix!) min = p;
+    }
+    if (min == null) return null;
+    return _TickerItem(
+      produit: nomCourtProduit(c.produit.nom),
+      unite: c.produit.uniteMesure,
+      marche: nomCourtMarche(min.marche.nom),
+      prix: min.dernierPrix!,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final maj = widget.derniereMaj;
-    return Container(
-      padding: const EdgeInsets.only(left: 24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.ink.withValues(alpha: 0),
-            AppColors.ink,
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          stops: const [0, 0.55],
+    final Widget contenu;
+    if (_chargement) {
+      contenu = const SizedBox.shrink();
+    } else if (_items.isEmpty) {
+      contenu = const Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: EdgeInsets.only(left: 12),
+          child: Text(
+            'Prix du jour indisponibles pour le moment',
+            style: TextStyle(
+              fontFamily: AppFonts.sans,
+              fontSize: 11.5,
+              color: Color(0xFF8DB5A0),
+            ),
+          ),
         ),
-      ),
+      );
+    } else if (MediaQuery.disableAnimationsOf(context)) {
+      contenu = ListView(
+        scrollDirection: Axis.horizontal,
+        children: [for (final i in _items) _TuileTicker(item: i)],
+      );
+    } else {
+      contenu = _BandeauDefilant(items: _items);
+    }
+
+    return SizedBox(
+      height: PrixTickerBanner.hauteur,
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          // Horloge temps réel
-          Text(
-            formaterHeure(_now),
-            style: const TextStyle(
-              fontFamily: AppFonts.mono,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF6FD98C),
-              letterSpacing: 0.4,
+          const _EtiquetteTicker(),
+          Expanded(
+            child: ShaderMask(
+              blendMode: BlendMode.dstIn,
+              shaderCallback: (rect) => const LinearGradient(
+                colors: [
+                  Color(0x00000000),
+                  Color(0xFF000000),
+                  Color(0xFF000000),
+                  Color(0x00000000),
+                ],
+                stops: [0, 0.04, 0.94, 1],
+              ).createShader(rect),
+              child: contenu,
             ),
           ),
-          const SizedBox(width: 8),
-          // Dernière MAJ des données
-          if (maj != null) ...[
-            Text(
-              'MAJ ${formaterHeure(maj)}',
-              style: const TextStyle(
-                fontFamily: AppFonts.mono,
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF8DB5A0),
-                letterSpacing: 0.4,
-              ),
-            ),
-            const SizedBox(width: 6),
-          ],
-          Tooltip(
-            message: 'Rafraîchir les prix',
-            child: SizedBox(
-              width: 30,
-              height: 30,
-              child: widget.enRefresh
-                  ? const Padding(
-                      padding: EdgeInsets.all(7),
+          SizedBox(
+            width: 36,
+            child: _chargement
+                ? const Center(
+                    child: SizedBox(
+                      width: 12,
+                      height: 12,
                       child: CircularProgressIndicator(
-                        strokeWidth: 2,
+                        strokeWidth: 1.6,
                         color: AppColors.greenLight,
                       ),
-                    )
-                  : IconButton(
-                      padding: EdgeInsets.zero,
-                      iconSize: 16,
-                      icon: const Icon(
-                        Icons.refresh_rounded,
-                        color: AppColors.greenLight,
-                      ),
-                      onPressed: widget.onRafraichir,
                     ),
-            ),
+                  )
+                : IconButton(
+                    tooltip: 'Actualiser les prix',
+                    padding: EdgeInsets.zero,
+                    iconSize: 16,
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      color: AppColors.greenLight,
+                    ),
+                    onPressed: () => _charger(forcer: true),
+                  ),
           ),
-          const SizedBox(width: 8),
         ],
       ),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// Bandeau défilant (animation)
-// ---------------------------------------------------------------------------
+/// Pastille fixe à gauche : « MEILLEURS PRIX ».
+class _EtiquetteTicker extends StatelessWidget {
+  const _EtiquetteTicker();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(left: 12, right: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.greenLight.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.south_rounded, size: 11, color: AppColors.greenLight),
+          SizedBox(width: 3),
+          Text(
+            'MEILLEURS PRIX',
+            style: TextStyle(
+              fontFamily: AppFonts.mono,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.8,
+              color: AppColors.greenLight,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Défilement continu et sans à-coup, piloté par un [Ticker] (60 fps) :
+/// la liste est dupliquée et la position boucle sur la largeur d'une copie.
 class _BandeauDefilant extends StatefulWidget {
   const _BandeauDefilant({required this.items});
+
   final List<_TickerItem> items;
 
   @override
@@ -254,142 +198,91 @@ class _BandeauDefilant extends StatefulWidget {
 
 class _BandeauDefilantState extends State<_BandeauDefilant>
     with SingleTickerProviderStateMixin {
-  late final ScrollController _ctrl;
-  Timer? _timer;
+  static const _vitesse = 28.0; // pixels / seconde
+
+  final _ctrl = ScrollController();
+  final _cleCopie = GlobalKey();
+  late final Ticker _ticker;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = ScrollController();
-    // On lance le défilement après le premier frame.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _demarrerDefilement());
+    _ticker = createTicker(_avancer)..start();
   }
 
-  void _demarrerDefilement() {
-    _timer = Timer.periodic(const Duration(milliseconds: 30), (_) {
-      if (!mounted || !_ctrl.hasClients) return;
-      final max = _ctrl.position.maxScrollExtent;
-      final pos = _ctrl.offset;
-      if (pos >= max) {
-        // Retour au début sans animation pour l'effet boucle.
-        _ctrl.jumpTo(0);
-      } else {
-        _ctrl.jumpTo(pos + 1.2);
-      }
-    });
+  void _avancer(Duration ecoule) {
+    final copie = _cleCopie.currentContext?.size?.width;
+    if (!_ctrl.hasClients || copie == null || copie <= 0) return;
+    final distance = ecoule.inMicroseconds / 1e6 * _vitesse;
+    _ctrl.jumpTo(distance % copie);
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _ticker.dispose();
     _ctrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Triplage des items pour le scrolling infini seamless.
-    final tous = [...widget.items, ...widget.items, ...widget.items];
-    return ListView.separated(
+    Widget copie({Key? key}) => Row(
+          key: key,
+          mainAxisSize: MainAxisSize.min,
+          children: [for (final i in widget.items) _TuileTicker(item: i)],
+        );
+    return SingleChildScrollView(
       controller: _ctrl,
       scrollDirection: Axis.horizontal,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: tous.length,
-      separatorBuilder: (_, __) => const _SeparateurTicker(),
-      itemBuilder: (context, i) => _TuileTicker(item: tous[i]),
+      child: Row(
+        children: [copie(key: _cleCopie), copie(), copie()],
+      ),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// Bandeau statique (mode accessibilité reduced-motion)
-// ---------------------------------------------------------------------------
-class _BandeauStatique extends StatelessWidget {
-  const _BandeauStatique({required this.items});
-  final List<_TickerItem> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: items.length,
-      separatorBuilder: (_, __) => const _SeparateurTicker(),
-      itemBuilder: (context, i) => _TuileTicker(item: items[i]),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Tuile individuelle : PRODUIT · prix Ar · Marché
-// ---------------------------------------------------------------------------
+/// Tuile : PRODUIT · prix/unité · marché.
 class _TuileTicker extends StatelessWidget {
   const _TuileTicker({required this.item});
+
   final _TickerItem item;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 350),
-            transitionBuilder: (child, anim) => FadeTransition(
-              opacity: anim,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.35),
-                  end: Offset.zero,
-                ).animate(anim),
-                child: child,
-              ),
-            ),
-            child: Text(
-              item.nom.toUpperCase(),
-              key: ValueKey('nom-${item.nom}'),
-              style: const TextStyle(
-                fontFamily: AppFonts.mono,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFFD6ECDD),
-                letterSpacing: 0.5,
-              ),
+          Text(
+            item.produit.toUpperCase(),
+            style: const TextStyle(
+              fontFamily: AppFonts.mono,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.4,
+              color: Color(0xFFD6ECDD),
             ),
           ),
-          const SizedBox(width: 8),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 350),
-            transitionBuilder: (child, anim) => FadeTransition(
-              opacity: anim,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.35),
-                  end: Offset.zero,
-                ).animate(anim),
-                child: child,
-              ),
-            ),
-            child: Text(
-              formaterPrix(item.prix),
-              key: ValueKey('prix-${item.prix}'),
-              style: const TextStyle(
-                fontFamily: AppFonts.mono,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF6FD98C), // vert lumineux
-              ),
+          const SizedBox(width: 7),
+          Text(
+            item.unite.isEmpty
+                ? formaterPrix(item.prix)
+                : '${formaterPrix(item.prix)}/${item.unite}',
+            style: const TextStyle(
+              fontFamily: AppFonts.mono,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.darkGreenLight,
             ),
           ),
           const SizedBox(width: 6),
           Text(
-            '· ${item.marcheNom}',
+            item.marche,
             style: const TextStyle(
               fontFamily: AppFonts.sans,
-              fontSize: 11.5,
+              fontSize: 11,
               color: Color(0xFF8DB5A0),
             ),
           ),
@@ -399,39 +292,16 @@ class _TuileTicker extends StatelessWidget {
   }
 }
 
-class _SeparateurTicker extends StatelessWidget {
-  const _SeparateurTicker();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16),
-      child: Text(
-        '·',
-        style: TextStyle(
-          color: Color(0xFF4A6E60),
-          fontSize: 14,
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Modèle interne du ticker
-// ---------------------------------------------------------------------------
 class _TickerItem {
-  _TickerItem({
+  const _TickerItem({
     required this.produit,
-    required this.marcheNom,
+    required this.unite,
+    required this.marche,
     required this.prix,
-    this.nomManuel,
   });
 
-  final Produit? produit;
-  final String marcheNom;
+  final String produit;
+  final String unite;
+  final String marche;
   final double prix;
-  final String? nomManuel;
-
-  String get nom => nomManuel ?? produit?.nom ?? '—';
 }

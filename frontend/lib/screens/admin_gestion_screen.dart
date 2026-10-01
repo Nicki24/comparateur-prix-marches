@@ -6,6 +6,7 @@ import '../services/marche_service.dart';
 import '../services/produit_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/etats.dart';
+import '../widgets/marketscope_header.dart';
 import '../widgets/ms_anim.dart';
 import '../widgets/ms_card.dart';
 import '../widgets/ms_decor.dart';
@@ -365,12 +366,13 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Gestion des ${_intitule().toLowerCase()}'),
+      appBar: MarketScopeHeader(
+        titre: 'Gestion des ${_intitule().toLowerCase()}',
+        sousTitre: 'Administration',
         actions: [
           IconButton(
             tooltip: 'Ajouter un ${_estMarches ? 'marché' : 'produit'}',
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add_rounded),
             onPressed: _creer,
           ),
         ],
@@ -394,7 +396,7 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
           }
 
           return RefreshIndicator(
-            color: AppColors.green,
+            color: Theme.of(context).marque,
             onRefresh: _recharger,
             child: MsDecorFond(
               densite: 0.5,
@@ -423,7 +425,7 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
                   final theme = Theme.of(context);
 
                   return MsCascade(
-                    index: index % 7,
+                    index: (index - 1) % 7,
                     child: MarketScopeCard(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 6),

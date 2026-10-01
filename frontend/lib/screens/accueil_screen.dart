@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../services/session.dart';
 import '../theme/app_theme.dart';
+import '../widgets/marketscope_header.dart';
 import '../widgets/prix_ticker_banner.dart';
 import 'compte_screen.dart';
 import 'dashboard_accueil.dart';
+import 'login_screen.dart';
 import 'marches_screen.dart';
 import 'mes_releves_screen.dart';
 import 'produits_screen.dart';
@@ -30,7 +32,14 @@ class AccueilScreen extends StatefulWidget {
 class _AccueilScreenState extends State<AccueilScreen> {
   int _index = 0;
 
-  void _allerA(int index) => setState(() => _index = index);
+  /// Onglets déjà ouverts : un onglet n'est construit (et ne charge ses
+  /// données) qu'à sa première visite, puis reste en mémoire.
+  final _visites = <int>{0};
+
+  void _allerA(int index) => setState(() {
+        _index = index;
+        _visites.add(index);
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -53,23 +62,39 @@ class _AccueilScreenState extends State<AccueilScreen> {
     return Scaffold(
       body: Column(
         children: [
-          const SafeArea(bottom: false, child: PrixTickerBanner()),
+          // Barre d'état + bandeau sur fond encre, continus avec le header.
+          const ColoredBox(
+            color: AppColors.ink,
+            child: SafeArea(bottom: false, child: PrixTickerBanner()),
+          ),
           Expanded(
-            child: IndexedStack(index: _index, children: ecrans),
+            // Le padding haut est déjà consommé par le bandeau : sans ça,
+            // chaque AppBar ajouterait une 2e fois la hauteur de la barre
+            // d'état (double espace en haut sur téléphone).
+            child: MediaQuery.removePadding(
+              context: context,
+              removeTop: true,
+              child: IndexedStack(
+                index: _index,
+                children: [
+                  for (var i = 0; i < ecrans.length; i++)
+                    _visites.contains(i) ? ecrans[i] : const SizedBox.shrink(),
+                ],
+              ),
+            ),
           ),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: theme.ligne)),
+        ),
+        child: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: _allerA,
-        backgroundColor: theme.brightness == Brightness.dark
-            ? AppColors.darkSurface
-            : AppColors.white,
-        indicatorColor: (theme.brightness == Brightness.dark
-                ? AppColors.darkGreenLight
-                : AppColors.green)
-            .withValues(alpha: 0.16),
-        height: 70,
+        backgroundColor: theme.fondCarte,
+        indicatorColor: theme.marque.withValues(alpha: 0.14),
+        height: 66,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: const [
           NavigationDestination(
@@ -103,6 +128,7 @@ class _AccueilScreenState extends State<AccueilScreen> {
             tooltip: 'Profil',
           ),
         ],
+        ),
       ),
       floatingActionButton: _index == 3 && Session.instance.estConnecte
           ? FloatingActionButton.extended(
@@ -146,7 +172,7 @@ class _InvitationReleves extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Mes relevés')),
+      appBar: const MarketScopeHeader(),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -183,13 +209,13 @@ class _InvitationReleves extends StatelessWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Retrouvez l’onglet « Profil » ci-dessous pour vous connecter.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              const SizedBox(height: AppSpacing.lg),
+              FilledButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
                 ),
+                icon: const Icon(Icons.login_rounded, size: 18),
+                label: const Text('Se connecter'),
               ),
             ],
           ),

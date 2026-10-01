@@ -5,6 +5,7 @@ import '../services/signalement_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/etats.dart';
+import '../widgets/marketscope_header.dart';
 import '../widgets/ms_anim.dart';
 import '../widgets/ms_card.dart';
 import '../widgets/ms_decor.dart';
@@ -63,8 +64,9 @@ class _SignalementsScreenState extends State<SignalementsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Signalements'),
+      appBar: MarketScopeHeader(
+        titre: 'Signalements',
+        sousTitre: 'Prix anormaux et obsolètes',
         actions: [
           IconButton(
             tooltip: 'Détecter les prix obsolètes',
@@ -125,7 +127,7 @@ class _SignalementsScreenState extends State<SignalementsScreen> {
                       s.typeAnomalie == 'prix_anormal';
                   final theme = Theme.of(context);
                   return MsCascade(
-                    index: index % 7,
+                    index: (index - 1) % 7,
                     child: MarketScopeCard(
                       padding: const EdgeInsets.all(
                           AppSpacing.md),

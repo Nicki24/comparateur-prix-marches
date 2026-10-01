@@ -21,7 +21,8 @@ abstract final class AppColors {
   static const staleBg = Color(0xFFFCF0DC);
   static const staleFg = Color(0xFF8A5E15);
 
-  static const darkPaper = Color(0xFF0E2A38);
+  // Fond sombre un cran sous l'encre : header et héros (encre) s'en détachent.
+  static const darkPaper = Color(0xFF081A23);
   static const darkPaper2 = Color(0xFF163A4A);
   static const darkLine = Color(0xFF2A4A57);
   static const darkText = Color(0xFFF6FAF7);
@@ -247,6 +248,7 @@ abstract final class AppTheme {
           tertiary: AppColors.terracotta,
           onTertiary: AppColors.white,
           surface: AppColors.white,
+          surfaceContainerHighest: AppColors.paper2,
           onSurface: AppColors.text,
           onSurfaceVariant: AppColors.textMuted,
           outline: AppColors.line,
@@ -285,6 +287,7 @@ abstract final class AppTheme {
           tertiary: AppColors.darkTerracotta,
           onTertiary: AppColors.white,
           surface: AppColors.darkSurface,
+          surfaceContainerHighest: AppColors.darkLine,
           onSurface: AppColors.darkText,
           onSurfaceVariant: AppColors.darkTextMuted,
           outline: AppColors.darkLine,
@@ -558,7 +561,7 @@ abstract final class AppTheme {
         color: brightness == Brightness.dark ? AppColors.darkGreenLight : AppColors.green,
       ),
       extensions: <ThemeExtension<dynamic>>[
-        _MarketScopeTokens(
+        MarketScopeTokens(
           okBg: okBg,
           okFg: okFg,
           alertBg: alertBg,
@@ -577,8 +580,8 @@ abstract final class AppTheme {
 }
 
 @immutable
-class _MarketScopeTokens extends ThemeExtension<_MarketScopeTokens> {
-  const _MarketScopeTokens({
+class MarketScopeTokens extends ThemeExtension<MarketScopeTokens> {
+  const MarketScopeTokens({
     required this.okBg,
     required this.okFg,
     required this.alertBg,
@@ -605,7 +608,7 @@ class _MarketScopeTokens extends ThemeExtension<_MarketScopeTokens> {
   final double rayonChamp;
 
   @override
-  _MarketScopeTokens copyWith({
+  MarketScopeTokens copyWith({
     Color? okBg,
     Color? okFg,
     Color? alertBg,
@@ -618,7 +621,7 @@ class _MarketScopeTokens extends ThemeExtension<_MarketScopeTokens> {
     double? rayonSheet,
     double? rayonChamp,
   }) {
-    return _MarketScopeTokens(
+    return MarketScopeTokens(
       okBg: okBg ?? this.okBg,
       okFg: okFg ?? this.okFg,
       alertBg: alertBg ?? this.alertBg,
@@ -634,9 +637,9 @@ class _MarketScopeTokens extends ThemeExtension<_MarketScopeTokens> {
   }
 
   @override
-  _MarketScopeTokens lerp(ThemeExtension<_MarketScopeTokens>? other, double t) {
-    if (other is! _MarketScopeTokens) return this;
-    return _MarketScopeTokens(
+  MarketScopeTokens lerp(ThemeExtension<MarketScopeTokens>? other, double t) {
+    if (other is! MarketScopeTokens) return this;
+    return MarketScopeTokens(
       okBg: Color.lerp(okBg, other.okBg, t)!,
       okFg: Color.lerp(okFg, other.okFg, t)!,
       alertBg: Color.lerp(alertBg, other.alertBg, t)!,
@@ -653,7 +656,7 @@ class _MarketScopeTokens extends ThemeExtension<_MarketScopeTokens> {
 }
 
 extension MarketScopeTheme on ThemeData {
-  _MarketScopeTokens get msTokens => extension<_MarketScopeTokens>()!;
+  MarketScopeTokens get msTokens => extension<MarketScopeTokens>()!;
   Color get okBg => msTokens.okBg;
   Color get okFg => msTokens.okFg;
   Color get alertBg => msTokens.alertBg;
@@ -665,4 +668,15 @@ extension MarketScopeTheme on ThemeData {
   double get cardRadius => msTokens.rayonCarte;
   double get sheetRadius => msTokens.rayonSheet;
   double get fieldRadius => msTokens.rayonChamp;
+
+  bool get estSombre => brightness == Brightness.dark;
+
+  /// Vert de marque lisible sur le fond courant (clair ou sombre).
+  Color get marque => estSombre ? AppColors.darkGreenLight : AppColors.green;
+
+  /// Fond des cartes.
+  Color get fondCarte => estSombre ? AppColors.darkSurface : AppColors.white;
+
+  /// Bordure fine des cartes et séparateurs.
+  Color get ligne => estSombre ? AppColors.darkLine : AppColors.line;
 }

@@ -422,16 +422,24 @@ class _ActionTile extends StatelessWidget {
 
 /// Statistiques de contribution de l'utilisateur connecté, issues de son
 /// historique personnel : relevés soumis, produits et marchés distincts.
-class _StatsContributeur extends StatelessWidget {
+class _StatsContributeur extends StatefulWidget {
   const _StatsContributeur();
+
+  @override
+  State<_StatsContributeur> createState() => _StatsContributeurState();
+}
+
+class _StatsContributeurState extends State<_StatsContributeur> {
+  // Chargé une fois (et non à chaque reconstruction du profil).
+  late final _futur = ReleveService.mesRelevesAvecTotal();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return FutureBuilder<List<RelevePrix>>(
-      future: ReleveService.mesReleves(),
+    return FutureBuilder<({List<RelevePrix> releves, int total})>(
+      future: _futur,
       builder: (context, snapshot) {
-        final releves = snapshot.data ?? const <RelevePrix>[];
+        final releves = snapshot.data?.releves ?? const <RelevePrix>[];
         final produits = releves
             .map((r) => r.produit?.id)
             .whereType<int>()
@@ -468,7 +476,7 @@ class _StatsContributeur extends StatelessWidget {
                   _TuileStat(
                     icone: Icons.insights_rounded,
                     couleur: AppColors.green,
-                    valeur: snapshot.hasData ? releves.length : null,
+                    valeur: snapshot.hasData ? snapshot.data!.total : null,
                     placeholder: '…',
                     label: 'Relevés soumis',
                   ),
@@ -490,7 +498,7 @@ class _StatsContributeur extends StatelessWidget {
               ),
               if (snapshot.hasData) ...[
                 const Divider(height: 24),
-                _JalonContributeur(nbReleves: releves.length),
+                _JalonContributeur(nbReleves: snapshot.data!.total),
               ],
             ],
           ),

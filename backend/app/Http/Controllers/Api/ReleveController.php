@@ -22,7 +22,9 @@ class ReleveController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $releves = RelevePrix::query()
-            ->with(['produit', 'marche', 'utilisateur'])
+            // Route publique : on ne charge pas l'utilisateur, sinon l'e-mail
+            // de chaque contributeur serait exposé à tout visiteur.
+            ->with(['produit', 'marche'])
             ->when($request->filled('produit_id'), fn ($q) => $q->where('produit_id', $request->produit_id))
             ->when($request->filled('marche_id'), fn ($q) => $q->where('marche_id', $request->marche_id))
             ->when($request->filled('date_debut'), fn ($q) => $q->where('date_releve', '>=', $request->date_debut))

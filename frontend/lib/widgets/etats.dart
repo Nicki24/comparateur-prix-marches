@@ -63,16 +63,16 @@ class _CarteSqueletteState extends State<_CarteSquelette>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
+    final clair = theme.colorScheme.surface;
+    final fonce = theme.colorScheme.surfaceContainerHighest;
 
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, _) {
-        final baseColor = isDark
-            ? Color.lerp(theme.colorScheme.surface, theme.dividerColor, _animation.value)!
-            : Color.lerp(theme.colorScheme.surface, theme.dividerColor, _animation.value)!;
-
+        final t = _animation.value;
+        final baseColor = Color.lerp(clair, fonce, t * 0.35)!;
+        final placeholderColor = Color.lerp(fonce, clair, t * 0.6)!;
         return Container(
           height: 72,
           decoration: BoxDecoration(
@@ -88,9 +88,7 @@ class _CarteSqueletteState extends State<_CarteSquelette>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? Color.lerp(theme.dividerColor, theme.colorScheme.surface, _animation.value)!
-                      : Color.lerp(theme.dividerColor, theme.colorScheme.surface, _animation.value)!,
+                  color: placeholderColor,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -104,9 +102,7 @@ class _CarteSqueletteState extends State<_CarteSquelette>
                       height: 13,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? Color.lerp(theme.dividerColor, theme.colorScheme.surface, _animation.value)!
-                            : Color.lerp(theme.dividerColor, theme.colorScheme.surface, _animation.value)!,
+                        color: placeholderColor,
                         borderRadius: BorderRadius.circular(AppRadius.chip),
                       ),
                     ),
@@ -115,9 +111,7 @@ class _CarteSqueletteState extends State<_CarteSquelette>
                       height: 11,
                       width: 160,
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? Color.lerp(theme.dividerColor, theme.colorScheme.surface, _animation.value)!
-                            : Color.lerp(theme.dividerColor, theme.colorScheme.surface, _animation.value)!,
+                        color: placeholderColor,
                         borderRadius: BorderRadius.circular(AppRadius.chip),
                       ),
                     ),
@@ -222,7 +216,6 @@ class ContenuVide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
@@ -235,9 +228,10 @@ class ContenuVide extends StatelessWidget {
                 height: 80,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: isDark
-                        ? [theme.colorScheme.surfaceContainerHighest, theme.colorScheme.surface]
-                        : [theme.colorScheme.surfaceContainerHighest, theme.colorScheme.surface],
+                    colors: [
+                      theme.colorScheme.surfaceContainerHighest,
+                      theme.colorScheme.surface,
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),

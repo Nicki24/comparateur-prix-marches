@@ -8,11 +8,10 @@ import '../services/comparison_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/etats.dart';
+import '../widgets/marketscope_header.dart';
 import '../widgets/ms_anim.dart';
 import '../widgets/ms_badge.dart';
 import '../widgets/ms_card.dart';
-import '../widgets/ms_decor.dart';
-import '../widgets/produit_icone.dart';
 
 /// Écran de comparaison d'un produit : prix par marché (bar chart)
 /// et évolution historique (line chart) avec fl_chart.
@@ -44,42 +43,13 @@ class _ComparaisonScreenState extends State<ComparaisonScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            ProduitIcone(
-              nom: widget.produit.nom,
-              categorie: widget.produit.categorie,
-              taille: 32,
-              tailleIcone: 16,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.produit.nom,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (widget.produit.categorie != null)
-                    Text(
-                      widget.produit.categorie!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF9FB6AE),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
+      appBar: MarketScopeHeader(
+        titre: widget.produit.nom,
+        sousTitre: [
+          if (widget.produit.categorie != null) widget.produit.categorie!,
+          if (widget.produit.uniteMesure.isNotEmpty)
+            'prix par ${widget.produit.uniteMesure}',
+        ].join(' · '),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -120,7 +90,7 @@ class _ComparaisonTabState extends State<_ComparaisonTab> {
 
   Future<void> _recharger() async {
     setState(() {
-      _futur = ComparisonService.comparer(widget.produit.id);
+      _futur = ComparisonService.comparer(widget.produit.id, forcer: true);
     });
     await _futur;
   }
@@ -161,11 +131,9 @@ class _ComparaisonTabState extends State<_ComparaisonTab> {
             prix.fold<double>(0, (a, b) => a + b) / prix.length;
 
         return RefreshIndicator(
-          color: AppColors.green,
+          color: Theme.of(context).marque,
           onRefresh: _recharger,
-          child: MsDecorFond(
-            densite: 0.5,
-            child: ListView(
+          child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(AppSpacing.md),
               children: [
@@ -254,7 +222,6 @@ class _ComparaisonTabState extends State<_ComparaisonTab> {
                 ),
               ],
             ),
-          ),
         );
       },
     );
@@ -315,6 +282,8 @@ class _CarteMeilleurPrix extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Chez ${meilleur.marche.nom}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: const Color(0xFFCFE7D8),
             ),
@@ -438,10 +407,13 @@ class _BarChartPrix extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final maxPrix = paire.last.dernierPrix! * 1.12;
+    final intervalle = _intervalleLisible(paire.last.dernierPrix!);
+    final maxPrix =
+        ((paire.last.dernierPrix! * 1.08) / intervalle).ceil() * intervalle;
     // Évite les labels qui se chevauchent : 1 sur 2 si > 6 marchés,
     // inclinaison à 45° pour les noms longs, taille adaptative.
     final dense = paire.length > 6;
+    final aPlat = paire.length <= 4;
     final hauteur = paire.length > 4 ? 240.0 : 220.0;
 
     return SizedBox(
@@ -449,6 +421,7 @@ class _BarChartPrix extends StatelessWidget {
       child: BarChart(
         BarChartData(
           maxY: maxPrix > 0 ? maxPrix : 1,
+          minY: 0,
           barGroups: [
             for (var i = 0; i < paire.length; i++)
               BarChartGroupData(
@@ -476,9 +449,15 @@ class _BarChartPrix extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 44,
+                interval: intervalle,
                 getTitlesWidget: (value, meta) {
+                  // fl_chart ajoute toujours la borne max : on l'ignore
+                  // si elle ne tombe pas sur un palier (évite « 4000 » ×2).
+                  if (value % intervalle != 0) {
+                    return const SizedBox.shrink();
+                  }
                   return Text(
-                    '${value.toInt()}',
+                    formaterNombre(value),
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontFamily: AppFonts.mono,
                       fontSize: 10,
@@ -501,21 +480,22 @@ class _BarChartPrix extends StatelessWidget {
                     return const SizedBox.shrink();
                   }
                   final nom =
-                      _nomCourt(paire[index].marche.nom);
-                  final long = nom.length > 7;
+                      _nomCourt(nomCourtMarche(paire[index].marche.nom));
                   final txt = Text(
                     nom,
-                    maxLines: 1,
+                    maxLines: aPlat ? 2 : 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 10,
+                      height: 1.2,
                     ),
                   );
-                  if (!long) {
+                  // Peu de marchés : libellé à plat sur 2 lignes (lisible).
+                  if (aPlat) {
                     return Padding(
                       padding: const EdgeInsets.only(top: 6),
-                      child: txt,
+                      child: SizedBox(width: 72, child: txt),
                     );
                   }
                   // Incline les labels longs pour rester lisible.
@@ -532,6 +512,7 @@ class _BarChartPrix extends StatelessWidget {
           ),
           gridData: FlGridData(
             drawVerticalLine: false,
+            horizontalInterval: intervalle,
             getDrawingHorizontalLine: (_) => FlLine(
               color: theme.dividerColor.withValues(alpha: 0.6),
               strokeWidth: 1,
@@ -566,6 +547,20 @@ class _BarChartPrix extends StatelessWidget {
     if (t.length <= 12) return t;
     return t.substring(0, 11).trimRight();
   }
+}
+
+/// Palier d'axe « rond » (1, 2 ou 5 × 10ⁿ) donnant environ 4 graduations.
+double _intervalleLisible(double max) {
+  if (max <= 0) return 1;
+  final brut = max / 4;
+  var puissance = 1.0;
+  while (puissance * 10 <= brut) {
+    puissance *= 10;
+  }
+  for (final m in [1, 2, 5]) {
+    if (m * puissance >= brut) return m * puissance;
+  }
+  return 10 * puissance;
 }
 
 /// Ligne comparative : marché · prix (mono) · écart % · date MàJ.
@@ -636,7 +631,7 @@ class _RangPrixMarche extends StatelessWidget {
                 const MarketScopeRangBadge.cher()
               else if (ecart != null && ecart.abs() >= 0.05)
                 Text(
-                  '${ecart > 0 ? '+' : '−'}${ecart.abs().toStringAsFixed(1)} %',
+                  formaterPourcentage(ecart),
                   style: TextStyle(
                     fontFamily: AppFonts.mono,
                     fontSize: 11.5,
@@ -785,11 +780,6 @@ class _HistoriqueTabState extends State<_HistoriqueTab>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _TitreGraphique(
-                titre: 'Évolution du prix',
-                sousTitre: '${_intituleMode()} sur la période',
-              ),
-              const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: SegmentedButton<String>(
@@ -837,11 +827,9 @@ class _HistoriqueTabState extends State<_HistoriqueTab>
                   '${formaterDateCourte(points.first.date)} → ${formaterDateCourte(points.last.date)}';
 
               return RefreshIndicator(
-                color: AppColors.green,
+                color: Theme.of(context).marque,
                 onRefresh: _recharger,
-                child: MsDecorFond(
-                  densite: 0.5,
-                  child: ListView(
+                child: ListView(
                     physics:
                         const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(AppSpacing.md),
@@ -924,7 +912,6 @@ class _HistoriqueTabState extends State<_HistoriqueTab>
                       ),
                     ],
                   ),
-                ),
               );
             },
           ),
@@ -976,12 +963,20 @@ class _LineChartPrix extends StatelessWidget {
             LineChartBarData(
               spots: spots,
               isCurved: true,
-              color: AppColors.green,
+              preventCurveOverShooting: true,
+              color: theme.marque,
               barWidth: 3,
               dotData: const FlDotData(show: false),
               belowBarData: BarAreaData(
                 show: true,
-                color: AppColors.green.withValues(alpha: 0.14),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    theme.marque.withValues(alpha: 0.22),
+                    theme.marque.withValues(alpha: 0.0),
+                  ],
+                ),
               ),
             ),
           ],
@@ -997,8 +992,11 @@ class _LineChartPrix extends StatelessWidget {
                 showTitles: true,
                 reservedSize: 48,
                 getTitlesWidget: (value, meta) {
+                  if (value == meta.max || value == meta.min) {
+                    return const SizedBox.shrink();
+                  }
                   return Text(
-                    '${value.toInt()}',
+                    formaterNombre(value),
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontFamily: AppFonts.mono,
                     ),
@@ -1128,13 +1126,16 @@ class _VariationPanel extends StatelessWidget {
     final premier = points.first.valeur;
     final dernier = points.last.valeur;
     final variation = dernier - premier;
-    final baisse = variation < 0;
-    final pct = premier != 0
-        ? (variation / premier * 100).toStringAsFixed(1)
-        : '0';
-    final couleur = baisse ? AppColors.okFg : AppColors.alertFg;
-    final fondCouleur = baisse ? AppColors.okBg : AppColors.alertBg;
-    final affichage = '${baisse ? '−' : '+'}${pct.replaceFirst('-', '')} %';
+    final pctValeur = premier != 0 ? variation / premier * 100 : 0.0;
+    final stable = pctValeur.abs() < 0.05;
+    final baisse = !stable && variation < 0;
+    final couleur = stable
+        ? theme.colorScheme.onSurfaceVariant
+        : (baisse ? theme.okFg : theme.alertFg);
+    final fondCouleur = stable
+        ? theme.colorScheme.secondaryContainer
+        : (baisse ? theme.okBg : theme.alertBg);
+    final affichage = formaterPourcentage(pctValeur);
 
     return Padding(
       padding: const EdgeInsets.all(12),
@@ -1148,7 +1149,11 @@ class _VariationPanel extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              baisse ? Icons.trending_down_rounded : Icons.trending_up_rounded,
+              stable
+                  ? Icons.trending_flat_rounded
+                  : (baisse
+                      ? Icons.trending_down_rounded
+                      : Icons.trending_up_rounded),
               color: couleur,
               size: 20,
             ),
@@ -1159,7 +1164,11 @@ class _VariationPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  baisse ? 'Le prix a baissé depuis le début du suivi' : 'Le prix a évolué depuis le début du suivi',
+                  stable
+                      ? 'Prix stable depuis le début du suivi'
+                      : (baisse
+                          ? 'Le prix a baissé depuis le début du suivi'
+                          : 'Le prix a augmenté depuis le début du suivi'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -1184,55 +1193,6 @@ class _VariationPanel extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Titre d'un graphique façon tableau de bord : barre d'accent + titre
-/// (Space Grotesk) + sous-titre (muted).
-class _TitreGraphique extends StatelessWidget {
-  const _TitreGraphique({required this.titre, required this.sousTitre});
-
-  final String titre;
-  final String sousTitre;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 34,
-          decoration: BoxDecoration(
-            color: AppColors.green,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                titre,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontFamily: AppFonts.display,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                sousTitre,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

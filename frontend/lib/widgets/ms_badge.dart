@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../utils/formats.dart';
 
 /// Badge de variation : baisse (vert) / hausse (terracotta) / neutre.
 /// Toujours icône + texte (pas d'info portée uniquement par la couleur).
@@ -17,8 +18,8 @@ class MarketScopeVariationBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final baisse = variationPct < 0;
     final stable = variationPct.abs() < 0.05;
+    final baisse = !stable && variationPct < 0;
     final fond = stable
         ? theme.colorScheme.secondaryContainer
         : (baisse ? theme.okBg : theme.alertBg);
@@ -52,7 +53,7 @@ class MarketScopeVariationBadge extends StatelessWidget {
           ),
           const SizedBox(width: 3),
           Text(
-            '${baisse ? '−' : '+'}${variationPct.abs().toStringAsFixed(1)} %',
+            formaterPourcentage(variationPct),
             style: TextStyle(
               fontFamily: AppFonts.mono,
               fontSize: compact ? 11 : 12,

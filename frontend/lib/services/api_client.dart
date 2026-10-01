@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -59,38 +60,43 @@ class ApiClient {
     Map<String, dynamic>? query,
     String? token,
   ]) async {
-    final reponse = await http
-        .get(_uri(chemin, query), headers: _headers(token: token))
-        .timeout(_timeout);
-    return _verifier(reponse);
+    return _executer(() =>
+        http.get(_uri(chemin, query), headers: _headers(token: token)));
   }
 
   Future<dynamic> post(String chemin, Map<String, dynamic> corps) async {
-    final reponse = await http
-        .post(
+    return _executer(() => http.post(
           _uri(chemin),
           headers: _headers(),
           body: jsonEncode(corps),
-        )
-        .timeout(_timeout);
-    return _verifier(reponse);
+        ));
   }
 
   Future<dynamic> put(String chemin, Map<String, dynamic> corps) async {
-    final reponse = await http
-        .put(
+    return _executer(() => http.put(
           _uri(chemin),
           headers: _headers(),
           body: jsonEncode(corps),
-        )
-        .timeout(_timeout);
-    return _verifier(reponse);
+        ));
   }
 
   Future<dynamic> delete(String chemin) async {
-    final reponse = await http
-        .delete(_uri(chemin), headers: _headers())
-        .timeout(_timeout);
+    return _executer(() => http.delete(_uri(chemin), headers: _headers()));
+  }
+
+  /// Exécute la requête et convertit les échecs réseau (serveur éteint,
+  /// pas de connexion, délai dépassé) en [ApiException] lisible.
+  Future<dynamic> _executer(Future<http.Response> Function() requete) async {
+    final http.Response reponse;
+    try {
+      reponse = await requete().timeout(_timeout);
+    } on TimeoutException {
+      throw const ApiException(
+          0, 'Le serveur met trop de temps à répondre. Réessayez.');
+    } on http.ClientException {
+      throw const ApiException(0,
+          'Serveur injoignable. Vérifiez votre connexion internet puis réessayez.');
+    }
     return _verifier(reponse);
   }
 

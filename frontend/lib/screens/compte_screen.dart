@@ -7,6 +7,7 @@ import '../utils/formats.dart';
 import '../widgets/compteur_anime.dart';
 import '../widgets/fond_auth.dart';
 import '../widgets/logo.dart';
+import '../widgets/marketscope_header.dart';
 import 'login_screen.dart';
 import 'profil_screen.dart';
 import 'register_screen.dart';
@@ -21,9 +22,7 @@ class CompteScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const MarqueHeader(titre: 'Profil'),
-      ),
+      appBar: const MarketScopeHeader(),
       body: ListenableBuilder(
         listenable: Session.instance,
         builder: (context, _) {
@@ -60,7 +59,7 @@ class _DeconnecteViewState extends State<_DeconnecteView> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      color: AppColors.green,
+      color: Theme.of(context).marque,
       onRefresh: _recharger,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -71,36 +70,25 @@ class _DeconnecteViewState extends State<_DeconnecteView> {
           const SizedBox(height: 20),
           _BlocStatsPublic(cle: _versionStats),
           const SizedBox(height: 20),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _Pilier(
-                  icone: Icons.remove_red_eye_outlined,
-                  titre: 'Consultation libre',
-                  detail: 'Comparez les prix sans créer de compte.',
-                  couleur: AppColors.green,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _Pilier(
-                  icone: Icons.handshake_outlined,
-                  titre: 'Avec vous',
-                  detail: 'Chaque relevé provient d\'un contributeur local.',
-                  couleur: AppColors.saffron,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _Pilier(
-                  icone: Icons.insights_rounded,
-                  titre: 'Évolutif',
-                  detail: 'Historiques et alertes de prix anormaux.',
-                  couleur: AppColors.terracotta,
-                ),
-              ),
-            ],
+          const _Pilier(
+            icone: Icons.visibility_outlined,
+            titre: 'Consultation libre',
+            detail: 'Comparez les prix de tous les marchés sans créer de compte.',
+            couleur: AppColors.green,
+          ),
+          const SizedBox(height: 10),
+          const _Pilier(
+            icone: Icons.handshake_outlined,
+            titre: 'Des prix relevés sur place',
+            detail: 'Chaque prix provient d’un contributeur local, au marché.',
+            couleur: AppColors.saffron,
+          ),
+          const SizedBox(height: 10),
+          const _Pilier(
+            icone: Icons.verified_outlined,
+            titre: 'Données contrôlées',
+            detail: 'Les prix anormaux et obsolètes sont signalés automatiquement.',
+            couleur: AppColors.terracotta,
           ),
         ],
       ),
@@ -209,7 +197,7 @@ class _BlocStatsPublic extends StatelessWidget {
     (cle: 'nb_releves', label: 'Relevés', icone: Icons.insights_rounded, couleur: AppColors.green),
     (cle: 'nb_marches_actifs', label: 'Marchés actifs', icone: Icons.storefront_rounded, couleur: AppColors.saffron),
     (cle: 'nb_produits_actifs', label: 'Produits suivis', icone: Icons.shopping_basket_rounded, couleur: AppColors.terracotta),
-    (cle: 'nb_contributeurs', label: 'Contributeurs', icone: Icons.group_rounded, couleur: AppColors.ink),
+    (cle: 'nb_contributeurs', label: 'Contributeurs', icone: Icons.group_rounded, couleur: Color(0xFF1D6FA5)),
   ];
 
   /// Charge les stats publiques en silence (aucune erreur remontée).
@@ -257,8 +245,7 @@ class _BlocStatsPublic extends StatelessWidget {
                       const Spacer(),
                       if (derniereMaj != null)
                         Text(
-                          'MàJ ${formaterHeure(derniereMaj)}'
-                          ' · ${formaterDateCourte(derniereMaj)}',
+                          'MàJ ${formaterDate(derniereMaj)}',
                           style: theme.textTheme.labelSmall?.copyWith(
                             fontFamily: AppFonts.mono,
                             color: theme.colorScheme.onSurfaceVariant
@@ -276,15 +263,9 @@ class _BlocStatsPublic extends StatelessWidget {
                     horizontal: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.brightness == Brightness.dark
-                        ? AppColors.darkSurface
-                        : AppColors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: theme.brightness == Brightness.dark
-                          ? AppColors.darkLine
-                          : AppColors.line,
-                    ),
+                    color: theme.fondCarte,
+                    borderRadius: BorderRadius.circular(AppRadius.sheet),
+                    border: Border.all(color: theme.ligne),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -379,35 +360,37 @@ class _Pilier extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.brightness == Brightness.dark
-            ? AppColors.darkSurface
-            : AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.brightness == Brightness.dark
-              ? AppColors.darkLine
-              : AppColors.line,
-        ),
+        color: theme.fondCarte,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: theme.ligne),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Icon(icone, size: 22, color: couleur),
-          const SizedBox(height: 8),
-          Text(
-            titre,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: couleur.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
             ),
+            child: Icon(icone, size: 20, color: couleur),
           ),
-          const SizedBox(height: 3),
-          Text(
-            detail,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.25,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titre,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(detail, style: theme.textTheme.bodySmall),
+              ],
             ),
           ),
         ],

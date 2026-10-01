@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../models/marche.dart';
+import '../models/releve_prix.dart';
 import '../services/marche_service.dart';
+import '../services/releve_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/formats.dart';
 import '../widgets/barre_recherche.dart';
 import '../widgets/etats.dart';
-import '../widgets/logo.dart';
+import '../widgets/marketscope_header.dart';
 import '../widgets/ms_anim.dart';
-import '../widgets/ms_decor.dart';
-import '../widgets/tap_scale.dart';
-import 'produits_screen.dart';
+import '../widgets/ms_card.dart';
+import '../widgets/produit_icone.dart';
+import 'comparaison_screen.dart';
 
 class MarchesScreen extends StatefulWidget {
   const MarchesScreen({super.key});
@@ -66,8 +69,7 @@ class _MarchesScreenState extends State<MarchesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const MarqueHeader(titre: 'Marchés'),
+      appBar: MarketScopeHeader(
         actions: [
           IconButton(
             tooltip: _rechercheActive
@@ -80,10 +82,12 @@ class _MarchesScreenState extends State<MarchesScreen> {
           ),
         ],
       ),
-      body: MsDecorFond(
-        densite: 0.6,
-        child: Column(
+      body: Column(
           children: [
+            const Padding(
+              padding: EdgeInsets.only(top: AppSpacing.sm),
+              child: MarketScopeSectionTitle(titre: 'Marchés'),
+            ),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               transitionBuilder: (child, anim) => SizeTransition(
@@ -150,10 +154,12 @@ class _MarchesScreenState extends State<MarchesScreen> {
                   if (filtrees.isEmpty) {
                     return ContenuVide(
                       titre: 'Aucun résultat',
-                      message: 'Aucun marché ne correspond à '
-                          '« ${_controleurRecherche.text} ».',
+                      message: _requete.isEmpty
+                          ? 'Aucun marché pour ce filtre.'
+                          : 'Aucun marché ne correspond à '
+                              '« ${_controleurRecherche.text} ».',
                       icone: Icons.search_off_rounded,
-                      cta: 'Effacer la recherche',
+                      cta: 'Effacer les filtres',
                       onCta: _effacerFiltres,
                     );
                   }
@@ -199,7 +205,7 @@ class _MarchesScreenState extends State<MarchesScreen> {
                       ),
                       Expanded(
                         child: RefreshIndicator(
-                          color: AppColors.green,
+                          color: Theme.of(context).marque,
                           onRefresh: _recharger,
                           child: GridView.builder(
                             physics:
@@ -208,18 +214,23 @@ class _MarchesScreenState extends State<MarchesScreen> {
                                 16, 12, 16, 24),
                             gridDelegate:
                                 const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 360,
-                              mainAxisSpacing: 12,
+                              maxCrossAxisExtent: 520,
+                              mainAxisSpacing: 10,
                               crossAxisSpacing: 12,
-                              mainAxisExtent: 172,
+                              mainAxisExtent: 80,
                             ),
                             itemCount: filtrees.length,
                             itemBuilder: (context, index) =>
                                 MsCascade(
                               index: index,
-                              child: TapScale(
-                                child: _CarteMarche(
-                                    marche: filtrees[index]),
+                              child: _CarteMarche(
+                                marche: filtrees[index],
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => MarcheDetailScreen(
+                                        marche: filtrees[index]),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -232,7 +243,6 @@ class _MarchesScreenState extends State<MarchesScreen> {
             ),
           ],
         ),
-      ),
     );
   }
 }
@@ -325,15 +335,13 @@ class _ChipFiltre extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.green.withValues(alpha: 0.14)
-              : Colors.transparent,
+              ? theme.marque.withValues(alpha: 0.14)
+              : theme.fondCarte,
           borderRadius: BorderRadius.circular(99),
           border: Border.all(
             color: selected
-                ? AppColors.green.withValues(alpha: 0.5)
-                : (theme.brightness == Brightness.dark
-                    ? AppColors.darkLine
-                    : AppColors.line),
+                ? theme.marque.withValues(alpha: 0.5)
+                : theme.ligne,
           ),
         ),
         child: Text(
@@ -342,7 +350,7 @@ class _ChipFiltre extends StatelessWidget {
             fontFamily: AppFonts.sans,
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: selected ? AppColors.green : theme.colorScheme.onSurfaceVariant,
+            color: selected ? theme.marque : theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -353,349 +361,75 @@ class _ChipFiltre extends StatelessWidget {
 // ---------------------------------------------------------------------------
 // Carte Marché (grille) avec animation au toucher et à l'effleurement
 // ---------------------------------------------------------------------------
-class _CarteMarche extends StatefulWidget {
-  const _CarteMarche({required this.marche});
+class _CarteMarche extends StatelessWidget {
+  const _CarteMarche({required this.marche, required this.onTap});
   final Marche marche;
-
-  @override
-  State<_CarteMarche> createState() => _CarteMarcheState();
-}
-
-class _CarteMarcheState extends State<_CarteMarche> {
-  bool _survole = false;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      transform: Matrix4.translationValues(0, _survole ? -2 : 0, 0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: _survole
-              ? AppColors.green.withValues(alpha: 0.5)
-              : (isDark ? AppColors.darkLine : AppColors.line),
-        ),
-        boxShadow: _survole ? theme.cardShadowsHover : theme.cardShadows,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _ouvrirMarche(context),
-          onHover: (val) => setState(() => _survole = val),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+    return MarketScopeCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.saffron.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.storefront_rounded,
+              color: AppColors.saffron,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: AppColors.green
-                            .withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.storefront_rounded,
-                        color: AppColors.green,
-                        size: 21,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.marche.nom,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleSmall
-                                ?.copyWith(
-                              fontFamily: AppFonts.display,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.2,
-                              height: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Container(
-                            padding:
-                                const EdgeInsets.symmetric(
-                                    horizontal: 7,
-                                    vertical: 2),
-                            decoration: BoxDecoration(
-                              color: widget.marche.actif
-                                  ? theme.okBg
-                                  : theme.staleBg,
-                              borderRadius:
-                                  BorderRadius.circular(99),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: widget.marche.actif
-                                        ? theme.okFg
-                                        : theme.staleFg,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  widget.marche.actif
-                                      ? 'Actif'
-                                      : 'Inactif',
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: widget.marche.actif
-                                        ? theme.okFg
-                                        : theme.staleFg,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                Text(
+                  marche.nom,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontFamily: AppFonts.display,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     Icon(
                       Icons.location_on_rounded,
-                      size: 13,
-                      color: theme
-                          .colorScheme.onSurfaceVariant,
+                      size: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(width: 3),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        widget.marche.localisation.isEmpty
-                            ? 'Localisation non renseignée'
-                            : widget.marche.localisation,
+                        marche.localisation,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(
-                          color: theme.colorScheme
-                              .onSurfaceVariant,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
                   ],
                 ),
-                if (widget.marche.description != null &&
-                    widget.marche.description!
-                        .isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.marche.description!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant
-                          .withValues(alpha: 0.75),
-                      fontSize: 11.5,
-                    ),
-                  ),
-                ],
-                const Spacer(),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.compare_arrows_rounded,
-                      size: 15,
-                      color: _survole
-                          ? AppColors.green
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      'Voir les prix du marché',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(
-                        color: _survole
-                            ? AppColors.green
-                            : theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const Spacer(),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 18,
-                      color: theme
-                          .colorScheme.onSurfaceVariant
-                          .withValues(alpha: 0.6),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  void _ouvrirMarche(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => MarcheDetailScreen(marche: widget.marche),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Fiche détaillée d'un marché
-// ---------------------------------------------------------------------------
-class MarcheDetailScreen extends StatelessWidget {
-  const MarcheDetailScreen({super.key, required this.marche});
-  final Marche marche;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(marche.nom)),
-      body: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          // ─── Hero header ──────────────────────────────────────────────
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.ink, AppColors.ink2],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: AppColors.green.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.storefront_rounded,
-                        color: AppColors.greenLight,
-                        size: 26,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            marche.nom,
-                            style: const TextStyle(
-                              fontFamily: AppFonts.display,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 20,
-                              color: Color(0xFFEAF3EE),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.location_on_rounded,
-                                size: 14,
-                                color: Color(0xFF9FB6AE),
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  marche.localisation,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Color(0xFF9FB6AE),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                if (marche.description != null) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    marche.description!,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFFCFE7D8),
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          // ─── Contenu ──────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                const SizedBox(height: 4),
-                // Carte "voir les prix"
-                _CarteActionDetail(
-                  icone: Icons.shopping_basket_rounded,
-                  couleurIcone: AppColors.green,
-                  titre: 'Comparer les prix des produits',
-                  sousTitre: 'Consultez les relevés disponibles sur ce marché',
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const ProduitsScreen(),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 10),
-                // Info badge actif
-                _CarteActionDetail(
-                  icone: marche.actif
-                      ? Icons.check_circle_rounded
-                      : Icons.pause_circle_rounded,
-                  couleurIcone: marche.actif ? AppColors.okFg : AppColors.staleFg,
-                  titre: marche.actif ? 'Marché actif' : 'Marché inactif',
-                  sousTitre: marche.actif
-                      ? 'Les relevés de prix sont acceptés sur ce marché'
-                      : 'Les relevés ne sont pas acceptés actuellement',
-                  couleurFond: marche.actif ? AppColors.okBg : AppColors.staleBg,
-                ),
-              ],
-            ),
+          const SizedBox(width: 8),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ],
       ),
@@ -703,79 +437,308 @@ class MarcheDetailScreen extends StatelessWidget {
   }
 }
 
-/// Tuile d'action dans le détail d'un marché.
-class _CarteActionDetail extends StatelessWidget {
-  const _CarteActionDetail({
-    required this.icone,
-    required this.couleurIcone,
-    required this.titre,
-    required this.sousTitre,
-    this.onTap,
-    this.couleurFond,
-  });
+// ---------------------------------------------------------------------------
+// Fiche détaillée d'un marché : derniers prix relevés sur place
+// ---------------------------------------------------------------------------
+class MarcheDetailScreen extends StatefulWidget {
+  const MarcheDetailScreen({super.key, required this.marche});
 
-  final IconData icone;
-  final Color couleurIcone;
-  final String titre;
-  final String sousTitre;
-  final VoidCallback? onTap;
-  final Color? couleurFond;
+  final Marche marche;
+
+  @override
+  State<MarcheDetailScreen> createState() => _MarcheDetailScreenState();
+}
+
+class _MarcheDetailScreenState extends State<MarcheDetailScreen> {
+  late Future<List<RelevePrix>> _futur;
+
+  @override
+  void initState() {
+    super.initState();
+    _futur = _charger();
+  }
+
+  /// Dernier relevé de chaque produit sur ce marché (l'API renvoie les
+  /// relevés du plus récent au plus ancien).
+  Future<List<RelevePrix>> _charger() async {
+    final releves = await ReleveService.lister(marcheId: widget.marche.id);
+    final parProduit = <int, RelevePrix>{};
+    for (final r in releves) {
+      final produit = r.produit;
+      if (produit == null) continue;
+      parProduit.putIfAbsent(produit.id, () => r);
+    }
+    return parProduit.values.toList()
+      ..sort((a, b) => a.produit!.nom.compareTo(b.produit!.nom));
+  }
+
+  Future<void> _recharger() async {
+    setState(() => _futur = _charger());
+    await _futur;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final marche = widget.marche;
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Material(
-      color: couleurFond ?? (isDark ? AppColors.darkSurface : AppColors.white),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isDark ? AppColors.darkLine : AppColors.line,
+    return Scaffold(
+      appBar: MarketScopeHeader(
+        titre: marche.nom,
+        sousTitre: marche.localisation,
+      ),
+      body: RefreshIndicator(
+        color: theme.marque,
+        onRefresh: _recharger,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xl),
+          children: [
+            _HeroMarche(marche: marche),
+            const SizedBox(height: AppSpacing.lg),
+            const MarketScopeSectionTitle(
+              titre: 'Derniers prix relevés ici',
+              icone: Icons.sell_rounded,
+              padding: EdgeInsets.zero,
             ),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: couleurIcone.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icone, color: couleurIcone, size: 20),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: AppSpacing.sm),
+            FutureBuilder<List<RelevePrix>>(
+              future: _futur,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Padding(
+                    padding: EdgeInsets.all(AppSpacing.lg),
+                    child: ChargementCentre(),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return ErreurMessage(
+                    message: snapshot.error.toString(),
+                    onReessayer: _recharger,
+                  );
+                }
+                final releves = snapshot.data ?? const [];
+                if (releves.isEmpty) {
+                  return const ContenuVide(
+                    titre: 'Aucun prix pour l’instant',
+                    message:
+                        'Aucun relevé n’a encore été saisi sur ce marché.',
+                    icone: Icons.receipt_long_rounded,
+                  );
+                }
+                return Column(
                   children: [
-                    Text(
-                      titre,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
+                    MarketScopeCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        children: [
+                          for (var i = 0; i < releves.length; i++) ...[
+                            if (i > 0)
+                              Divider(
+                                  height: 1, indent: 64, color: theme.ligne),
+                            _LignePrixMarche(releve: releves[i]),
+                          ],
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
-                      sousTitre,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      'Touchez un produit pour le comparer avec les autres marchés.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroMarche extends StatelessWidget {
+  const _HeroMarche({required this.marche});
+
+  final Marche marche;
+
+  @override
+  Widget build(BuildContext context) {
+    final actif = marche.actif;
+    final couleurStatut = actif ? AppColors.greenLight : AppColors.darkSaffron;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.ink, AppColors.ink2],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.sheet + 4),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.saffron.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.storefront_rounded,
+                  color: AppColors.darkSaffron,
+                  size: 24,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: couleurStatut.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      actif
+                          ? Icons.check_circle_rounded
+                          : Icons.pause_circle_rounded,
+                      size: 14,
+                      color: couleurStatut,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      actif ? 'Relevés ouverts' : 'Relevés suspendus',
+                      style: TextStyle(
+                        fontFamily: AppFonts.sans,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: couleurStatut,
                       ),
                     ),
                   ],
                 ),
               ),
-              if (onTap != null)
-                const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
             ],
           ),
+          const SizedBox(height: 14),
+          Text(
+            marche.nom,
+            style: const TextStyle(
+              fontFamily: AppFonts.display,
+              fontWeight: FontWeight.w700,
+              fontSize: 22,
+              height: 1.2,
+              color: Color(0xFFEAF3EE),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.location_on_outlined,
+                  size: 15, color: Color(0xFF9FB6AE)),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  marche.localisation,
+                  style:
+                      const TextStyle(fontSize: 13, color: Color(0xFF9FB6AE)),
+                ),
+              ),
+            ],
+          ),
+          if (marche.description != null &&
+              marche.description!.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              marche.description!,
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: Color(0xFFCFE7D8),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LignePrixMarche extends StatelessWidget {
+  const _LignePrixMarche({required this.releve});
+
+  final RelevePrix releve;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final produit = releve.produit!;
+    return InkWell(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ComparaisonScreen(produit: produit),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md, vertical: 12),
+        child: Row(
+          children: [
+            ProduitIcone(
+              nom: produit.nom,
+              categorie: produit.categorie,
+              taille: 38,
+              tailleIcone: 19,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    produit.nom,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  Text(
+                    'Relevé le ${formaterDateLisible(releve.dateReleve)}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  formaterPrix(releve.valeur),
+                  style: AppTextStyles.priceSmall.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                if (produit.uniteMesure.isNotEmpty)
+                  Text(
+                    'par ${produit.uniteMesure}',
+                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ],
         ),
       ),
     );

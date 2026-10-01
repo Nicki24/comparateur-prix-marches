@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Apparition progressive + léger slide vertical.
 /// Utilisée pour les cartes, sections, badges. Respecte
-/// `accessibleNavigation` (pas d'animation si reduced-motion).
+/// la préférence système « réduire les animations ».
 class MsApparition extends StatelessWidget {
   const MsApparition({
     super.key,
@@ -19,7 +19,7 @@ class MsApparition extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reduced = MediaQuery.of(context).accessibleNavigation;
+    final reduced = MediaQuery.disableAnimationsOf(context);
     if (reduced) return child;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
