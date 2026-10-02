@@ -13,11 +13,7 @@ import 'profil_screen.dart';
 import 'register_screen.dart';
 
 class CompteScreen extends StatelessWidget {
-  const CompteScreen(
-      {super.key, this.onThemeModeChanged, this.currentThemeMode});
-
-  final void Function(ThemeMode)? onThemeModeChanged;
-  final ThemeMode? currentThemeMode;
+  const CompteScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +23,7 @@ class CompteScreen extends StatelessWidget {
         listenable: Session.instance,
         builder: (context, _) {
           if (Session.instance.estConnecte) {
-            return ProfilScreen(
-              onThemeModeChanged: onThemeModeChanged,
-              currentThemeMode: currentThemeMode,
-            );
+            return const ProfilScreen();
           }
           return const _DeconnecteView();
         },

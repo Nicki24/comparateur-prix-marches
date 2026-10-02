@@ -5,6 +5,21 @@ Thumbs.db
 
 # Artefacts temporaires de travail local
 .freebuff/
+.claude/
+
+# Livrables et brouillons non versionnés (docs, rapports, maquettes)
+*.docx
+*Rapport_Suivi*
+ChatGPT Image *.png
+Logo_MarketScope.png
+MarketScope_wordmark_transparent.png
+new_logo.png
+create_logos.ps1
+marketscope-dashboard.html
+marketscope-design-system.html
+*MOIRE_*.md
+gap_analysis_report.md
+implementation_plan.md
 
 # Secrets / environnements locaux (BACKEND)
 .env

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/session.dart';
 import '../theme/app_theme.dart';
+import '../widgets/assistant_chat.dart';
 import '../widgets/marketscope_header.dart';
 import '../widgets/prix_ticker_banner.dart';
 import 'compte_screen.dart';
@@ -19,11 +20,7 @@ import 'saisie_releve_screen.dart';
 /// Comparaison / Historique restent accessibles depuis Marchés / Produits.
 /// L'administration reste accessible depuis Profil pour les admins.
 class AccueilScreen extends StatefulWidget {
-  const AccueilScreen(
-      {super.key, this.onThemeModeChanged, this.currentThemeMode});
-
-  final void Function(ThemeMode)? onThemeModeChanged;
-  final ThemeMode? currentThemeMode;
+  const AccueilScreen({super.key});
 
   @override
   State<AccueilScreen> createState() => _AccueilScreenState();
@@ -53,10 +50,7 @@ class _AccueilScreenState extends State<AccueilScreen> {
       const MarchesScreen(),
       const ProduitsScreen(),
       const _OngletReleves(),
-      CompteScreen(
-        onThemeModeChanged: widget.onThemeModeChanged,
-        currentThemeMode: widget.currentThemeMode,
-      ),
+      const CompteScreen(),
     ];
 
     return Scaffold(
@@ -130,8 +124,16 @@ class _AccueilScreenState extends State<AccueilScreen> {
         ],
         ),
       ),
-      floatingActionButton: _index == 3 && Session.instance.estConnecte
-          ? FloatingActionButton.extended(
+      // Bulle de l'assistant IA sur tous les onglets ; sur Relevés, elle
+      // se place au-dessus du bouton « Nouveau ».
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          const BulleAssistant(),
+          if (_index == 3 && Session.instance.estConnecte) ...[
+            const SizedBox(height: 12),
+            FloatingActionButton.extended(
               heroTag: 'new-releve',
               onPressed: () {
                 Navigator.of(context).push(
@@ -141,8 +143,10 @@ class _AccueilScreenState extends State<AccueilScreen> {
               },
               icon: const Icon(Icons.add_rounded),
               label: const Text('Nouveau'),
-            )
-          : null,
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

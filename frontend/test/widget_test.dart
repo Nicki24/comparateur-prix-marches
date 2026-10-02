@@ -9,7 +9,8 @@ import 'package:comparateur_prix_app/screens/login_screen.dart';
 import 'package:comparateur_prix_app/widgets/marketscope_header.dart';
 
 void main() {
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+  // Visite guidée déjà vue : on arrive directement sur l'accueil.
+  setUp(() => SharedPreferences.setMockInitialValues({'onboarding_vu': true}));
 
   testWidgets('L’application démarre avec la navigation principale', (tester) async {
     await tester.pumpWidget(const App());

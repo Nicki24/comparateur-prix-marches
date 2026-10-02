@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screens/accueil_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'services/preferences_app.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -10,54 +11,50 @@ void main() {
   runApp(const App());
 }
 
-class App extends StatefulWidget {
+class App extends StatelessWidget {
   const App({super.key});
 
   @override
-  State<App> createState() => _AppState();
-}
-
-class _AppState extends State<App> {
-  ThemeMode _themeMode = ThemeMode.system;
-
-  @override
-  void initState() {
-    super.initState();
-    _chargerThemeMode();
-  }
-
-  Future<void> _chargerThemeMode() async {
-    final prefs = await SharedPreferences.getInstance();
-    final themeIndex = prefs.getInt('theme_mode') ?? 0;
-    setState(() {
-      _themeMode = ThemeMode.values[themeIndex];
-    });
-  }
-
-  void _changerThemeMode(ThemeMode mode) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('theme_mode', mode.index);
-    setState(() {
-      _themeMode = mode;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'MarketScope',
-      debugShowCheckedModeBanner: false,
-      locale: const Locale('fr'),
-      supportedLocales: const [Locale('fr'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: _themeMode,
-      home: AccueilScreen(onThemeModeChanged: _changerThemeMode, currentThemeMode: _themeMode),
+    final prefs = PreferencesApp.instance;
+    return ListenableBuilder(
+      listenable: prefs,
+      builder: (context, _) {
+        final Widget accueil;
+        if (!prefs.charge) {
+          // Lecture des préférences (quelques ms) : fond encre neutre.
+          accueil = const ColoredBox(color: AppColors.ink);
+        } else if (!prefs.onboardingVu) {
+          accueil = OnboardingScreen(onTermine: prefs.marquerOnboardingVu);
+        } else {
+          accueil = const AccueilScreen();
+        }
+
+        return MaterialApp(
+          title: 'MarketScope',
+          debugShowCheckedModeBanner: false,
+          locale: const Locale('fr'),
+          supportedLocales: const [Locale('fr'), Locale('en')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: prefs.themeMode,
+          // Fondu doux entre clair et sombre plutôt qu'un changement sec.
+          themeAnimationDuration: const Duration(milliseconds: 450),
+          themeAnimationCurve: Curves.easeInOutCubic,
+          home: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            child: KeyedSubtree(
+              key: ValueKey(accueil.runtimeType),
+              child: accueil,
+            ),
+          ),
+        );
+      },
     );
   }
 }

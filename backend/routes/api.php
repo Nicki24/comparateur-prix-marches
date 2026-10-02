@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AssistantController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ComparisonController;
 use App\Http\Controllers\Api\MarcheController;
@@ -30,6 +31,9 @@ Route::get('/produits/{produit}/historique', [ComparisonController::class, 'hist
 
 // --- Tableau de bord (synthèse publique) ---
 Route::get('/stats', [StatistiqueController::class, 'synthese']);
+
+// --- Assistant IA (public, limité par utilisateur ou par IP) ---
+Route::post('/assistant', [AssistantController::class, 'discuter'])->middleware('throttle:assistant');
 
 // --- Zone authentifiée (contributeurs + admin) ---
 Route::middleware('auth:sanctum')->group(function () {

@@ -64,12 +64,19 @@ class ApiClient {
         http.get(_uri(chemin, query), headers: _headers(token: token)));
   }
 
-  Future<dynamic> post(String chemin, Map<String, dynamic> corps) async {
-    return _executer(() => http.post(
-          _uri(chemin),
-          headers: _headers(),
-          body: jsonEncode(corps),
-        ));
+  Future<dynamic> post(
+    String chemin,
+    Map<String, dynamic> corps, {
+    Duration timeout = _timeout,
+  }) async {
+    return _executer(
+      () => http.post(
+        _uri(chemin),
+        headers: _headers(),
+        body: jsonEncode(corps),
+      ),
+      timeout: timeout,
+    );
   }
 
   Future<dynamic> put(String chemin, Map<String, dynamic> corps) async {
@@ -86,10 +93,13 @@ class ApiClient {
 
   /// Exécute la requête et convertit les échecs réseau (serveur éteint,
   /// pas de connexion, délai dépassé) en [ApiException] lisible.
-  Future<dynamic> _executer(Future<http.Response> Function() requete) async {
+  Future<dynamic> _executer(
+    Future<http.Response> Function() requete, {
+    Duration timeout = _timeout,
+  }) async {
     final http.Response reponse;
     try {
-      reponse = await requete().timeout(_timeout);
+      reponse = await requete().timeout(timeout);
     } on TimeoutException {
       throw const ApiException(
           0, 'Le serveur met trop de temps à répondre. Réessayez.');

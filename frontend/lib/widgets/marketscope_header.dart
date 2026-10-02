@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'actions_header.dart';
 
 /// Asset du badge rond MarketScope (logo officiel complet).
 const _assetBadge = 'assets/marketscope_logo_round.png';
@@ -92,6 +93,9 @@ class MarketScopeBadge extends StatelessWidget {
 /// * Pages empilées (avec [titre]) : bouton retour + titre de la page
 ///   (et [sousTitre] facultatif) — l'utilisateur sait toujours où il est.
 ///
+/// Sur les onglets racine, les boutons Aide et Thème sont ajoutés
+/// automatiquement après les [actions] propres à l'écran.
+///
 /// Fond marine du thème, hauteur standard, fine ligne d'accent en bas.
 class MarketScopeHeader extends StatelessWidget
     implements PreferredSizeWidget {
@@ -179,6 +183,7 @@ class MarketScopeHeader extends StatelessWidget
       title: titreWidget,
       actions: [
         ...?actions,
+        if (titre == null) ...const [BoutonAide(), BoutonTheme()],
         const SizedBox(width: AppSpacing.xs),
       ],
       shape: Border(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/releve_prix.dart';
+import '../services/preferences_app.dart';
 import '../services/releve_service.dart';
 import '../services/session.dart';
 import '../theme/app_theme.dart';
@@ -17,11 +18,7 @@ import 'signalements_screen.dart';
 
 /// Vue de l'utilisateur connecté : profil + actions selon le rôle.
 class ProfilScreen extends StatefulWidget {
-  const ProfilScreen(
-      {super.key, this.onThemeModeChanged, this.currentThemeMode});
-
-  final void Function(ThemeMode)? onThemeModeChanged;
-  final ThemeMode? currentThemeMode;
+  const ProfilScreen({super.key});
 
   @override
   State<ProfilScreen> createState() => _ProfilScreenState();
@@ -205,22 +202,23 @@ class _ProfilScreenState extends State<ProfilScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment:
                               CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'Apparence',
                               style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14),
                             ),
                             Text(
-                              'Mode clair / sombre',
+                              'Clair · sombre · système',
                               style: TextStyle(
                                   fontSize: 12.5,
-                                  color: AppColors.textMuted),
+                                  color: theme
+                                      .colorScheme.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -229,30 +227,30 @@ class _ProfilScreenState extends State<ProfilScreen> {
                         segments: const [
                           ButtonSegment(
                             value: ThemeMode.light,
+                            tooltip: 'Clair',
                             icon: Icon(Icons.light_mode_rounded,
                                 size: 16),
                           ),
                           ButtonSegment(
                             value: ThemeMode.dark,
+                            tooltip: 'Sombre',
                             icon: Icon(Icons.dark_mode_rounded,
                                 size: 16),
                           ),
                           ButtonSegment(
                             value: ThemeMode.system,
+                            tooltip: 'Système',
                             icon: Icon(Icons.settings_suggest_rounded,
                                 size: 16),
                           ),
                         ],
-                        selected: {
-                          widget.currentThemeMode ?? ThemeMode.system
-                        },
+                        selected: {PreferencesApp.instance.themeMode},
                         showSelectedIcon: false,
                         style: SegmentedButton.styleFrom(
                           visualDensity: VisualDensity.compact,
                         ),
                         onSelectionChanged: (s) =>
-                            widget.onThemeModeChanged
-                                ?.call(s.first),
+                            PreferencesApp.instance.changerTheme(s.first),
                       ),
                     ],
                   ),
