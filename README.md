@@ -20,6 +20,19 @@ Ce projet vise à aider les consommateurs à comparer les prix des produits esse
   - 🔁 Maximum **1 relevé / contributeur / produit / marché / jour**.
 - **Statistiques & graphiques** : évolution des prix (bibliothèque `fl_chart`).
 
+## 📸 Captures d'écran
+
+Six captures de l'application en fonctionnement (rendu Flutter, format portrait mobile).
+
+| | | |
+|:-:|:-:|:-:|
+| ![Capture 1](docs/captures/capture-01.png) | ![Capture 2](docs/captures/capture-02.png) | ![Capture 3](docs/captures/capture-03.png) |
+| **1** | **2** | **3** |
+| ![Capture 4](docs/captures/capture-04.png) | ![Capture 5](docs/captures/capture-05.png) | ![Capture 6](docs/captures/capture-06.png) |
+| **4** | **5** | **6** |
+
+> Fichiers sources dans [`docs/captures/`](docs/captures/) — 620 × 895 px environ, 618 Ko au total.
+
 ## 🏗️ Architecture
 
 Stack choisie (**Plan A — application mobile**) :
