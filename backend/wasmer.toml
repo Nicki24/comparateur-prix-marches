@@ -2,6 +2,11 @@
 # Wasmer ne fournit officiellement que PHP 8.3 : composer.json fixe donc
 # config.platform.php à 8.3 pour que les dépendances restent compatibles.
 
+[package]
+# Commande lancée par défaut (serveur web) ; « artisan » ne sert
+# qu'aux tâches de déploiement.
+entrypoint = "run"
+
 [dependencies]
 "php/php" = "^8.3"
 
