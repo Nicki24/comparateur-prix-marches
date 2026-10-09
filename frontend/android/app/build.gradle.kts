@@ -1,8 +1,18 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Clé de signature de production, hors du dépôt (voir android/.gitignore).
+// android/key.properties : storeFile, storePassword, keyAlias, keyPassword.
+val proprietesCle = Properties().apply {
+    val fichier = rootProject.file("key.properties")
+    if (fichier.exists()) load(FileInputStream(fichier))
 }
 
 android {
@@ -31,11 +41,26 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (proprietesCle.isNotEmpty()) {
+            create("release") {
+                storeFile = file(proprietesCle["storeFile"] as String)
+                storePassword = proprietesCle["storePassword"] as String
+                keyAlias = proprietesCle["keyAlias"] as String
+                keyPassword = proprietesCle["keyPassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Clé MarketScope si android/key.properties existe ; sinon clé de
+            // debug (APK de test seulement : ne pas le distribuer).
+            signingConfig = if (proprietesCle.isNotEmpty()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }
