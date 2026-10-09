@@ -1,0 +1,25 @@
+# Paquet Wasmer de l'API MarketScope (Laravel).
+# Wasmer ne fournit officiellement que PHP 8.3 : composer.json fixe donc
+# config.platform.php à 8.3 pour que les dépendances restent compatibles.
+
+[dependencies]
+"php/php" = "^8.3"
+
+[fs]
+"/app/" = "."
+
+# Serveur web : sert public/index.php (front controller Laravel).
+[[command]]
+name = "run"
+module = "php/php:php"
+runner = "wasi"
+[command.annotations.wasi]
+main-args = ["-t", "/app/public", "-S", "localhost:8080"]
+
+# `php artisan …`, utilisé par les tâches de déploiement (app.yaml).
+[[command]]
+name = "artisan"
+module = "php/php:php"
+runner = "wasi"
+[command.annotations.wasi]
+main-args = ["/app/artisan"]

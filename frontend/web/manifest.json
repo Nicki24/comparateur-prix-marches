@@ -3,7 +3,7 @@
     "short_name": "MarketScope",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0E2A38",
+    "background_color": "#FFFFFF",
     "theme_color": "#0E2A38",
     "description": "Comparez les prix des marchés locaux de Toliara (Madagascar).",
     "orientation": "portrait-primary",

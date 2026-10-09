@@ -65,6 +65,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
   image: ^4.10.1
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -131,3 +132,21 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Icône de l'application (Android + web) générée depuis le logo officiel :
+#   dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: assets/icon/marketscope_icon.png
+  android: true
+  ios: false
+  min_sdk_android: 23
+  # Icône adaptative Android : logo rond sur fond blanc, avec marge pour
+  # que les masques (cercle, carré arrondi…) ne rognent pas le contour.
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/icon/marketscope_icon.png
+  adaptive_icon_foreground_inset: 18
+  web:
+    generate: true
+    image_path: assets/icon/marketscope_icon.png
+    background_color: "#FFFFFF"
+    theme_color: "#0E2A38"
