@@ -68,6 +68,17 @@ class GeminiFournisseur implements FournisseurIA
                 return $texte;
             }
 
+            // Un outil appelé sans argument arrive avec "args": {} ; décodé en
+            // tableau PHP vide, il repartirait en liste [] que Gemini refuse
+            // (« Proto field is not repeating »). On le renvoie en objet.
+            $parts = array_map(function (array $p) {
+                if (isset($p['functionCall']) && ($p['functionCall']['args'] ?? null) === []) {
+                    $p['functionCall']['args'] = new \stdClass;
+                }
+
+                return $p;
+            }, $parts);
+
             $contents[] = ['role' => 'model', 'parts' => $parts];
             $contents[] = [
                 'role' => 'user',

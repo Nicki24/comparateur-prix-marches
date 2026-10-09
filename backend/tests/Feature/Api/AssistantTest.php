@@ -74,6 +74,25 @@ class AssistantTest extends TestCase
         });
     }
 
+    public function test_un_outil_sans_argument_est_renvoye_a_gemini_avec_un_objet_vide(): void
+    {
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::sequence()
+                ->push(['candidates' => [['content' => ['role' => 'model', 'parts' => [
+                    ['functionCall' => ['id' => 'a1', 'name' => 'rechercher_produits', 'args' => new \stdClass]],
+                ]]]]])
+                ->push(['candidates' => [['content' => ['role' => 'model', 'parts' => [
+                    ['text' => 'Nous suivons le riz local.'],
+                ]]]]]),
+        ]);
+
+        $this->question('Quels produits suivez-vous ?')->assertOk();
+
+        // "args" doit repartir en objet JSON {} et non en liste [] (refusée par Gemini).
+        Http::assertSent(fn (Request $r) => isset($r['contents'][1])
+            && str_contains($r->body(), '"functionCall":{"id":"a1","name":"rechercher_produits","args":{}}'));
+    }
+
     public function test_bascule_sur_openrouter_si_gemini_echoue(): void
     {
         Http::fake([
