@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../utils/mise_en_page.dart';
 import 'actions_header.dart';
+import 'navigation_principale.dart';
 
 /// Asset du badge rond MarketScope (logo officiel complet).
 const _assetBadge = 'assets/marketscope_logo_round.png';
@@ -96,7 +98,12 @@ class MarketScopeBadge extends StatelessWidget {
 /// Sur les onglets racine, les boutons Aide et Thème sont ajoutés
 /// automatiquement après les [actions] propres à l'écran.
 ///
-/// Fond marine du thème, hauteur standard, fine ligne d'accent en bas.
+/// Fond marine du thème, fine ligne d'accent en bas.
+///
+/// Deux formats selon la largeur de la fenêtre (voir [MiseEnPage.estLarge]) :
+/// * compact (téléphone) : barre standard de 56 px, badge 32 px ;
+/// * large (plein écran) : barre de 76 px, badge et wordmark agrandis,
+///   accroche sous la marque, et contenu aligné sur la colonne centrale.
 class MarketScopeHeader extends StatelessWidget
     implements PreferredSizeWidget {
   const MarketScopeHeader({
@@ -119,23 +126,81 @@ class MarketScopeHeader extends StatelessWidget
   final PreferredSizeWidget? bottom;
 
   static const double hauteurBarre = kToolbarHeight;
+  static const double hauteurBarreLarge = 76;
+
+  /// `preferredSize` n'a pas accès au contexte : la largeur est lue sur la
+  /// fenêtre. Le Scaffold se reconstruit quand elle change.
+  static bool get _fenetreLarge {
+    final vue = WidgetsBinding.instance.platformDispatcher.implicitView;
+    if (vue == null) return false;
+    return vue.physicalSize.width / vue.devicePixelRatio >=
+        MiseEnPage.seuilLarge;
+  }
 
   @override
-  Size get preferredSize =>
-      Size.fromHeight(hauteurBarre + (bottom?.preferredSize.height ?? 0));
+  Size get preferredSize => Size.fromHeight(
+      (_fenetreLarge ? hauteurBarreLarge : hauteurBarre) +
+          (bottom?.preferredSize.height ?? 0));
 
   @override
   Widget build(BuildContext context) {
+    final large = MiseEnPage.estLarge(context);
+    // Onglets racine sur desktop : la navigation principale vit ici.
+    final navigation = titre == null && MiseEnPage.estBureau(context)
+        ? NavigationPrincipale.maybeOf(context)
+        : null;
     final Widget titreWidget;
-    if (titre == null) {
+    if (navigation != null) {
+      titreWidget = Row(
+        children: [
+          Semantics(
+            header: true,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                MarketScopeBadge(taille: 44),
+                SizedBox(width: 12),
+                MarketScopeWordmark(taille: 26),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: LiensNavigationHeader(navigation: navigation),
+          ),
+        ],
+      );
+    } else if (titre == null) {
       titreWidget = Semantics(
         header: true,
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            MarketScopeBadge(),
-            SizedBox(width: 10),
-            Flexible(child: MarketScopeWordmark(taille: 21)),
+            MarketScopeBadge(taille: large ? 48 : 32),
+            SizedBox(width: large ? 14 : 10),
+            Flexible(
+              child: large
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const MarketScopeWordmark(taille: 28),
+                        const SizedBox(height: 5),
+                        Text(
+                          'Comparez les prix des marchés de Toliara',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: AppFonts.sans,
+                            fontSize: 12.5,
+                            height: 1.2,
+                            color: AppColors.paper.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    )
+                  : const MarketScopeWordmark(taille: 21),
+            ),
           ],
         ),
       );
@@ -148,10 +213,10 @@ class MarketScopeHeader extends StatelessWidget
             titre!,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: AppFonts.display,
               fontWeight: FontWeight.w700,
-              fontSize: 18,
+              fontSize: large ? 22 : 18,
               height: 1.2,
               color: AppColors.paper,
             ),
@@ -163,7 +228,7 @@ class MarketScopeHeader extends StatelessWidget
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: AppFonts.sans,
-                fontSize: 12,
+                fontSize: large ? 13.5 : 12,
                 height: 1.3,
                 color: AppColors.paper.withValues(alpha: 0.65),
               ),
@@ -172,6 +237,12 @@ class MarketScopeHeader extends StatelessWidget
       );
     }
 
+    // Sur grand écran, logo / bouton retour et actions sont alignés sur
+    // les bords du contenu centré plutôt que sur ceux de la fenêtre.
+    final marge = MiseEnPage.marge(context);
+    final retour = titre != null &&
+        (ModalRoute.of(context)?.impliesAppBarDismissal ?? false);
+
     return AppBar(
       backgroundColor: AppColors.ink,
       foregroundColor: AppColors.paper,
@@ -179,12 +250,30 @@ class MarketScopeHeader extends StatelessWidget
       scrolledUnderElevation: 0,
       elevation: 0,
       centerTitle: false,
-      titleSpacing: titre == null ? AppSpacing.md : 0,
-      title: titreWidget,
+      toolbarHeight: large ? hauteurBarreLarge : hauteurBarre,
+      iconTheme: IconThemeData(size: large ? 26 : 24),
+      actionsIconTheme: IconThemeData(size: large ? 26 : 24),
+      leading: retour && marge > 0
+          ? Padding(
+              padding: EdgeInsets.only(left: marge),
+              child: const BackButton(),
+            )
+          : null,
+      leadingWidth: retour && marge > 0 ? kToolbarHeight + marge : null,
+      // La marge de centrage passe par un Padding et non par titleSpacing :
+      // AppBar retire titleSpacing deux fois de la largeur du titre, ce
+      // qui l'étranglait sur grand écran (onglets en débordement).
+      titleSpacing: 0,
+      title: titre == null
+          ? Padding(
+              padding: EdgeInsets.only(left: AppSpacing.md + marge),
+              child: titreWidget,
+            )
+          : titreWidget,
       actions: [
         ...?actions,
         if (titre == null) ...const [BoutonAide(), BoutonTheme()],
-        const SizedBox(width: AppSpacing.xs),
+        SizedBox(width: (large ? AppSpacing.sm : AppSpacing.xs) + marge),
       ],
       shape: Border(
         bottom: BorderSide(color: AppColors.paper.withValues(alpha: 0.06)),

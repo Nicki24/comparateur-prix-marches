@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../theme/app_theme.dart';
 
@@ -48,60 +49,60 @@ class ProduitStyle {
     // Riz / céréales.
     if (_contient(brut, ['riz', 'céréale', 'cereale', 'farine', 'blé', 'ble', 'maïs', 'mais'])) {
       return const ProduitStyle(
-          icone: Icons.grain_rounded, couleur: Color(0xFFB7791F));
+          icone: PhosphorIconsRegular.grains, couleur: Color(0xFFB7791F));
     }
     // Huiles.
     if (_contient(brut, ['huile', 'huile alimentaire'])) {
       return const ProduitStyle(
-          icone: Icons.water_drop_outlined, couleur: Color(0xFFC9930A));
+          icone: PhosphorIconsRegular.drop, couleur: Color(0xFFC9930A));
     }
     // Légumes : tomate, oignon…
     if (_contient(brut, ['tomate', 'oignon', 'légume', 'legume', 'carotte', 'pomme de terre', 'brède', 'brede', 'chou'])) {
       return const ProduitStyle(
-          icone: Icons.eco_rounded, couleur: Color(0xFF2DA44E));
+          icone: PhosphorIconsRegular.carrot, couleur: Color(0xFF2DA44E));
     }
     // Fruits.
     if (_contient(brut, ['fruit', 'banane', 'mangue', 'orange', 'pomme', 'ananas'])) {
       return const ProduitStyle(
-          icone: Icons.apple_rounded, couleur: Color(0xFF2DA44E));
+          icone: PhosphorIconsRegular.orangeSlice, couleur: Color(0xFF2DA44E));
     }
     // Viande.
     if (_contient(brut, ['viande', 'bœuf', 'boeuf', 'porc', 'poulet', 'zébu', 'zebu'])) {
       return const ProduitStyle(
-          icone: Icons.set_meal_rounded, couleur: AppColors.terracotta);
+          icone: PhosphorIconsRegular.cookingPot, couleur: AppColors.terracotta);
     }
     // Poisson.
     if (_contient(brut, ['poisson', 'thon', 'carpe', 'tilapia'])) {
       return const ProduitStyle(
-          icone: Icons.phishing_rounded, couleur: Color(0xFF1D6FA5));
+          icone: PhosphorIconsRegular.fish, couleur: Color(0xFF1D6FA5));
     }
     // Haricot / sucre.
     if (_contient(brut, ['haricot', 'lentille', 'pois'])) {
       return const ProduitStyle(
-          icone: Icons.spa_rounded, couleur: Color(0xFF2DA44E));
+          icone: PhosphorIconsRegular.plant, couleur: Color(0xFF2DA44E));
     }
     if (_contient(brut, ['sucre', 'sel'])) {
       return const ProduitStyle(
-          icone: Icons.hexagon_outlined, couleur: Color(0xFF8A6D1B));
+          icone: PhosphorIconsRegular.hexagon, couleur: Color(0xFF8A6D1B));
     }
     // Hygiène / emballés.
     if (_contient(brut, ['savon', 'hygièn', 'hygien', 'nettoyage', 'emballé', 'emballe'])) {
       return const ProduitStyle(
-          icone: Icons.soap_rounded, couleur: Color(0xFF6B7C8D));
+          icone: PhosphorIconsRegular.sprayBottle, couleur: Color(0xFF6B7C8D));
     }
     // Boissons.
     if (_contient(brut, ['boisson', 'eau', 'jus'])) {
       return const ProduitStyle(
-          icone: Icons.local_drink_rounded, couleur: Color(0xFF1D6FA5));
+          icone: PhosphorIconsRegular.pintGlass, couleur: Color(0xFF1D6FA5));
     }
     // Épices.
     if (_contient(brut, ['épice', 'epice', 'poivre', 'curry', 'condiment'])) {
       return const ProduitStyle(
-          icone: Icons.spa_rounded, couleur: AppColors.saffron);
+          icone: PhosphorIconsRegular.plant, couleur: AppColors.saffron);
     }
     // Défaut alimentaire.
     return const ProduitStyle(
-        icone: Icons.shopping_basket_rounded, couleur: AppColors.green);
+        icone: PhosphorIconsRegular.basket, couleur: AppColors.green);
   }
 
   static bool _contient(String brut, List<String> mots) {

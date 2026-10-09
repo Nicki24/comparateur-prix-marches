@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/comparaison.dart';
 import '../models/historique_point.dart';
@@ -12,6 +13,7 @@ import '../widgets/marketscope_header.dart';
 import '../widgets/ms_anim.dart';
 import '../widgets/ms_badge.dart';
 import '../widgets/ms_card.dart';
+import '../utils/mise_en_page.dart';
 
 /// Écran de comparaison d'un produit : prix par marché (bar chart)
 /// et évolution historique (line chart) avec fl_chart.
@@ -119,7 +121,7 @@ class _ComparaisonTabState extends State<_ComparaisonTab> {
         if (paire.isEmpty) {
           return const ContenuVide(
             message: 'Aucun prix relevé pour ce produit pour le moment.',
-            icone: Icons.show_chart,
+            icone: PhosphorIconsRegular.chartLine,
           );
         }
 
@@ -135,7 +137,8 @@ class _ComparaisonTabState extends State<_ComparaisonTab> {
           onRefresh: _recharger,
           child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: MiseEnPage.padding(
+    context, const EdgeInsets.all(AppSpacing.md)),
               children: [
                 MsApparition(
                     child: _CarteMeilleurPrix(
@@ -285,7 +288,7 @@ class _CarteMeilleurPrix extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFFCFE7D8),
+              color: AppColors.onInkSoft,
             ),
           ),
         ],
@@ -323,13 +326,12 @@ class _MiniStat extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  label.toUpperCase(),
+                  label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    fontFamily: AppFonts.mono,
-                    fontSize: 10,
-                    letterSpacing: 0.8,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -379,7 +381,7 @@ class _BadgeMeilleureAffaire extends StatelessWidget {
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.whatshot_rounded, size: 13, color: Colors.white),
+            Icon(PhosphorIconsRegular.fire, size: 13, color: Colors.white),
             SizedBox(width: 4),
             Text(
               'Meilleure affaire',
@@ -812,7 +814,7 @@ class _HistoriqueTabState extends State<_HistoriqueTab>
               if (points.isEmpty) {
                 return const ContenuVide(
                   message: 'Pas de données d’historique.',
-                  icone: Icons.timeline,
+                  icone: PhosphorIconsRegular.chartLine,
                 );
               }
               // Synthèse période : min / max / moyenne / variation.
@@ -832,7 +834,8 @@ class _HistoriqueTabState extends State<_HistoriqueTab>
                 child: ListView(
                     physics:
                         const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(AppSpacing.md),
+                    padding: MiseEnPage.padding(
+    context, const EdgeInsets.all(AppSpacing.md)),
                     children: [
                       AnimatedSwitcher(
                         duration:
@@ -858,9 +861,8 @@ class _HistoriqueTabState extends State<_HistoriqueTab>
                                               .textTheme
                                               .labelSmall
                                               ?.copyWith(
-                                                fontFamily:
-                                                    AppFonts.mono,
-                                                letterSpacing: 0.6,
+                                                fontWeight:
+                                                    FontWeight.w500,
                                                 color: Theme.of(
                                                         context)
                                                     .colorScheme
@@ -1150,10 +1152,10 @@ class _VariationPanel extends StatelessWidget {
             ),
             child: Icon(
               stable
-                  ? Icons.trending_flat_rounded
+                  ? PhosphorIconsRegular.arrowRight
                   : (baisse
-                      ? Icons.trending_down_rounded
-                      : Icons.trending_up_rounded),
+                      ? PhosphorIconsRegular.trendDown
+                      : PhosphorIconsRegular.trendUp),
               color: couleur,
               size: 20,
             ),

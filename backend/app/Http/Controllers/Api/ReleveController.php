@@ -30,7 +30,7 @@ class ReleveController extends Controller
             ->when($request->filled('date_debut'), fn ($q) => $q->where('date_releve', '>=', $request->date_debut))
             ->when($request->filled('date_fin'), fn ($q) => $q->where('date_releve', '<=', $request->date_fin))
             ->orderByDesc('date_releve')
-            ->paginate($request->integer('per_page', 50) ?: 50);
+            ->paginate(min(max($request->integer('per_page', 50), 1), 100));
 
         return RelevePrixResource::collection($releves);
     }
@@ -79,7 +79,7 @@ class ReleveController extends Controller
             ->with(['produit', 'marche', 'signalements'])
             ->where('utilisateur_id', $request->user()->id)
             ->orderByDesc('date_releve')
-            ->paginate($request->integer('per_page', 50) ?: 50);
+            ->paginate(min(max($request->integer('per_page', 50), 1), 100));
 
         return RelevePrixResource::collection($releves);
     }
@@ -102,14 +102,20 @@ class ReleveController extends Controller
 
             fputcsv($handle, ['Date', 'Produit', 'Marché', 'Prix (Ar)', 'Unité', 'Contributeur', 'Statut'], ';');
 
+            // Neutralise les formules (=, +, -, @) qu'un contributeur pourrait
+            // glisser dans son nom pour qu'Excel les exécute à l'ouverture.
+            $cellule = static fn (?string $valeur): string => preg_match('/^[=+\-@\t\r]/', (string) $valeur)
+                ? "'".$valeur
+                : (string) $valeur;
+
             foreach ($releves as $releve) {
                 fputcsv($handle, [
                     $releve->date_releve?->toDateString(),
-                    $releve->produit->nom,
-                    $releve->marche->nom,
+                    $cellule($releve->produit->nom),
+                    $cellule($releve->marche->nom),
                     number_format((float) $releve->valeur, 2, ',', ' '),
-                    $releve->produit->unite_mesure,
-                    $releve->utilisateur->name,
+                    $cellule($releve->produit->unite_mesure),
+                    $cellule($releve->utilisateur->name),
                     $releve->statut,
                 ], ';');
             }

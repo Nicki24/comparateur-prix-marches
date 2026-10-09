@@ -3,21 +3,34 @@ import 'package:flutter/material.dart';
 abstract final class AppColors {
   static const ink = Color(0xFF0E2A38);
   static const ink2 = Color(0xFF163A4A);
-  static const green = Color(0xFF1C8A4E);
+  static const green = Color(
+    0xFF197F47,
+  ); // #1C8A4E assombri : blanc 5.0:1, papier 4.8:1 (WCAG AA)
   static const greenLight = Color(0xFF4CC26B);
   static const terracotta = Color(0xFFC1502E);
   static const saffron = Color(0xFFE0A23B);
   static const paper = Color(0xFFF6FAF7);
   static const paper2 = Color(0xFFEBF2ED);
   static const line = Color(0xFFD7E3DA);
+  // Bordure des contrôles interactifs (champs, boutons contour) : 3,1:1
+  // sur blanc et papier (WCAG 1.4.11). [line] reste pour le décoratif.
+  static const lineStrong = Color(0xFF7F928B);
   static const text = Color(0xFF12242A);
   static const textMuted = Color(0xFF5A6D66);
   static const white = Color(0xFFFFFFFF);
 
+  // Texte posé sur les bandeaux encre (header, ticker, fond d'auth),
+  // identique en thème clair et sombre. Contrastes sur [ink] : 13,2 / 7,0 / 11,4.
+  static const onInk = Color(0xFFEAF3EE);
+  static const onInkMuted = Color(0xFF9FB6AE);
+  static const onInkSoft = Color(0xFFCFE7D8);
+
   static const okBg = Color(0xFFE4F5E9);
   static const okFg = Color(0xFF166B3A);
   static const alertBg = Color(0xFFFBE7E0);
-  static const alertFg = Color(0xFFC1502E);
+  // Terracotta assombri pour le TEXTE d'alerte : 5,15:1 sur alertBg
+  // (le terracotta de la charte, 3,95:1, ne passe pas l'AA §8.5).
+  static const alertFg = Color(0xFFA8401D);
   static const staleBg = Color(0xFFFCF0DC);
   static const staleFg = Color(0xFF8A5E15);
 
@@ -25,6 +38,7 @@ abstract final class AppColors {
   static const darkPaper = Color(0xFF081A23);
   static const darkPaper2 = Color(0xFF163A4A);
   static const darkLine = Color(0xFF2A4A57);
+  static const darkLineStrong = Color(0xFF6A8894);
   static const darkText = Color(0xFFF6FAF7);
   static const darkTextMuted = Color(0xFFB9C9C3);
   static const darkSurface = Color(0xFF163A4A);
@@ -235,44 +249,45 @@ TextStyle stylePrix({
 
 abstract final class AppTheme {
   static ThemeData get light => _construire(
-        brightness: Brightness.light,
-        scheme: ColorScheme.fromSeed(seedColor: AppColors.green).copyWith(
-          primary: AppColors.green,
-          onPrimary: AppColors.white,
-          primaryContainer: AppColors.ink,
-          onPrimaryContainer: AppColors.paper,
-          secondary: AppColors.ink,
-          onSecondary: AppColors.white,
-          secondaryContainer: AppColors.paper2,
-          onSecondaryContainer: AppColors.ink,
-          tertiary: AppColors.terracotta,
-          onTertiary: AppColors.white,
-          surface: AppColors.white,
-          surfaceContainerHighest: AppColors.paper2,
-          onSurface: AppColors.text,
-          onSurfaceVariant: AppColors.textMuted,
-          outline: AppColors.line,
-          outlineVariant: AppColors.line,
-          error: AppColors.terracotta,
-          onError: AppColors.white,
-        ),
-        fond: AppColors.paper,
-        surface: AppColors.white,
-        surface2: AppColors.paper2,
-        bordure: AppColors.line,
-        texte: AppColors.text,
-        texteAttenue: AppColors.textMuted,
-        okBg: AppColors.okBg,
-        okFg: AppColors.okFg,
-        alertBg: AppColors.alertBg,
-        alertFg: AppColors.alertFg,
-        staleBg: AppColors.staleBg,
-        staleFg: AppColors.staleFg,
-      );
+    brightness: Brightness.light,
+    scheme: ColorScheme.fromSeed(seedColor: AppColors.green).copyWith(
+      primary: AppColors.green,
+      onPrimary: AppColors.white,
+      primaryContainer: AppColors.ink,
+      onPrimaryContainer: AppColors.paper,
+      secondary: AppColors.ink,
+      onSecondary: AppColors.white,
+      secondaryContainer: AppColors.paper2,
+      onSecondaryContainer: AppColors.ink,
+      tertiary: AppColors.terracotta,
+      onTertiary: AppColors.white,
+      surface: AppColors.white,
+      surfaceContainerHighest: AppColors.paper2,
+      onSurface: AppColors.text,
+      onSurfaceVariant: AppColors.textMuted,
+      outline: AppColors.line,
+      outlineVariant: AppColors.line,
+      error: AppColors.terracotta,
+      onError: AppColors.white,
+    ),
+    fond: AppColors.paper,
+    surface: AppColors.white,
+    surface2: AppColors.paper2,
+    bordure: AppColors.line,
+    texte: AppColors.text,
+    texteAttenue: AppColors.textMuted,
+    okBg: AppColors.okBg,
+    okFg: AppColors.okFg,
+    alertBg: AppColors.alertBg,
+    alertFg: AppColors.alertFg,
+    staleBg: AppColors.staleBg,
+    staleFg: AppColors.staleFg,
+  );
 
   static ThemeData get dark => _construire(
-        brightness: Brightness.dark,
-        scheme: ColorScheme.fromSeed(
+    brightness: Brightness.dark,
+    scheme:
+        ColorScheme.fromSeed(
           seedColor: AppColors.darkGreen,
           brightness: Brightness.dark,
         ).copyWith(
@@ -295,19 +310,19 @@ abstract final class AppTheme {
           error: AppColors.darkTerracotta,
           onError: AppColors.white,
         ),
-        fond: AppColors.darkPaper,
-        surface: AppColors.darkSurface,
-        surface2: AppColors.darkPaper2,
-        bordure: AppColors.darkLine,
-        texte: AppColors.darkText,
-        texteAttenue: AppColors.darkTextMuted,
-        okBg: AppColors.darkOkBg,
-        okFg: AppColors.darkOkFg,
-        alertBg: AppColors.darkAlertBg,
-        alertFg: AppColors.darkAlertFg,
-        staleBg: AppColors.darkStaleBg,
-        staleFg: AppColors.darkStaleFg,
-      );
+    fond: AppColors.darkPaper,
+    surface: AppColors.darkSurface,
+    surface2: AppColors.darkPaper2,
+    bordure: AppColors.darkLine,
+    texte: AppColors.darkText,
+    texteAttenue: AppColors.darkTextMuted,
+    okBg: AppColors.darkOkBg,
+    okFg: AppColors.darkOkFg,
+    alertBg: AppColors.darkAlertBg,
+    alertFg: AppColors.darkAlertFg,
+    staleBg: AppColors.darkStaleBg,
+    staleFg: AppColors.darkStaleFg,
+  );
 
   static ThemeData _construire({
     required Brightness brightness,
@@ -326,6 +341,9 @@ abstract final class AppTheme {
     required Color staleFg,
   }) {
     final base = ThemeData(brightness: brightness).textTheme;
+    final bordureControle = brightness == Brightness.dark
+        ? AppColors.darkLineStrong
+        : AppColors.lineStrong;
 
     final textTheme = base
         .copyWith(
@@ -375,6 +393,8 @@ abstract final class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: fond,
       fontFamily: AppFonts.sans,
+      focusColor: scheme.primary.withValues(alpha: 0.22),
+      hoverColor: scheme.primary.withValues(alpha: 0.06),
       textTheme: textTheme,
       canvasColor: fond,
       pageTransitionsTheme: const PageTransitionsTheme(
@@ -387,10 +407,24 @@ abstract final class AppTheme {
           TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
         },
       ),
-      dividerTheme: DividerThemeData(
-        color: bordure,
-        thickness: 1,
-        space: 1,
+      dividerTheme: DividerThemeData(color: bordure, thickness: 1, space: 1),
+      // Surfaces navigateur (web / desktop) : défilement et sélection
+      // reprennent la palette au lieu des valeurs par défaut.
+      scrollbarTheme: ScrollbarThemeData(
+        thickness: const WidgetStatePropertyAll(8),
+        radius: const Radius.circular(8),
+        thumbColor: WidgetStateProperty.resolveWith(
+          (etats) =>
+              etats.contains(WidgetState.hovered) ||
+                  etats.contains(WidgetState.dragged)
+              ? scheme.primary.withValues(alpha: 0.7)
+              : texteAttenue.withValues(alpha: 0.35),
+        ),
+      ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: scheme.primary,
+        selectionColor: scheme.primary.withValues(alpha: 0.28),
+        selectionHandleColor: scheme.primary,
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.ink,
@@ -418,10 +452,11 @@ abstract final class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface2,
-        indicatorColor: (brightness == Brightness.dark
-                ? AppColors.darkGreenLight
-                : AppColors.green)
-            .withValues(alpha: 0.16),
+        indicatorColor:
+            (brightness == Brightness.dark
+                    ? AppColors.darkGreenLight
+                    : AppColors.green)
+                .withValues(alpha: 0.16),
         height: 68,
         labelTextStyle: WidgetStatePropertyAll(
           TextStyle(
@@ -440,10 +475,11 @@ abstract final class AppTheme {
           foregroundColor: brightness == Brightness.dark
               ? AppColors.darkPaper
               : AppColors.white,
-          disabledBackgroundColor: (brightness == Brightness.dark
-                  ? AppColors.darkGreenLight
-                  : AppColors.green)
-              .withValues(alpha: 0.4),
+          disabledBackgroundColor:
+              (brightness == Brightness.dark
+                      ? AppColors.darkGreenLight
+                      : AppColors.green)
+                  .withValues(alpha: 0.4),
           shape: formePilule,
           padding: padragePilule,
           textStyle: buttonTextStyle,
@@ -453,7 +489,7 @@ abstract final class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: texte,
-          side: BorderSide(color: bordure),
+          side: BorderSide(color: bordureControle),
           shape: formePilule,
           padding: padragePilule,
           textStyle: buttonTextStyle,
@@ -461,9 +497,11 @@ abstract final class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
+          // Clair : vert foncé (6,2:1), plus de marge que le vert de
+          // marque (4,8:1) pour les liens textuels.
           foregroundColor: brightness == Brightness.dark
               ? AppColors.darkGreenLight
-              : AppColors.green,
+              : AppColors.okFg,
           shape: formePilule,
           textStyle: buttonTextStyle,
         ),
@@ -472,15 +510,15 @@ abstract final class AppTheme {
         filled: true,
         fillColor: surface,
         labelStyle: TextStyle(color: texteAttenue, fontSize: 14),
-        hintStyle: TextStyle(color: texteAttenue.withValues(alpha: 0.8)),
+        hintStyle: TextStyle(color: texteAttenue),
         prefixIconColor: texteAttenue,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(rayonChamp),
-          borderSide: BorderSide(color: bordure),
+          borderSide: BorderSide(color: bordureControle),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(rayonChamp),
-          borderSide: BorderSide(color: bordure),
+          borderSide: BorderSide(color: bordureControle),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(rayonChamp),
@@ -503,7 +541,10 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(rayonChamp),
           borderSide: BorderSide(color: bordure.withValues(alpha: 0.5)),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: surface2,
@@ -558,7 +599,9 @@ abstract final class AppTheme {
         ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: brightness == Brightness.dark ? AppColors.darkGreenLight : AppColors.green,
+        color: brightness == Brightness.dark
+            ? AppColors.darkGreenLight
+            : AppColors.green,
       ),
       extensions: <ThemeExtension<dynamic>>[
         MarketScopeTokens(

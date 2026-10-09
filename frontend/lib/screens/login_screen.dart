@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../services/api_client.dart';
 import '../services/auth_service.dart';
@@ -134,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.centerLeft,
                       child: IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.arrow_back_rounded,
+                        icon: const Icon(PhosphorIconsRegular.arrowLeft,
                             color: surEncre),
                         style: IconButton.styleFrom(
                           backgroundColor:
@@ -198,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               autofillHints: const [AutofillHints.email],
                               textInputAction: TextInputAction.next,
                               decoration: _decoChamp(
-                                icone: Icons.mail_outline,
+                                icone: PhosphorIconsRegular.envelopeSimple,
                                 label: 'Adresse e-mail',
                               ),
                               validator: (v) {
@@ -219,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               autofillHints: const [AutofillHints.password],
                               textInputAction: TextInputAction.done,
                               decoration: _decoChamp(
-                                icone: Icons.lock_outline,
+                                icone: PhosphorIconsRegular.lock,
                                 label: 'Mot de passe',
                                 suffix: IconButton(
                                   tooltip: _motDePasseVisible
@@ -227,8 +228,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       : 'Afficher le mot de passe',
                                   icon: Icon(
                                     _motDePasseVisible
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
+                                        ? PhosphorIconsRegular.eyeSlash
+                                        : PhosphorIconsRegular.eye,
                                     size: 20,
                                   ),
                                   onPressed: () => setState(() =>
@@ -251,7 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 24),
                             MarketScopeButton(
                               label: 'Se connecter',
-                              icone: Icons.login_rounded,
+                              icone: PhosphorIconsRegular.signIn,
                               enChargement: _enChargement,
                               onPressed:
                                   _enChargement ? null : _seConnecter,
@@ -318,17 +319,17 @@ class _AtmosphereMarche extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
-                Icon(Icons.eco_rounded, size: 26, color: surEncre),
+                Icon(PhosphorIconsRegular.carrot, size: 26, color: surEncre),
                 SizedBox(width: 22),
-                Icon(Icons.grain_rounded, size: 30, color: surEncre),
+                Icon(PhosphorIconsRegular.grains, size: 30, color: surEncre),
                 SizedBox(width: 22),
-                Icon(Icons.water_drop_outlined,
+                Icon(PhosphorIconsRegular.drop,
                     size: 26, color: surEncre),
                 SizedBox(width: 22),
-                Icon(Icons.shopping_basket_rounded,
+                Icon(PhosphorIconsRegular.basket,
                     size: 28, color: surEncre),
                 SizedBox(width: 22),
-                Icon(Icons.spa_rounded, size: 26, color: surEncre),
+                Icon(PhosphorIconsRegular.plant, size: 26, color: surEncre),
               ],
             ),
           ),

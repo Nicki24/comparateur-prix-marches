@@ -8,7 +8,7 @@ import 'tap_scale.dart';
 ///
 /// Variantes : [MarketScopeCard], [MarketScopeStatCard],
 /// [MarketScopeChartCard], [MarketScopeSectionTitle].
-class MarketScopeCard extends StatelessWidget {
+class MarketScopeCard extends StatefulWidget {
   const MarketScopeCard({
     super.key,
     required this.child,
@@ -27,33 +27,55 @@ class MarketScopeCard extends StatelessWidget {
   final bool sansOmbre;
 
   @override
+  State<MarketScopeCard> createState() => _MarketScopeCardState();
+}
+
+class _MarketScopeCardState extends State<MarketScopeCard> {
+  /// Survol souris (web / desktop) : bordure teintée de vert et ombre
+  /// de niveau 2, pour signaler qu'une carte est cliquable.
+  bool _survol = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final fond = couleur ??
+    final fond = widget.couleur ??
         (isDark ? AppColors.darkSurface : AppColors.white);
     final couleurBordure =
-        bordure ?? (isDark ? AppColors.darkLine : AppColors.line);
+        widget.bordure ?? (isDark ? AppColors.darkLine : AppColors.line);
+    final survol = _survol && widget.onTap != null;
 
-    final contenu = Container(
+    final contenu = AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
         color: fond,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: couleurBordure),
-        boxShadow: sansOmbre ? null : theme.cardShadows,
+        border: Border.all(
+          color: survol
+              ? Color.alphaBlend(
+                  theme.marque.withValues(alpha: 0.45), couleurBordure)
+              : couleurBordure,
+        ),
+        boxShadow: widget.sansOmbre
+            ? null
+            : (survol ? theme.cardShadowsHover : theme.cardShadows),
       ),
       clipBehavior: Clip.antiAlias,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
+          onTap: widget.onTap,
+          onHover: widget.onTap == null
+              ? null
+              : (v) => setState(() => _survol = v),
           borderRadius: BorderRadius.circular(AppRadius.card),
-          child: Padding(padding: padding, child: child),
+          child: Padding(padding: widget.padding, child: widget.child),
         ),
       ),
     );
 
-    if (onTap != null) {
+    if (widget.onTap != null) {
       return TapScale(child: contenu);
     }
     return contenu;
@@ -220,30 +242,29 @@ class MarketScopeSectionTitle extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: padding,
+      // Style « H2 section » de la charte V2 : Space Grotesk 18 SemiBold.
+      // Le titre porte seul la hiérarchie (pas de surtitre mono en
+      // capitales ni de barre colorée).
       child: Row(
         children: [
-          Container(
-            width: 4,
-            height: 22,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
           if (icone != null) ...[
-            const SizedBox(width: 8),
-            Icon(icone, size: 18, color: theme.colorScheme.primary),
+            Icon(icone, size: 20, color: theme.marque),
+            const SizedBox(width: 10),
           ],
-          const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              titre.toUpperCase(),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontFamily: AppFonts.mono,
-                letterSpacing: 1,
-                fontWeight: FontWeight.w600,
+            child: Semantics(
+              header: true,
+              child: Text(
+                titre,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontFamily: AppFonts.display,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.2,
+                  color: theme.colorScheme.onSurface,
+                ),
               ),
             ),
           ),

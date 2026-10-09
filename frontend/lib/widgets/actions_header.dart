@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../screens/aide_screen.dart';
 import '../services/preferences_app.dart';
@@ -30,12 +31,12 @@ class BoutonTheme extends StatelessWidget {
         ),
         child: sombre
             ? const Icon(
-                Icons.dark_mode_rounded,
+                PhosphorIconsRegular.moon,
                 key: ValueKey('lune'),
                 color: AppColors.darkSaffron,
               )
             : const Icon(
-                Icons.light_mode_rounded,
+                PhosphorIconsRegular.sun,
                 key: ValueKey('soleil'),
                 color: AppColors.saffron,
               ),
@@ -146,7 +147,7 @@ class _BoutonAideState extends State<BoutonAide>
             ],
           );
         },
-        child: const Icon(Icons.help_outline_rounded),
+        child: const Icon(PhosphorIconsRegular.question),
       ),
     );
   }

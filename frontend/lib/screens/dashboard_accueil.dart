@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/comparaison.dart';
 import '../models/marche.dart';
@@ -21,6 +22,7 @@ import '../widgets/produit_icone.dart';
 import '../widgets/statut_badge.dart';
 import 'comparaison_screen.dart';
 import 'marches_screen.dart';
+import '../utils/mise_en_page.dart';
 
 /// Onglet d'accueil : tableau de bord du marché.
 ///
@@ -87,8 +89,11 @@ class _DashboardAccueilState extends State<DashboardAccueil> {
             onRefresh: _recharger,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(
-                  top: AppSpacing.lg, bottom: AppSpacing.xl),
+              padding: MiseEnPage.padding(
+                context,
+                const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xl),
+                boutonsFlottants: 1,
+              ),
               children: [
                 _EnTete(
                   salutation: _salutation(),
@@ -102,7 +107,7 @@ class _DashboardAccueilState extends State<DashboardAccueil> {
                   const SizedBox(height: AppSpacing.lg),
                   const MarketScopeSectionTitle(
                     titre: 'Variations récentes',
-                    icone: Icons.swap_vert_rounded,
+                    icone: PhosphorIconsRegular.arrowsDownUp,
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   _ListeVariations(variations: donnees.variations),
@@ -123,7 +128,7 @@ class _DashboardAccueilState extends State<DashboardAccueil> {
                   const SizedBox(height: AppSpacing.lg),
                   MarketScopeSectionTitle(
                     titre: 'Marchés suivis',
-                    icone: Icons.storefront_rounded,
+                    icone: PhosphorIconsRegular.storefront,
                     actionLabel: 'Tout voir',
                     onAction: widget.onVoirMarches,
                   ),
@@ -134,7 +139,7 @@ class _DashboardAccueilState extends State<DashboardAccueil> {
                   const SizedBox(height: AppSpacing.lg),
                   MarketScopeSectionTitle(
                     titre: 'Meilleurs prix par produit',
-                    icone: Icons.sell_rounded,
+                    icone: PhosphorIconsRegular.tag,
                     actionLabel: 'Tout voir',
                     onAction: widget.onVoirProduits,
                   ),
@@ -368,15 +373,15 @@ class _HeroEconomie extends StatelessWidget {
     final theme = Theme.of(context);
     final e = donnees.meilleureEconomie;
 
-    const clair = Color(0xFFEAF3EE);
-    const attenue = Color(0xFF9FB6AE);
+    const clair = AppColors.onInk;
+    const attenue = AppColors.onInkMuted;
 
     final Widget contenu;
     if (e == null) {
       contenu = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _Surtitre('COMPARER POUR ÉCONOMISER'),
+          const _Surtitre('Comparer pour économiser'),
           const SizedBox(height: 10),
           Text(
             'Pas encore assez de relevés pour comparer les marchés.',
@@ -394,7 +399,7 @@ class _HeroEconomie extends StatelessWidget {
       contenu = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _Surtitre('MEILLEURE ÉCONOMIE DU MOMENT'),
+          const _Surtitre('Meilleure économie du moment'),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -466,7 +471,7 @@ class _HeroEconomie extends StatelessWidget {
                 foregroundColor: AppColors.ink,
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              icon: const Icon(Icons.bar_chart_rounded, size: 18),
+              icon: const Icon(PhosphorIconsRegular.chartBar, size: 18),
               label: const Text('Comparer tous les marchés'),
             ),
           ),
@@ -520,11 +525,10 @@ class _Surtitre extends StatelessWidget {
     return Text(
       texte,
       style: const TextStyle(
-        fontFamily: AppFonts.mono,
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 1.1,
-        color: Color(0xFF9FB6AE),
+        fontFamily: AppFonts.sans,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        color: AppColors.onInkMuted,
       ),
     );
   }
@@ -562,7 +566,7 @@ class _LigneMarcheHero extends StatelessWidget {
               fontFamily: AppFonts.sans,
               fontSize: 13.5,
               fontWeight: fort ? FontWeight.w600 : FontWeight.w400,
-              color: fort ? const Color(0xFFEAF3EE) : const Color(0xFF9FB6AE),
+              color: fort ? AppColors.onInk : AppColors.onInkMuted,
             ),
           ),
         ),
@@ -570,7 +574,7 @@ class _LigneMarcheHero extends StatelessWidget {
           prix,
           style: stylePrix(
             taille: 13,
-            couleur: fort ? const Color(0xFFEAF3EE) : const Color(0xFF9FB6AE),
+            couleur: fort ? AppColors.onInk : AppColors.onInkMuted,
           ),
         ),
       ],
@@ -621,25 +625,25 @@ class _GrilleChiffres extends StatelessWidget {
   Widget build(BuildContext context) {
     final cartes = [
       MarketScopeStatCard(
-        icone: Icons.receipt_long_rounded,
+        icone: PhosphorIconsRegular.receipt,
         couleur: AppColors.green,
         valeur: _valeur('nb_releves'),
         label: 'Relevés de prix',
       ),
       MarketScopeStatCard(
-        icone: Icons.storefront_rounded,
+        icone: PhosphorIconsRegular.storefront,
         couleur: AppColors.saffron,
         valeur: _valeur('nb_marches_actifs'),
         label: 'Marchés suivis',
       ),
       MarketScopeStatCard(
-        icone: Icons.shopping_basket_rounded,
+        icone: PhosphorIconsRegular.basket,
         couleur: AppColors.terracotta,
         valeur: _valeur('nb_produits_actifs'),
         label: 'Produits suivis',
       ),
       MarketScopeStatCard(
-        icone: Icons.groups_rounded,
+        icone: PhosphorIconsRegular.usersThree,
         couleur: const Color(0xFF1D6FA5),
         valeur: _valeur('nb_contributeurs'),
         label: 'Contributeurs',
@@ -659,12 +663,30 @@ class _GrilleChiffres extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      child: Column(
-        children: [
-          ligne(0, 1),
-          const SizedBox(height: 12),
-          ligne(2, 3),
-        ],
+      child: LayoutBuilder(
+        builder: (context, contraintes) {
+          // Assez large (desktop, tablette paysage) : une seule rangée.
+          if (contraintes.maxWidth >= 720) {
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < cartes.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 12),
+                    Expanded(child: MsCascade(index: i, child: cartes[i])),
+                  ],
+                ],
+              ),
+            );
+          }
+          return Column(
+            children: [
+              ligne(0, 1),
+              const SizedBox(height: 12),
+              ligne(2, 3),
+            ],
+          );
+        },
       ),
     );
   }
@@ -783,7 +805,7 @@ class _DerniersRelevesState extends State<_DerniersReleves> {
       children: [
         const MarketScopeSectionTitle(
           titre: 'Mes derniers relevés',
-          icone: Icons.history_rounded,
+          icone: PhosphorIconsRegular.clockCounterClockwise,
         ),
         const SizedBox(height: AppSpacing.sm),
         Padding(
@@ -889,32 +911,59 @@ class _ListeMarches extends StatelessWidget {
 
   final List<Marche> marches;
 
+  static const _largeurCarte = 168.0;
+
+  Widget _carte(BuildContext context, Marche m) => MarketScopeCard(
+        sansOmbre: true,
+        padding: const EdgeInsets.all(12),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => MarcheDetailScreen(marche: m),
+          ),
+        ),
+        child: _ContenuCarteMarche(marche: m),
+      );
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 88,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        itemCount: marches.length,
-        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
-        itemBuilder: (context, index) {
-          final m = marches[index];
-          return SizedBox(
-            width: 168,
-            child: MarketScopeCard(
-              sansOmbre: true,
-              padding: const EdgeInsets.all(12),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => MarcheDetailScreen(marche: m),
-                ),
+    return LayoutBuilder(
+      builder: (context, contraintes) {
+        // Si tous les marchés tiennent sur la largeur (desktop), ils se
+        // la partagent au lieu de défiler en cartes étroites tronquées.
+        final disponible = contraintes.maxWidth - 2 * AppSpacing.md;
+        final requis = marches.length * _largeurCarte +
+            (marches.length - 1) * AppSpacing.sm;
+        if (marches.isNotEmpty && requis <= disponible) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: SizedBox(
+              height: 88,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < marches.length; i++) ...[
+                    if (i > 0) const SizedBox(width: AppSpacing.sm),
+                    Expanded(child: _carte(context, marches[i])),
+                  ],
+                ],
               ),
-              child: _ContenuCarteMarche(marche: m),
             ),
           );
-        },
-      ),
+        }
+        return SizedBox(
+          height: 88,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            itemCount: marches.length,
+            separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
+            itemBuilder: (context, index) => SizedBox(
+              width: _largeurCarte,
+              child: _carte(context, marches[index]),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -941,7 +990,7 @@ class _ContenuCarteMarche extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
-                Icons.storefront_rounded,
+                PhosphorIconsRegular.storefront,
                 size: 15,
                 color: AppColors.saffron,
               ),
@@ -964,7 +1013,7 @@ class _ContenuCarteMarche extends StatelessWidget {
         Row(
           children: [
             Icon(
-              Icons.location_on_outlined,
+              PhosphorIconsRegular.mapPin,
               size: 13,
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -1049,7 +1098,7 @@ class _ListeProduits extends StatelessWidget {
             ),
           const SizedBox(width: 4),
           Icon(
-            Icons.chevron_right_rounded,
+            PhosphorIconsRegular.caretRight,
             size: 20,
             color: theme.colorScheme.onSurfaceVariant,
           ),

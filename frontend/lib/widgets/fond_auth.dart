@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 /// Teintes lisibles sur le fond encre de la charte, quel que soit le thème.
-const surEncre = Color(0xFFEAF3EE);
-const attenueEncre = Color(0xFF9FB6AE);
+const surEncre = AppColors.onInk;
+const attenueEncre = AppColors.onInkMuted;
 
 class FondEncre extends StatelessWidget {
   const FondEncre({super.key});

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/releve_prix.dart';
 import '../services/releve_service.dart';
@@ -11,6 +12,7 @@ import '../widgets/ms_card.dart';
 import '../widgets/ms_decor.dart';
 import '../widgets/produit_icone.dart';
 import '../widgets/statut_badge.dart';
+import '../utils/mise_en_page.dart';
 
 /// Historique personnel des relevés de l'utilisateur connecté.
 /// Lecture seule : un relevé est immuable après envoi (règle métier).
@@ -64,7 +66,7 @@ class _MesRelevesScreenState extends State<MesRelevesScreen> {
                 titre: 'Aucun relevé',
                 message: 'Aucun relevé pour le moment. '
                     'Saisissez votre premier prix sur le terrain.',
-                icone: Icons.add_chart_rounded,
+                icone: PhosphorIconsRegular.notePencil,
               );
             }
 
@@ -76,11 +78,13 @@ class _MesRelevesScreenState extends State<MesRelevesScreen> {
               onRefresh: _recharger,
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
+                padding: MiseEnPage.padding(
+    context, const EdgeInsets.fromLTRB(
                     AppSpacing.md,
                     AppSpacing.sm,
                     AppSpacing.md,
                     AppSpacing.xl),
+                  boutonsFlottants: 2),
                 itemCount: releves.length + 1,
                 separatorBuilder: (_, __) =>
                     const SizedBox(height: 8),

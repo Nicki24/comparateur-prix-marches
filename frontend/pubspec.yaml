@@ -48,6 +48,8 @@ dependencies:
 
   # Formatage des dates et des prix en français
   intl: ^0.20.1
+  phosphor_flutter: ^2.1.0
+  flutter_secure_storage: ^10.3.4
 
 dev_dependencies:
   flutter_test:

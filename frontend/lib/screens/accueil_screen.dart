@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../services/session.dart';
 import '../theme/app_theme.dart';
+import '../utils/mise_en_page.dart';
 import '../widgets/assistant_chat.dart';
 import '../widgets/marketscope_header.dart';
+import '../widgets/navigation_principale.dart';
 import '../widgets/prix_ticker_banner.dart';
 import 'compte_screen.dart';
 import 'dashboard_accueil.dart';
@@ -53,7 +56,12 @@ class _AccueilScreenState extends State<AccueilScreen> {
       const CompteScreen(),
     ];
 
-    return Scaffold(
+    final bureau = MiseEnPage.estBureau(context);
+
+    return NavigationPrincipale(
+      index: _index,
+      onSelection: _allerA,
+      child: Scaffold(
       body: Column(
         children: [
           // Barre d'état + bandeau sur fond encre, continus avec le header.
@@ -79,51 +87,41 @@ class _AccueilScreenState extends State<AccueilScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: theme.ligne)),
-        ),
-        child: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: _allerA,
-        backgroundColor: theme.fondCarte,
-        indicatorColor: theme.marque.withValues(alpha: 0.14),
-        height: 66,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Accueil',
-            tooltip: 'Accueil',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.storefront_outlined),
-            selectedIcon: Icon(Icons.storefront),
-            label: 'Marchés',
-            tooltip: 'Marchés',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.shopping_basket_outlined),
-            selectedIcon: Icon(Icons.shopping_basket),
-            label: 'Produits',
-            tooltip: 'Produits',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long),
-            label: 'Relevés',
-            tooltip: 'Mes relevés',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Profil',
-            tooltip: 'Profil',
-          ),
-        ],
-        ),
-      ),
+      // Desktop : les onglets sont dans le header (NavigationPrincipale).
+      // Téléphone / tablette : barre du bas, dont les onglets restent
+      // regroupés au centre sur une fenêtre intermédiaire.
+      bottomNavigationBar: bureau
+          ? null
+          : DecoratedBox(
+              decoration: BoxDecoration(
+                color: theme.fondCarte,
+                border: Border(top: BorderSide(color: theme.ligne)),
+              ),
+              child: ContenuCentre(
+                largeurMax: MiseEnPage.largeurNavigation,
+                child: NavigationBar(
+                  selectedIndex: _index,
+                  onDestinationSelected: _allerA,
+                  backgroundColor: theme.fondCarte,
+                  // Pas de teinte d'élévation : même couleur que le fond
+                  // pleine largeur.
+                  surfaceTintColor: Colors.transparent,
+                  indicatorColor: theme.marque.withValues(alpha: 0.14),
+                  height: 66,
+                  labelBehavior:
+                      NavigationDestinationLabelBehavior.alwaysShow,
+                  destinations: [
+                    for (final d in destinationsPrincipales)
+                      NavigationDestination(
+                        icon: Icon(d.icone),
+                        selectedIcon: Icon(d.iconeActive),
+                        label: d.label,
+                        tooltip: d.tooltip ?? d.label,
+                      ),
+                  ],
+                ),
+              ),
+            ),
       // Bulle de l'assistant IA sur tous les onglets ; sur Relevés, elle
       // se place au-dessus du bouton « Nouveau ».
       floatingActionButton: Column(
@@ -141,11 +139,12 @@ class _AccueilScreenState extends State<AccueilScreen> {
                       builder: (_) => const SaisieReleveScreen()),
                 );
               },
-              icon: const Icon(Icons.add_rounded),
+              icon: const Icon(PhosphorIconsRegular.plus),
               label: const Text('Nouveau'),
             ),
           ],
         ],
+      ),
       ),
     );
   }
@@ -192,7 +191,7 @@ class _InvitationReleves extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.receipt_long_rounded,
+                  PhosphorIconsRegular.receipt,
                   size: 36,
                   color: theme.colorScheme.primary,
                 ),
@@ -218,7 +217,7 @@ class _InvitationReleves extends StatelessWidget {
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
                 ),
-                icon: const Icon(Icons.login_rounded, size: 18),
+                icon: const Icon(PhosphorIconsRegular.signIn, size: 18),
                 label: const Text('Se connecter'),
               ),
             ],

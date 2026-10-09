@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/releve_prix.dart';
 import '../services/preferences_app.dart';
@@ -15,6 +16,7 @@ import 'admin_gestion_screen.dart';
 import 'mes_releves_screen.dart';
 import 'saisie_releve_screen.dart';
 import 'signalements_screen.dart';
+import '../utils/mise_en_page.dart';
 
 /// Vue de l'utilisateur connecté : profil + actions selon le rôle.
 class ProfilScreen extends StatefulWidget {
@@ -45,7 +47,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
     return MsDecorFond(
       densite: 0.7,
       child: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: MiseEnPage.padding(
+          context,
+          const EdgeInsets.all(AppSpacing.md),
+          boutonsFlottants: 1,
+        ),
         children: [
           const SizedBox(height: 8),
           MsApparition(
@@ -94,8 +100,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
                             children: [
                               Icon(
                                 estAdmin
-                                    ? Icons.admin_panel_settings_rounded
-                                    : Icons.eco_rounded,
+                                    ? PhosphorIconsRegular.shieldStar
+                                    : PhosphorIconsRegular.carrot,
                                 size: 13,
                                 color: estAdmin
                                     ? AppColors.saffron
@@ -134,14 +140,14 @@ class _ProfilScreenState extends State<ProfilScreen> {
             delai: const Duration(milliseconds: 120),
             child: MarketScopeSectionTitle(
               titre: 'Contributions',
-              icone: Icons.receipt_long_rounded,
+              icone: PhosphorIconsRegular.receipt,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
           MsCascade(
             index: 1,
             child: _ActionTile(
-              icone: Icons.add_chart_rounded,
+              icone: PhosphorIconsRegular.notePencil,
               titre: 'Saisir un relevé de prix',
               sousTitre:
                   'Quel produit ? Dans quel marché ? À quel prix ?',
@@ -157,7 +163,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
           MsCascade(
             index: 2,
             child: _ActionTile(
-              icone: Icons.history_rounded,
+              icone: PhosphorIconsRegular.clockCounterClockwise,
               titre: 'Mes relevés',
               sousTitre: 'Produit · marché · prix · date · statut',
               onTap: () {
@@ -172,7 +178,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
           const MsApparition(
             child: MarketScopeSectionTitle(
               titre: 'Préférences',
-              icone: Icons.settings_outlined,
+              icone: PhosphorIconsRegular.gear,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -195,8 +201,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
                         child: Icon(
                           Theme.of(context).brightness ==
                                   Brightness.dark
-                              ? Icons.dark_mode_rounded
-                              : Icons.light_mode_rounded,
+                              ? PhosphorIconsRegular.moon
+                              : PhosphorIconsRegular.sun,
                           size: 19,
                           color: theme.colorScheme.primary,
                         ),
@@ -228,19 +234,19 @@ class _ProfilScreenState extends State<ProfilScreen> {
                           ButtonSegment(
                             value: ThemeMode.light,
                             tooltip: 'Clair',
-                            icon: Icon(Icons.light_mode_rounded,
+                            icon: Icon(PhosphorIconsRegular.sun,
                                 size: 16),
                           ),
                           ButtonSegment(
                             value: ThemeMode.dark,
                             tooltip: 'Sombre',
-                            icon: Icon(Icons.dark_mode_rounded,
+                            icon: Icon(PhosphorIconsRegular.moon,
                                 size: 16),
                           ),
                           ButtonSegment(
                             value: ThemeMode.system,
                             tooltip: 'Système',
-                            icon: Icon(Icons.settings_suggest_rounded,
+                            icon: Icon(PhosphorIconsRegular.gearSix,
                                 size: 16),
                           ),
                         ],
@@ -262,13 +268,13 @@ class _ProfilScreenState extends State<ProfilScreen> {
             const SizedBox(height: AppSpacing.lg),
             const MarketScopeSectionTitle(
               titre: 'Administration',
-              icone: Icons.admin_panel_settings_outlined,
+              icone: PhosphorIconsRegular.shieldStar,
             ),
             const SizedBox(height: AppSpacing.sm),
             MsCascade(
               index: 3,
               child: _ActionTile(
-                icone: Icons.report_problem_outlined,
+                icone: PhosphorIconsRegular.warning,
                 titre: 'Relevés signalés',
                 sousTitre:
                     'Prix anormaux · prix obsolètes · écarts',
@@ -285,7 +291,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
             MsCascade(
               index: 4,
               child: _ActionTile(
-                icone: Icons.storefront_outlined,
+                icone: PhosphorIconsRegular.storefront,
                 titre: 'Gestion des marchés',
                 sousTitre: 'Créer · modifier · désactiver',
                 onTap: () {
@@ -302,7 +308,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
             MsCascade(
               index: 5,
               child: _ActionTile(
-                icone: Icons.category_outlined,
+                icone: PhosphorIconsRegular.squaresFour,
                 titre: 'Gestion des produits',
                 sousTitre: 'Créer · modifier · désactiver',
                 onTap: () {
@@ -326,7 +332,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                     child:
                         CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.logout_rounded, size: 18),
+                : const Icon(PhosphorIconsRegular.signOut, size: 18),
             label: const Text('Se déconnecter'),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(48, 50),
@@ -409,7 +415,7 @@ class _ActionTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+              const Icon(PhosphorIconsRegular.caretRight, color: AppColors.textMuted),
             ],
           ),
         ),
@@ -472,21 +478,21 @@ class _StatsContributeurState extends State<_StatsContributeur> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _TuileStat(
-                    icone: Icons.insights_rounded,
+                    icone: PhosphorIconsRegular.chartLineUp,
                     couleur: AppColors.green,
                     valeur: snapshot.hasData ? snapshot.data!.total : null,
                     placeholder: '…',
                     label: 'Relevés soumis',
                   ),
                   _TuileStat(
-                    icone: Icons.shopping_basket_rounded,
+                    icone: PhosphorIconsRegular.basket,
                     couleur: AppColors.saffron,
                     valeur: snapshot.hasData ? produits : null,
                     placeholder: '…',
                     label: 'Produits suivis',
                   ),
                   _TuileStat(
-                    icone: Icons.storefront_rounded,
+                    icone: PhosphorIconsRegular.storefront,
                     couleur: AppColors.terracotta,
                     valeur: snapshot.hasData ? marches : null,
                     placeholder: '…',
@@ -568,7 +574,7 @@ class _JalonContributeur extends StatelessWidget {
         Row(
           children: [
             const Icon(
-              Icons.emoji_events_rounded,
+              PhosphorIconsRegular.trophy,
               size: 18,
               color: AppColors.saffron,
             ),

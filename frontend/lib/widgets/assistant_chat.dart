@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../services/assistant_service.dart';
 import '../theme/app_theme.dart';
@@ -121,7 +122,7 @@ class _AvatarAssistant extends StatelessWidget {
           stops: [0, 0.55, 1],
         ),
       ),
-      child: Icon(Icons.auto_awesome_rounded, color: Colors.white, size: icone),
+      child: Icon(PhosphorIconsRegular.sparkle, color: Colors.white, size: icone),
     );
   }
 }
@@ -311,13 +312,13 @@ class _EnTete extends StatelessWidget {
                   onPressed: peutReinitialiser ? onReinitialiser : null,
                   color: AppColors.paper,
                   disabledColor: AppColors.paper.withValues(alpha: 0.3),
-                  icon: const Icon(Icons.refresh_rounded),
+                  icon: const Icon(PhosphorIconsRegular.arrowClockwise),
                 ),
                 IconButton(
                   tooltip: 'Fermer',
                   onPressed: () => Navigator.of(context).pop(),
                   color: AppColors.paper,
-                  icon: const Icon(Icons.close_rounded),
+                  icon: const Icon(PhosphorIconsRegular.x),
                 ),
               ],
             ),
@@ -366,7 +367,7 @@ class _Accueil extends StatelessWidget {
               _Apparition(
                 delai: Duration(milliseconds: 80 * i),
                 child: ActionChip(
-                  avatar: Icon(Icons.bolt_rounded, size: 16, color: theme.marque),
+                  avatar: Icon(PhosphorIconsRegular.lightning, size: 16, color: theme.marque),
                   label: Text(_suggestions[i]),
                   onPressed: () => onSuggestion(_suggestions[i]),
                 ),
@@ -434,7 +435,7 @@ class _Bulle extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
               ),
-              icon: const Icon(Icons.refresh_rounded, size: 16),
+              icon: const Icon(PhosphorIconsRegular.arrowClockwise, size: 16),
               label: const Text('Réessayer'),
             ),
           ],
@@ -623,7 +624,7 @@ class _ZoneSaisie extends StatelessWidget {
                   child: IconButton.filled(
                     tooltip: 'Envoyer',
                     onPressed: peutEnvoyer ? onEnvoyer : null,
-                    icon: const Icon(Icons.arrow_upward_rounded),
+                    icon: const Icon(PhosphorIconsRegular.arrowUp),
                   ),
                 ),
               ],

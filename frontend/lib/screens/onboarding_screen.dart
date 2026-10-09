@@ -1,11 +1,13 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/fond_auth.dart';
 import '../widgets/marketscope_header.dart';
+import '../utils/mise_en_page.dart';
 
 /// Une page de la visite guidée.
 class _EtapeVisite {
@@ -28,7 +30,7 @@ class _EtapeVisite {
 
 final _etapes = [
   _EtapeVisite(
-    icone: Icons.storefront_rounded,
+    icone: PhosphorIconsRegular.storefront,
     couleur: AppColors.greenLight,
     titre: 'Bienvenue sur MarketScope',
     texte:
@@ -37,7 +39,7 @@ final _etapes = [
     etiquettes: ['Marchés', 'Produits', 'Prix réels'],
   ),
   _EtapeVisite(
-    icone: Icons.compare_arrows_rounded,
+    icone: PhosphorIconsRegular.arrowsLeftRight,
     couleur: AppColors.saffron,
     titre: 'Comparez en un coup d’œil',
     texte:
@@ -46,7 +48,7 @@ final _etapes = [
     etiquettes: [formaterPrix(2800), formaterPrix(3150), formaterPrix(3400)],
   ),
   _EtapeVisite(
-    icone: Icons.show_chart_rounded,
+    icone: PhosphorIconsRegular.chartLine,
     couleur: Color(0xFF5DB4E8),
     titre: 'Suivez l’évolution',
     texte:
@@ -55,7 +57,7 @@ final _etapes = [
     etiquettes: [formaterPourcentage(-4.2), formaterPourcentage(1.8), '30 j'],
   ),
   _EtapeVisite(
-    icone: Icons.add_chart_rounded,
+    icone: PhosphorIconsRegular.notePencil,
     couleur: AppColors.terracotta,
     titre: 'Contribuez à votre tour',
     texte:
@@ -141,7 +143,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
           ),
           SafeArea(
-            child: Column(
+            // Sur grand écran, la visite reste au format d'un téléphone
+            // au lieu de s'étirer (bouton et textes sur toute la largeur).
+            child: ContenuCentre(
+              largeurMax: 600,
+              child: Column(
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
@@ -213,8 +219,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             const SizedBox(width: 8),
                             Icon(
                               _derniere
-                                  ? Icons.rocket_launch_rounded
-                                  : Icons.arrow_forward_rounded,
+                                  ? PhosphorIconsRegular.rocketLaunch
+                                  : PhosphorIconsRegular.arrowRight,
                               size: 18,
                             ),
                           ],
@@ -224,6 +230,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   ),
                 ),
               ],
+            ),
             ),
           ),
         ],

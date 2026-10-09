@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/marche.dart';
 import '../models/produit.dart';
@@ -14,6 +15,7 @@ import '../widgets/ms_anim.dart';
 import '../widgets/ms_button.dart';
 import '../widgets/ms_card.dart';
 import '../widgets/ms_decor.dart';
+import '../utils/mise_en_page.dart';
 
 /// Formulaire de saisie d'un relevé de prix (contributeur).
 class SaisieReleveScreen extends StatefulWidget {
@@ -115,7 +117,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
       context: context,
       builder: (context) => AlertDialog(
         icon: Icon(
-          releve.estSignale ? Icons.warning : Icons.check_circle,
+          releve.estSignale ? PhosphorIconsRegular.warning : PhosphorIconsRegular.checkCircle,
           color: releve.estSignale ? Colors.orange : Colors.green,
         ),
         title: Text(releve.estSignale ? 'Prix signalé' : 'Relevé enregistré'),
@@ -136,7 +138,8 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
       appBar: const MarketScopeHeader(titre: 'Nouveau relevé de prix'),
       body: MsDecorFond(
         child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: MiseEnPage.padding(
+    context, const EdgeInsets.all(AppSpacing.md)),
           children: [
             MsApparition(
               child: Container(
@@ -169,7 +172,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
                               Text(
                                 'Un relevé par produit, marché et jour',
                                 style: TextStyle(
-                                  color: Color(0xFFEAF3EE),
+                                  color: AppColors.onInk,
                                   fontFamily: AppFonts.sans,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14,
@@ -179,7 +182,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
                               Text(
                                 'Si vous avez déjà enregistré ce produit dans ce marché aujourd’hui, le serveur vous le signalera.',
                                 style: TextStyle(
-                                  color: Color(0xFF9FB6AE),
+                                  color: AppColors.onInkMuted,
                                   fontSize: 12.5,
                                   height: 1.4,
                                 ),
@@ -234,7 +237,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
                         labelText: 'Prix observé (Ariary)',
                         hintText: 'Ex. 3200',
                         prefixIcon: const Icon(
-                            Icons.payments_outlined),
+                            PhosphorIconsRegular.money),
                         suffixText:
                             _produitChoisi?.uniteMesure.isNotEmpty ==
                                     true
@@ -274,7 +277,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              Icons.event_rounded,
+                              PhosphorIconsRegular.calendarBlank,
                               size: 19,
                               color: Theme.of(context)
                                   .colorScheme
@@ -326,7 +329,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
                       hintText:
                           'État du produit, qualité, précisions…',
                       prefixIcon:
-                          Icon(Icons.notes_rounded),
+                          Icon(PhosphorIconsRegular.note),
                     ),
                     maxLines: 2,
                   ),
@@ -338,7 +341,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
                   const SizedBox(height: 20),
                   MarketScopeButton(
                     label: 'Envoyer le relevé',
-                    icone: Icons.send_rounded,
+                    icone: PhosphorIconsRegular.paperPlaneRight,
                     enChargement: _enChargement,
                     onPressed:
                         _enChargement ? null : _soumettre,
@@ -376,7 +379,7 @@ class _ChampProduit extends StatelessWidget {
         if (snapshot.hasError || (snapshot.data ?? []).isEmpty) {
           return const ContenuVide(
             message: 'Aucun produit disponible.',
-            icone: Icons.category,
+            icone: PhosphorIconsRegular.squaresFour,
           );
         }
         final produits = snapshot.data!;
@@ -385,7 +388,7 @@ class _ChampProduit extends StatelessWidget {
           isExpanded: true,
           decoration: const InputDecoration(
             labelText: 'Produit',
-            prefixIcon: Icon(Icons.category_outlined),
+            prefixIcon: Icon(PhosphorIconsRegular.squaresFour),
           ),
           items: [
             for (final p in produits)
@@ -428,11 +431,10 @@ class _SectionReleve extends StatelessWidget {
           ),
           const SizedBox(width: 9),
           Text(
-            titre.toUpperCase(),
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontFamily: AppFonts.mono,
-              color: theme.colorScheme.onSurfaceVariant,
-              letterSpacing: 1.1,
+            titre,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontFamily: AppFonts.display,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -484,7 +486,7 @@ class _IconeSaisie extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: const Icon(
-        Icons.receipt_long_outlined,
+        PhosphorIconsRegular.receipt,
         color: AppColors.greenLight,
         size: 22,
       ),
@@ -517,7 +519,7 @@ class _ChampMarche extends StatelessWidget {
         if (snapshot.hasError || (snapshot.data ?? []).isEmpty) {
           return const ContenuVide(
             message: 'Aucun marché disponible.',
-            icone: Icons.storefront,
+            icone: PhosphorIconsRegular.storefront,
           );
         }
         final marches = snapshot.data!;
@@ -526,7 +528,7 @@ class _ChampMarche extends StatelessWidget {
           isExpanded: true,
           decoration: const InputDecoration(
             labelText: 'Marché',
-            prefixIcon: Icon(Icons.storefront_outlined),
+            prefixIcon: Icon(PhosphorIconsRegular.storefront),
           ),
           items: [
             for (final m in marches)

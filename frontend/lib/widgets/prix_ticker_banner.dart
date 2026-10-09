@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/comparaison.dart';
 import '../services/comparison_service.dart';
 import '../services/produit_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
+import '../utils/mise_en_page.dart';
 
 /// Bandeau « meilleurs prix du moment » : pour chaque produit, le prix le
 /// plus bas relevé et le marché où il a été observé.
@@ -18,6 +20,9 @@ class PrixTickerBanner extends StatefulWidget {
   const PrixTickerBanner({super.key});
 
   static const double hauteur = 32;
+
+  /// Hauteur en plein écran (textes agrandis de 15 %).
+  static const double hauteurLarge = 38;
 
   @override
   State<PrixTickerBanner> createState() => _PrixTickerBannerState();
@@ -101,9 +106,13 @@ class _PrixTickerBannerState extends State<PrixTickerBanner> {
       contenu = _BandeauDefilant(items: _items);
     }
 
+    final large = MiseEnPage.estLarge(context);
     return SizedBox(
-      height: PrixTickerBanner.hauteur,
-      child: Row(
+      height: large ? PrixTickerBanner.hauteurLarge : PrixTickerBanner.hauteur,
+      // En plein écran, textes un peu plus grands pour rester lisibles.
+      child: MediaQuery.withClampedTextScaling(
+        minScaleFactor: large ? 1.15 : 1.0,
+        child: Row(
         children: [
           const _EtiquetteTicker(),
           Expanded(
@@ -139,13 +148,14 @@ class _PrixTickerBannerState extends State<PrixTickerBanner> {
                     padding: EdgeInsets.zero,
                     iconSize: 16,
                     icon: const Icon(
-                      Icons.refresh_rounded,
+                      PhosphorIconsRegular.arrowClockwise,
                       color: AppColors.greenLight,
                     ),
                     onPressed: () => _charger(forcer: true),
                   ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -167,7 +177,7 @@ class _EtiquetteTicker extends StatelessWidget {
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.south_rounded, size: 11, color: AppColors.greenLight),
+          Icon(PhosphorIconsRegular.arrowDown, size: 11, color: AppColors.greenLight),
           SizedBox(width: 3),
           Text(
             'MEILLEURS PRIX',

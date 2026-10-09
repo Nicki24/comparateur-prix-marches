@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
@@ -41,10 +42,10 @@ class MarketScopeVariationBadge extends StatelessWidget {
         children: [
           Icon(
             stable
-                ? Icons.remove_rounded
+                ? PhosphorIconsRegular.minus
                 : (baisse
-                    ? Icons.arrow_downward_rounded
-                    : Icons.arrow_upward_rounded),
+                    ? PhosphorIconsRegular.arrowDown
+                    : PhosphorIconsRegular.arrowUp),
             size: compact ? 11 : 12,
             color: fg,
             semanticLabel: stable
@@ -87,7 +88,7 @@ class MarketScopeRangBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle_rounded,
+            Icon(PhosphorIconsRegular.checkCircle,
                 size: 11, color: theme.okFg),
             const SizedBox(width: 3),
             Text(

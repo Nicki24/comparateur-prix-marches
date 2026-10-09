@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../services/api_client.dart';
 import '../services/session.dart';
@@ -11,6 +12,7 @@ import '../widgets/marketscope_header.dart';
 import 'login_screen.dart';
 import 'profil_screen.dart';
 import 'register_screen.dart';
+import '../utils/mise_en_page.dart';
 
 class CompteScreen extends StatelessWidget {
   const CompteScreen({super.key});
@@ -56,7 +58,11 @@ class _DeconnecteViewState extends State<_DeconnecteView> {
       onRefresh: _recharger,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: MiseEnPage.padding(
+          context,
+          const EdgeInsets.all(16),
+          boutonsFlottants: 1,
+        ),
         children: [
           const SizedBox(height: 8),
           _HeroInvitation(),
@@ -64,23 +70,25 @@ class _DeconnecteViewState extends State<_DeconnecteView> {
           _BlocStatsPublic(cle: _versionStats),
           const SizedBox(height: 20),
           const _Pilier(
-            icone: Icons.visibility_outlined,
+            icone: PhosphorIconsRegular.eye,
             titre: 'Consultation libre',
-            detail: 'Comparez les prix de tous les marchés sans créer de compte.',
+            detail:
+                'Comparez les prix de tous les marchés sans créer de compte.',
             couleur: AppColors.green,
           ),
           const SizedBox(height: 10),
           const _Pilier(
-            icone: Icons.handshake_outlined,
+            icone: PhosphorIconsRegular.handshake,
             titre: 'Des prix relevés sur place',
             detail: 'Chaque prix provient d’un contributeur local, au marché.',
             couleur: AppColors.saffron,
           ),
           const SizedBox(height: 10),
           const _Pilier(
-            icone: Icons.verified_outlined,
+            icone: PhosphorIconsRegular.sealCheck,
             titre: 'Données contrôlées',
-            detail: 'Les prix anormaux et obsolètes sont signalés automatiquement.',
+            detail:
+                'Les prix anormaux et obsolètes sont signalés automatiquement.',
             couleur: AppColors.terracotta,
           ),
         ],
@@ -130,7 +138,8 @@ class _HeroInvitation extends StatelessWidget {
                   tailleLogo: 72,
                   couleurTexte: surEncre,
                   couleurSousTitre: attenueEncre,
-                  sousTitre: 'Comparez · Suivez · Comprenez\nles prix des marchés locaux',
+                  sousTitre:
+                      'Comparez · Suivez · Comprenez\nles prix des marchés locaux',
                 ),
                 const SizedBox(height: 26),
                 SizedBox(
@@ -187,10 +196,30 @@ class _BlocStatsPublic extends StatelessWidget {
   final int cle;
 
   static const _stats = [
-    (cle: 'nb_releves', label: 'Relevés', icone: Icons.insights_rounded, couleur: AppColors.green),
-    (cle: 'nb_marches_actifs', label: 'Marchés actifs', icone: Icons.storefront_rounded, couleur: AppColors.saffron),
-    (cle: 'nb_produits_actifs', label: 'Produits suivis', icone: Icons.shopping_basket_rounded, couleur: AppColors.terracotta),
-    (cle: 'nb_contributeurs', label: 'Contributeurs', icone: Icons.group_rounded, couleur: Color(0xFF1D6FA5)),
+    (
+      cle: 'nb_releves',
+      label: 'Relevés',
+      icone: PhosphorIconsRegular.chartLineUp,
+      couleur: AppColors.green,
+    ),
+    (
+      cle: 'nb_marches_actifs',
+      label: 'Marchés actifs',
+      icone: PhosphorIconsRegular.storefront,
+      couleur: AppColors.saffron,
+    ),
+    (
+      cle: 'nb_produits_actifs',
+      label: 'Produits suivis',
+      icone: PhosphorIconsRegular.basket,
+      couleur: AppColors.terracotta,
+    ),
+    (
+      cle: 'nb_contributeurs',
+      label: 'Contributeurs',
+      icone: PhosphorIconsRegular.users,
+      couleur: Color(0xFF1D6FA5),
+    ),
   ];
 
   /// Charge les stats publiques en silence (aucune erreur remontée).
@@ -226,23 +255,28 @@ class _BlocStatsPublic extends StatelessWidget {
                   padding: const EdgeInsets.only(left: 4, bottom: 8),
                   child: Row(
                     children: [
-                      Text(
-                        'LA PLATEFORME EN CHIFFRES',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontFamily: AppFonts.mono,
-                          color: theme.colorScheme.onSurfaceVariant,
-                          letterSpacing: 1.2,
-                          fontWeight: FontWeight.w600,
+                      // Expanded : le titre se tronque au lieu de déborder
+                      // sur les écrans étroits ou en grand corps de texte.
+                      Expanded(
+                        child: Text(
+                          'La plateforme en chiffres',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontFamily: AppFonts.display,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.2,
+                          ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       if (derniereMaj != null)
                         Text(
                           'MàJ ${formaterDate(derniereMaj)}',
                           style: theme.textTheme.labelSmall?.copyWith(
                             fontFamily: AppFonts.mono,
-                            color: theme.colorScheme.onSurfaceVariant
-                                .withValues(alpha: 0.7),
+                            color: theme.colorScheme.onSurfaceVariant,
                             fontSize: 10.5,
                             letterSpacing: 0.4,
                           ),

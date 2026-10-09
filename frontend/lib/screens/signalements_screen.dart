@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/signalement.dart';
 import '../services/signalement_service.dart';
@@ -11,6 +12,7 @@ import '../widgets/ms_card.dart';
 import '../widgets/ms_decor.dart';
 import '../widgets/produit_icone.dart';
 import '../widgets/statut_badge.dart';
+import '../utils/mise_en_page.dart';
 
 class SignalementsScreen extends StatefulWidget {
   const SignalementsScreen({super.key});
@@ -77,7 +79,7 @@ class _SignalementsScreenState extends State<SignalementsScreen> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.schedule_send),
+                : const Icon(PhosphorIconsRegular.clockCountdown),
           ),
         ],
       ),
@@ -100,7 +102,7 @@ class _SignalementsScreenState extends State<SignalementsScreen> {
               message: 'Aucune anomalie détectée. '
                   'Utilisez l’icône en haut à droite pour lancer la détection '
                   'des prix obsolètes.',
-              icone: Icons.verified_user,
+              icone: PhosphorIconsRegular.shieldCheck,
             );
           }
 
@@ -112,11 +114,12 @@ class _SignalementsScreenState extends State<SignalementsScreen> {
               child: ListView.separated(
                 physics:
                     const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
+                padding: MiseEnPage.padding(
+    context, const EdgeInsets.fromLTRB(
                     AppSpacing.md,
                     AppSpacing.sm,
                     AppSpacing.md,
-                    AppSpacing.xl),
+                    AppSpacing.xl)),
                 itemCount: signalements.length,
                 separatorBuilder: (_, __) =>
                     const SizedBox(height: 8),

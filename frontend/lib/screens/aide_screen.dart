@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/fond_auth.dart';
@@ -8,6 +9,7 @@ import '../widgets/ms_card.dart';
 import '../widgets/ms_decor.dart';
 import '../widgets/statut_badge.dart';
 import 'onboarding_screen.dart';
+import '../utils/mise_en_page.dart';
 
 typedef _Question = ({String question, String reponse});
 
@@ -128,7 +130,8 @@ class _AideScreenState extends State<AideScreen> {
       body: MsDecorFond(
         densite: 0.6,
         child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: MiseEnPage.padding(
+    context, const EdgeInsets.all(AppSpacing.md)),
           children: [
             MsApparition(child: _HeroAide(onRevoirVisite: _revoirVisite)),
             const SizedBox(height: AppSpacing.md),
@@ -140,11 +143,11 @@ class _AideScreenState extends State<AideScreen> {
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   hintText: 'Rechercher une question…',
-                  prefixIcon: const Icon(Icons.search_rounded),
+                  prefixIcon: const Icon(PhosphorIconsRegular.magnifyingGlass),
                   suffixIcon: enRecherche
                       ? IconButton(
                           tooltip: 'Effacer',
-                          icon: const Icon(Icons.close_rounded),
+                          icon: const Icon(PhosphorIconsRegular.x),
                           onPressed: () {
                             _recherche.clear();
                             setState(() => _filtre = '');
@@ -158,7 +161,7 @@ class _AideScreenState extends State<AideScreen> {
               const SizedBox(height: AppSpacing.lg),
               const MarketScopeSectionTitle(
                 titre: 'Premiers pas',
-                icone: Icons.flag_outlined,
+                icone: PhosphorIconsRegular.flag,
                 padding: EdgeInsets.zero,
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -166,7 +169,7 @@ class _AideScreenState extends State<AideScreen> {
               const SizedBox(height: AppSpacing.lg),
               const MarketScopeSectionTitle(
                 titre: 'Lire les badges',
-                icone: Icons.sell_outlined,
+                icone: PhosphorIconsRegular.tag,
                 padding: EdgeInsets.zero,
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -177,7 +180,7 @@ class _AideScreenState extends State<AideScreen> {
               titre: enRecherche
                   ? '${questions.length} résultat${questions.length > 1 ? 's' : ''}'
                   : 'Questions fréquentes',
-              icone: Icons.forum_outlined,
+              icone: PhosphorIconsRegular.chats,
               padding: EdgeInsets.zero,
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -265,7 +268,7 @@ class _HeroAide extends StatelessWidget {
                           backgroundColor: AppColors.green,
                           foregroundColor: Colors.white,
                         ),
-                        icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                        icon: const Icon(PhosphorIconsRegular.play, size: 20),
                         label: const Text('Visite guidée'),
                       ),
                     ],
@@ -283,7 +286,7 @@ class _HeroAide extends StatelessWidget {
                     ),
                   ),
                   child: const Icon(
-                    Icons.lightbulb_outline_rounded,
+                    PhosphorIconsRegular.lightbulb,
                     color: AppColors.greenLight,
                     size: 30,
                   ),
@@ -303,24 +306,24 @@ class _PremiersPas extends StatelessWidget {
 
   static const _etapes = [
     (
-      icone: Icons.storefront_rounded,
+      icone: PhosphorIconsRegular.storefront,
       titre: 'Explorez les marchés',
       detail: 'Onglet Marchés : liste, recherche par nom ou par ville.',
     ),
     (
-      icone: Icons.compare_arrows_rounded,
+      icone: PhosphorIconsRegular.arrowsLeftRight,
       titre: 'Comparez un produit',
       detail: 'Onglet Produits → un produit : prix par marché, du moins cher '
           'au plus cher.',
     ),
     (
-      icone: Icons.show_chart_rounded,
+      icone: PhosphorIconsRegular.chartLine,
       titre: 'Regardez l’historique',
       detail: 'Dans la comparaison, l’onglet Historique trace l’évolution '
           'du prix.',
     ),
     (
-      icone: Icons.add_chart_rounded,
+      icone: PhosphorIconsRegular.notePencil,
       titre: 'Contribuez',
       detail: 'Créez un compte, puis Relevés → Nouveau pour partager un prix.',
     ),

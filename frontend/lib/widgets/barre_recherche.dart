@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../theme/app_theme.dart';
 
@@ -50,7 +51,7 @@ class BarreRecherche extends StatelessWidget {
             fontFamily: AppFonts.sans,
           ),
           prefixIcon: Icon(
-            Icons.search_rounded,
+            PhosphorIconsRegular.magnifyingGlass,
             size: 20,
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -58,7 +59,7 @@ class BarreRecherche extends StatelessWidget {
               ? null
               : IconButton(
                   icon: Icon(
-                    Icons.close_rounded,
+                    PhosphorIconsRegular.x,
                     size: 18,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),

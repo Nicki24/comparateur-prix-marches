@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../theme/app_theme.dart';
+import '../utils/mise_en_page.dart';
 
 class Chargement extends StatelessWidget {
   const Chargement({super.key, this.nombreCartes = 4});
@@ -9,9 +11,19 @@ class Chargement extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Les cartes squelettes sont décoratives : un seul libellé annoncé
+    // (WCAG 4.1.3) plutôt qu'une liste vide pour les lecteurs d'écran.
+    return Semantics(
+      liveRegion: true,
+      label: 'Chargement en cours',
+      child: ExcludeSemantics(child: _listeSquelettes(context)),
+    );
+  }
+
+  Widget _listeSquelettes(BuildContext context) {
     return ListView.separated(
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: MiseEnPage.padding(context, const EdgeInsets.all(AppSpacing.md)),
       itemCount: nombreCartes,
       separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (_, __) => const _CarteSquelette(),
@@ -25,9 +37,13 @@ class ChargementCentre extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: CircularProgressIndicator(
-        color: Theme.of(context).colorScheme.primary,
-        strokeWidth: 2.5,
+      child: Semantics(
+        liveRegion: true,
+        label: 'Chargement en cours',
+        child: CircularProgressIndicator(
+          color: Theme.of(context).colorScheme.primary,
+          strokeWidth: 2.5,
+        ),
       ),
     );
   }
@@ -51,8 +67,20 @@ class _CarteSqueletteState extends State<_CarteSquelette>
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+    );
     _animation = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Pulsation figée si l'utilisateur a demandé moins d'animations.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _ctrl.stop();
+      _ctrl.value = 0.5;
+    } else if (!_ctrl.isAnimating) {
+      _ctrl.repeat(reverse: true);
+    }
   }
 
   @override
@@ -81,7 +109,10 @@ class _CarteSqueletteState extends State<_CarteSquelette>
             border: Border.all(color: theme.dividerColor),
             boxShadow: theme.cardShadows,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
           child: Row(
             children: [
               Container(
@@ -139,57 +170,64 @@ class ErreurMessage extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: _Apparition(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: theme.alertBg,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: theme.alertFg.withValues(alpha: 0.25),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.alertFg.withValues(alpha: 0.14),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+          child: Semantics(
+            liveRegion: true,
+            container: true,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: theme.alertBg,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: theme.alertFg.withValues(alpha: 0.25),
                     ),
-                  ],
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.alertFg.withValues(alpha: 0.14),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    PhosphorIconsRegular.cloudSlash,
+                    size: 34,
+                    color: theme.alertFg,
+                  ),
                 ),
-                child: Icon(
-                  Icons.cloud_off_rounded,
-                  size: 34,
-                  color: theme.alertFg,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                'Connexion impossible',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontFamily: AppFonts.display,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              if (onReessayer != null) ...[
                 const SizedBox(height: AppSpacing.lg),
-                FilledButton.icon(
-                  onPressed: onReessayer,
-                  icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: const Text('Réessayer'),
+                Text(
+                  'Connexion impossible',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontFamily: AppFonts.display,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                if (onReessayer != null) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  FilledButton.icon(
+                    onPressed: onReessayer,
+                    icon: const Icon(
+                      PhosphorIconsRegular.arrowClockwise,
+                      size: 18,
+                    ),
+                    label: const Text('Réessayer'),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -201,7 +239,7 @@ class ContenuVide extends StatelessWidget {
   const ContenuVide({
     super.key,
     required this.message,
-    this.icone = Icons.inbox_rounded,
+    this.icone = PhosphorIconsRegular.tray,
     this.titre,
     this.cta,
     this.onCta,
@@ -236,9 +274,7 @@ class ContenuVide extends StatelessWidget {
                     end: Alignment.bottomRight,
                   ),
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: theme.dividerColor,
-                  ),
+                  border: Border.all(color: theme.dividerColor),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.08),
@@ -273,10 +309,7 @@ class ContenuVide extends StatelessWidget {
               ),
               if (cta != null && onCta != null) ...[
                 const SizedBox(height: AppSpacing.lg),
-                FilledButton(
-                  onPressed: onCta,
-                  child: Text(cta!),
-                ),
+                FilledButton(onPressed: onCta, child: Text(cta!)),
               ],
             ],
           ),
@@ -293,6 +326,9 @@ class _Apparition extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return child;
+    }
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 450),

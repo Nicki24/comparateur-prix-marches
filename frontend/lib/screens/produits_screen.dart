@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/comparaison.dart';
 import '../models/produit.dart';
@@ -13,6 +14,7 @@ import '../widgets/ms_card.dart';
 import '../widgets/produit_icone.dart';
 import '../widgets/marketscope_header.dart';
 import 'comparaison_screen.dart';
+import '../utils/mise_en_page.dart';
 
 class ProduitsScreen extends StatefulWidget {
   const ProduitsScreen({super.key});
@@ -98,7 +100,7 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
                 ? 'Fermer la recherche'
                 : 'Rechercher un produit',
             icon: Icon(
-              _rechercheActive ? Icons.close_rounded : Icons.search_rounded,
+              _rechercheActive ? PhosphorIconsRegular.x : PhosphorIconsRegular.magnifyingGlass,
             ),
             onPressed: _basculerRecherche,
           ),
@@ -106,11 +108,14 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
       ),
       body: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.only(top: AppSpacing.sm),
-              child: MarketScopeSectionTitle(titre: 'Produits'),
+            const ContenuCentre(
+              child: Padding(
+                padding: EdgeInsets.only(top: AppSpacing.sm),
+                child: MarketScopeSectionTitle(titre: 'Produits'),
+              ),
             ),
-            AnimatedSwitcher(
+            ContenuCentre(
+              child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               transitionBuilder: (child, anim) => SizeTransition(
                 sizeFactor: anim,
@@ -128,6 +133,7 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
                     )
                   : const SizedBox.shrink(
                       key: ValueKey('cache-recherche')),
+              ),
             ),
             Expanded(
               child: FutureBuilder<List<Produit>>(
@@ -151,7 +157,7 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
                       message:
                           'Aucun produit n\'est encore suivi.\n'
                           'Revenez bientôt !',
-                      icone: Icons.shopping_basket_rounded,
+                      icone: PhosphorIconsRegular.basket,
                     );
                   }
 
@@ -170,7 +176,7 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
                       titre: 'Aucun résultat',
                       message: 'Aucun produit ne correspond à '
                           '« ${_controleurRecherche.text} ».',
-                      icone: Icons.search_off_rounded,
+                      icone: PhosphorIconsRegular.magnifyingGlassMinus,
                       cta: 'Effacer la recherche',
                       onCta: _effacerRecherche,
                     );
@@ -196,11 +202,13 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
                     child: ListView.builder(
                       physics:
                           const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(
+                      padding: MiseEnPage.padding(
+    context, const EdgeInsets.fromLTRB(
                           AppSpacing.md,
                           AppSpacing.sm,
                           AppSpacing.md,
                           AppSpacing.xl),
+                        boutonsFlottants: 1),
                       itemCount: allItems.length,
                       itemBuilder: (context, index) {
                         final item = allItems[index];
@@ -262,14 +270,14 @@ class _EnteteCat extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              categorie.toUpperCase(),
+              categorie,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontFamily: AppFonts.mono,
-                color: theme.colorScheme.onSurfaceVariant,
-                letterSpacing: 1.2,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontFamily: AppFonts.display,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -369,7 +377,7 @@ class _CarteProduit extends StatelessWidget {
             ),
           const SizedBox(width: 2),
           Icon(
-            Icons.chevron_right_rounded,
+            PhosphorIconsRegular.caretRight,
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ],

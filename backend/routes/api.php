@@ -17,8 +17,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 // --- Authentification (publique) ---
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+// Limitées contre le bourrage d'identifiants (voir AppServiceProvider).
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:inscription');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:connexion');
 
 // --- Consultation publique (sans compte) ---
 Route::get('/marches', [MarcheController::class, 'index']);

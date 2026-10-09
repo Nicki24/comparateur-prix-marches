@@ -57,13 +57,13 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
 
       expect(find.text('Nouveau sur MarketScope ?'), findsOneWidget);
-      expect(find.text('PREMIERS PAS'), findsOneWidget);
+      expect(find.text('Premiers pas'), findsOneWidget);
 
       await tester.enterText(find.byType(TextField), 'obsolete');
       await tester.pump(const Duration(seconds: 1));
       // Recherche insensible aux accents : « obsolète » est trouvé.
       expect(find.text('Que veut dire « Obsolète » ?'), findsOneWidget);
-      expect(find.text('PREMIERS PAS'), findsNothing);
+      expect(find.text('Premiers pas'), findsNothing);
 
       await tester.enterText(find.byType(TextField), 'zzzz');
       await tester.pump();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/marche.dart';
 import '../models/releve_prix.dart';
@@ -13,6 +14,7 @@ import '../widgets/ms_anim.dart';
 import '../widgets/ms_card.dart';
 import '../widgets/produit_icone.dart';
 import 'comparaison_screen.dart';
+import '../utils/mise_en_page.dart';
 
 class MarchesScreen extends StatefulWidget {
   const MarchesScreen({super.key});
@@ -76,7 +78,7 @@ class _MarchesScreenState extends State<MarchesScreen> {
                 ? 'Fermer la recherche'
                 : 'Rechercher un marché',
             icon: Icon(
-              _rechercheActive ? Icons.close_rounded : Icons.search_rounded,
+              _rechercheActive ? PhosphorIconsRegular.x : PhosphorIconsRegular.magnifyingGlass,
             ),
             onPressed: _basculerRecherche,
           ),
@@ -84,11 +86,14 @@ class _MarchesScreenState extends State<MarchesScreen> {
       ),
       body: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.only(top: AppSpacing.sm),
-              child: MarketScopeSectionTitle(titre: 'Marchés'),
+            const ContenuCentre(
+              child: Padding(
+                padding: EdgeInsets.only(top: AppSpacing.sm),
+                child: MarketScopeSectionTitle(titre: 'Marchés'),
+              ),
             ),
-            AnimatedSwitcher(
+            ContenuCentre(
+              child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               transitionBuilder: (child, anim) => SizeTransition(
                 sizeFactor: anim,
@@ -106,6 +111,7 @@ class _MarchesScreenState extends State<MarchesScreen> {
                     )
                   : const SizedBox.shrink(
                       key: ValueKey('cache-recherche')),
+              ),
             ),
             Expanded(
               child: FutureBuilder<List<Marche>>(
@@ -129,7 +135,7 @@ class _MarchesScreenState extends State<MarchesScreen> {
                       message:
                           'Aucun marché n\'est encore disponible.\n'
                           'Revenez bientôt !',
-                      icone: Icons.storefront_rounded,
+                      icone: PhosphorIconsRegular.storefront,
                     );
                   }
 
@@ -158,7 +164,7 @@ class _MarchesScreenState extends State<MarchesScreen> {
                           ? 'Aucun marché pour ce filtre.'
                           : 'Aucun marché ne correspond à '
                               '« ${_controleurRecherche.text} ».',
-                      icone: Icons.search_off_rounded,
+                      icone: PhosphorIconsRegular.magnifyingGlassMinus,
                       cta: 'Effacer les filtres',
                       onCta: _effacerFiltres,
                     );
@@ -176,7 +182,8 @@ class _MarchesScreenState extends State<MarchesScreen> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
+                      ContenuCentre(
+                        child: Padding(
                         padding: const EdgeInsets.fromLTRB(
                             AppSpacing.md,
                             AppSpacing.sm,
@@ -194,14 +201,17 @@ class _MarchesScreenState extends State<MarchesScreen> {
                               ),
                         ),
                       ),
-                      _FiltresMarche(
-                        tri: _tri,
-                        villes: villes,
-                        villeFiltre: _villeFiltre,
-                        onTri: (tri) =>
-                            setState(() => _tri = tri),
-                        onVille: (ville) => setState(
-                            () => _villeFiltre = ville),
+                      ),
+                      ContenuCentre(
+                        child: _FiltresMarche(
+                          tri: _tri,
+                          villes: villes,
+                          villeFiltre: _villeFiltre,
+                          onTri: (tri) =>
+                              setState(() => _tri = tri),
+                          onVille: (ville) => setState(
+                              () => _villeFiltre = ville),
+                        ),
                       ),
                       Expanded(
                         child: RefreshIndicator(
@@ -210,8 +220,11 @@ class _MarchesScreenState extends State<MarchesScreen> {
                           child: GridView.builder(
                             physics:
                                 const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(
-                                16, 12, 16, 24),
+                            padding: MiseEnPage.padding(
+                              context,
+                              const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                              boutonsFlottants: 1,
+                            ),
                             gridDelegate:
                                 const SliverGridDelegateWithMaxCrossAxisExtent(
                               maxCrossAxisExtent: 520,
@@ -272,11 +285,9 @@ class _FiltresMarche extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            'TRI',
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontFamily: AppFonts.mono,
+            'Trier',
+            style: theme.textTheme.labelMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
-              letterSpacing: 1,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -382,7 +393,7 @@ class _CarteMarche extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
-              Icons.storefront_rounded,
+              PhosphorIconsRegular.storefront,
               color: AppColors.saffron,
               size: 24,
             ),
@@ -406,7 +417,7 @@ class _CarteMarche extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      Icons.location_on_rounded,
+                      PhosphorIconsRegular.mapPin,
                       size: 14,
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -428,7 +439,7 @@ class _CarteMarche extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Icon(
-            Icons.chevron_right_rounded,
+            PhosphorIconsRegular.caretRight,
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ],
@@ -491,14 +502,15 @@ class _MarcheDetailScreenState extends State<MarcheDetailScreen> {
         onRefresh: _recharger,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xl),
+          padding: MiseEnPage.padding(
+    context, const EdgeInsets.fromLTRB(
+              AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xl)),
           children: [
             _HeroMarche(marche: marche),
             const SizedBox(height: AppSpacing.lg),
             const MarketScopeSectionTitle(
               titre: 'Derniers prix relevés ici',
-              icone: Icons.sell_rounded,
+              icone: PhosphorIconsRegular.tag,
               padding: EdgeInsets.zero,
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -523,7 +535,7 @@ class _MarcheDetailScreenState extends State<MarcheDetailScreen> {
                     titre: 'Aucun prix pour l’instant',
                     message:
                         'Aucun relevé n’a encore été saisi sur ce marché.',
-                    icone: Icons.receipt_long_rounded,
+                    icone: PhosphorIconsRegular.receipt,
                   );
                 }
                 return Column(
@@ -590,7 +602,7 @@ class _HeroMarche extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
-                  Icons.storefront_rounded,
+                  PhosphorIconsRegular.storefront,
                   color: AppColors.darkSaffron,
                   size: 24,
                 ),
@@ -608,8 +620,8 @@ class _HeroMarche extends StatelessWidget {
                   children: [
                     Icon(
                       actif
-                          ? Icons.check_circle_rounded
-                          : Icons.pause_circle_rounded,
+                          ? PhosphorIconsRegular.checkCircle
+                          : PhosphorIconsRegular.pauseCircle,
                       size: 14,
                       color: couleurStatut,
                     ),
@@ -636,20 +648,20 @@ class _HeroMarche extends StatelessWidget {
               fontWeight: FontWeight.w700,
               fontSize: 22,
               height: 1.2,
-              color: Color(0xFFEAF3EE),
+              color: AppColors.onInk,
             ),
           ),
           const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(Icons.location_on_outlined,
-                  size: 15, color: Color(0xFF9FB6AE)),
+              const Icon(PhosphorIconsRegular.mapPin,
+                  size: 15, color: AppColors.onInkMuted),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   marche.localisation,
                   style:
-                      const TextStyle(fontSize: 13, color: Color(0xFF9FB6AE)),
+                      const TextStyle(fontSize: 13, color: AppColors.onInkMuted),
                 ),
               ),
             ],
@@ -662,7 +674,7 @@ class _HeroMarche extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 14,
                 height: 1.5,
-                color: Color(0xFFCFE7D8),
+                color: AppColors.onInkSoft,
               ),
             ),
           ],
@@ -734,7 +746,7 @@ class _LignePrixMarche extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Icon(
-              Icons.chevron_right_rounded,
+              PhosphorIconsRegular.caretRight,
               size: 20,
               color: theme.colorScheme.onSurfaceVariant,
             ),

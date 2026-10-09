@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../services/auth_service.dart';
 import '../services/session.dart';
@@ -136,7 +137,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       alignment: Alignment.centerLeft,
                       child: IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.arrow_back_rounded,
+                        icon: const Icon(PhosphorIconsRegular.arrowLeft,
                             color: surEncre),
                         style: IconButton.styleFrom(
                           backgroundColor:
@@ -201,7 +202,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               autofillHints: const [AutofillHints.name],
                               textInputAction: TextInputAction.next,
                               decoration: _deco(
-                                icone: Icons.person_outline,
+                                icone: PhosphorIconsRegular.user,
                                 label: 'Nom complet',
                               ),
                               validator: (v) {
@@ -222,7 +223,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               autofillHints: const [AutofillHints.email],
                               textInputAction: TextInputAction.next,
                               decoration: _deco(
-                                icone: Icons.mail_outline,
+                                icone: PhosphorIconsRegular.envelopeSimple,
                                 label: 'Adresse e-mail',
                               ),
                               validator: (v) {
@@ -246,7 +247,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ],
                               textInputAction: TextInputAction.next,
                               decoration: _deco(
-                                icone: Icons.lock_outline,
+                                icone: PhosphorIconsRegular.lock,
                                 label: 'Mot de passe',
                                 hint: '8 caractères minimum',
                                 suffix: IconButton(
@@ -255,8 +256,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       : 'Afficher',
                                   icon: Icon(
                                     _mdpVisible
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
+                                        ? PhosphorIconsRegular.eyeSlash
+                                        : PhosphorIconsRegular.eye,
                                     size: 20,
                                   ),
                                   onPressed: () => setState(() =>
@@ -279,7 +280,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ],
                               textInputAction: TextInputAction.done,
                               decoration: _deco(
-                                icone: Icons.lock_outline,
+                                icone: PhosphorIconsRegular.lock,
                                 label: 'Confirmer le mot de passe',
                                 suffix: IconButton(
                                   tooltip: _confirmVisible
@@ -287,8 +288,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       : 'Afficher',
                                   icon: Icon(
                                     _confirmVisible
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
+                                        ? PhosphorIconsRegular.eyeSlash
+                                        : PhosphorIconsRegular.eye,
                                     size: 20,
                                   ),
                                   onPressed: () => setState(() =>
@@ -312,7 +313,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 20),
                             MarketScopeButton(
                               label: 'Créer mon compte',
-                              icone: Icons.person_add_outlined,
+                              icone: PhosphorIconsRegular.userPlus,
                               enChargement: _enChargement,
                               onPressed:
                                   _enChargement ? null : _inscrire,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../theme/app_theme.dart';
 
@@ -156,7 +157,7 @@ class MarketScopeErrorBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.error_outline_rounded,
+          Icon(PhosphorIconsRegular.warningCircle,
               size: 20, color: theme.alertFg),
           const SizedBox(width: 10),
           Expanded(

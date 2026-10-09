@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/marche.dart';
 import '../models/produit.dart';
@@ -11,6 +12,7 @@ import '../widgets/ms_anim.dart';
 import '../widgets/ms_card.dart';
 import '../widgets/ms_decor.dart';
 import '../widgets/statut_badge.dart';
+import '../utils/mise_en_page.dart';
 
 enum AdminGestionType { marches, produits }
 
@@ -372,7 +374,7 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
         actions: [
           IconButton(
             tooltip: 'Ajouter un ${_estMarches ? 'marché' : 'produit'}',
-            icon: const Icon(Icons.add_rounded),
+            icon: const Icon(PhosphorIconsRegular.plus),
             onPressed: _creer,
           ),
         ],
@@ -403,11 +405,12 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
               child: ListView.separated(
                 physics:
                     const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
+                padding: MiseEnPage.padding(
+    context, const EdgeInsets.fromLTRB(
                     AppSpacing.md,
                     AppSpacing.sm,
                     AppSpacing.md,
-                    AppSpacing.xl),
+                    AppSpacing.xl)),
                 itemCount: elements.length,
                 separatorBuilder: (_, __) =>
                     const SizedBox(height: 8),
@@ -446,8 +449,8 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
                             ),
                             child: Icon(
                               _estMarches
-                                  ? Icons.storefront_rounded
-                                  : Icons.category_rounded,
+                                  ? PhosphorIconsRegular.storefront
+                                  : PhosphorIconsRegular.squaresFour,
                               size: 20,
                               color: actif
                                   ? theme.colorScheme.primary
@@ -507,7 +510,7 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
                           IconButton(
                             tooltip: 'Modifier',
                             icon: const Icon(
-                                Icons.edit_outlined,
+                                PhosphorIconsRegular.pencilSimple,
                                 size: 19),
                             onPressed: () =>
                                 _modifier(element),
