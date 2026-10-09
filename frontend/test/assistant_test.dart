@@ -30,6 +30,11 @@ void main() {
         expect(find.text('Assistant MarketScope'), findsWidgets);
         expect(find.text('Où acheter le riz le moins cher ?'), findsOneWidget);
         expect(find.byTooltip('Envoyer'), findsOneWidget);
+      expect(
+        find.byTooltip('Partager ma position avec l’assistant'),
+        findsOneWidget,
+      );
+      expect(find.text('Le riz le moins cher près de moi ?'), findsOneWidget);
 
         // Le bouton Envoyer s'active quand on tape une question.
         final envoyer = find.widgetWithIcon(

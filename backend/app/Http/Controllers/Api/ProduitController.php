@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\SupprimeOuFusionne;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProduitRequest;
 use App\Http\Requests\UpdateProduitRequest;
@@ -13,6 +14,8 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ProduitController extends Controller
 {
+    use SupprimeOuFusionne;
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $produits = Produit::query()
@@ -50,5 +53,21 @@ class ProduitController extends Controller
         $produit->update(['actif' => false]);
 
         return response()->json(['message' => 'Produit désactivé.']);
+    }
+
+    /**
+     * Suppression définitive : refusée (409) dès qu'un relevé est rattaché.
+     */
+    public function supprimerDefinitivement(Request $request, Produit $produit): JsonResponse
+    {
+        return $this->supprimerElement($request, $produit, 'Produit');
+    }
+
+    /**
+     * Fusion d'un doublon : ses relevés passent sur `cible_id`, puis il est supprimé.
+     */
+    public function fusionner(Request $request, Produit $produit): JsonResponse
+    {
+        return $this->fusionnerElement($request, $produit, Produit::class, 'Produit');
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\SupprimeOuFusionne;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreMarcheRequest;
 use App\Http\Requests\UpdateMarcheRequest;
@@ -13,6 +14,8 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class MarcheController extends Controller
 {
+    use SupprimeOuFusionne;
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $marches = Marche::query()
@@ -50,5 +53,21 @@ class MarcheController extends Controller
         $marche->update(['actif' => false]);
 
         return response()->json(['message' => 'Marché désactivé.']);
+    }
+
+    /**
+     * Suppression définitive : refusée (409) dès qu'un relevé est rattaché.
+     */
+    public function supprimerDefinitivement(Request $request, Marche $marche): JsonResponse
+    {
+        return $this->supprimerElement($request, $marche, 'Marché');
+    }
+
+    /**
+     * Fusion d'un doublon : ses relevés passent sur `cible_id`, puis il est supprimé.
+     */
+    public function fusionner(Request $request, Marche $marche): JsonResponse
+    {
+        return $this->fusionnerElement($request, $marche, Marche::class, 'Marché');
     }
 }

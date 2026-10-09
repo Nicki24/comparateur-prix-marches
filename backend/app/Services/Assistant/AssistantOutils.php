@@ -16,6 +16,20 @@ use Illuminate\Support\Carbon;
  */
 class AssistantOutils
 {
+    /** Rayon de recherche par défaut et maximal (km) pour marches_proches. */
+    private const RAYON_DEFAUT_KM = 10;
+
+    private const RAYON_MAX_KM = 50;
+
+    /** @var array{0: float, 1: float}|null [latitude, longitude] */
+    private ?array $position = null;
+
+    /** Position de l'utilisateur pour la requête en cours (ou null). */
+    public function definirPosition(?array $position): void
+    {
+        $this->position = $position;
+    }
+
     /**
      * Déclarations neutres (JSON Schema), traduites par chaque fournisseur.
      *
@@ -59,6 +73,20 @@ class AssistantOutils
                 ],
             ],
             [
+                'name' => 'marches_proches',
+                'description' => 'Marchés les plus proches de la position de l’utilisateur, avec la distance en km. '
+                    .'Avec produit_id : dernier prix du produit dans chacun de ces marchés, '
+                    .'trié du moins cher au plus cher. Renvoie position_inconnue si l’utilisateur '
+                    .'n’a pas partagé sa position.',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'produit_id' => ['type' => 'integer', 'description' => 'Optionnel : comparer ce produit.'],
+                        'rayon_km' => ['type' => 'number', 'description' => 'Rayon de recherche (défaut 10, max 50).'],
+                    ],
+                ],
+            ],
+            [
                 'name' => 'historique_prix',
                 'description' => 'Évolution du prix moyen d’un produit (par date) sur une période, '
                     .'avec la variation en % entre le premier et le dernier point.',
@@ -98,6 +126,10 @@ class AssistantOutils
                     (int) ($args['jours'] ?? 60),
                 ),
                 'statistiques_plateforme' => $this->statistiques(),
+                'marches_proches' => $this->marchesProches(
+                    isset($args['produit_id']) ? (int) $args['produit_id'] : null,
+                    (float) ($args['rayon_km'] ?? self::RAYON_DEFAUT_KM),
+                ),
                 default => ['erreur' => "Outil inconnu : $nom"],
             };
         } catch (\Throwable $e) {
@@ -135,12 +167,13 @@ class AssistantOutils
                 ->orWhere('nom', 'like', "%$ville%")))
             ->orderBy('nom')
             ->limit(40)
-            ->get(['id', 'nom', 'localisation']);
+            ->get(['id', 'nom', 'localisation', 'quartier']);
 
         return [
             'marches' => $marches->map(fn (Marche $m) => [
                 'id' => $m->id,
                 'nom' => $m->nom,
+                'quartier' => $m->quartier,
                 'ville' => $m->localisation,
             ])->all(),
         ];
@@ -183,6 +216,80 @@ class AssistantOutils
                 'ecart_vs_moins_cher_pct' => $min ? round(($l['prix_ariary'] - $min) / $min * 100, 1) : null,
             ])->all(),
         ];
+    }
+
+    private function marchesProches(?int $produitId, float $rayonKm): array
+    {
+        if ($this->position === null) {
+            return ['erreur' => 'position_inconnue'];
+        }
+        [$lat, $lng] = $this->position;
+        $rayonKm = min(max($rayonKm, 1), self::RAYON_MAX_KM);
+
+        $produit = $produitId ? Produit::find($produitId) : null;
+        if ($produitId && ! $produit) {
+            return ['erreur' => "Aucun produit avec l'id $produitId."];
+        }
+
+        $proches = Marche::where('actif', true)
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->get(['id', 'nom', 'localisation', 'quartier', 'latitude', 'longitude'])
+            ->map(fn (Marche $m) => [
+                'marche' => $m,
+                'distance_km' => round(self::distanceKm($lat, $lng, $m->latitude, $m->longitude), 1),
+            ])
+            ->filter(fn (array $l) => $l['distance_km'] <= $rayonKm)
+            ->sortBy('distance_km')
+            ->values();
+
+        $lignes = $proches->map(function (array $l) use ($produit) {
+            $m = $l['marche'];
+            $ligne = [
+                'marche_id' => $m->id,
+                'marche' => $m->nom,
+                'quartier' => $m->quartier,
+                'ville' => $m->localisation,
+                'distance_km' => $l['distance_km'],
+            ];
+            if (! $produit) {
+                return $ligne;
+            }
+            $dernier = RelevePrix::where('produit_id', $produit->id)
+                ->where('marche_id', $m->id)
+                ->where('statut', 'valide')
+                ->orderByDesc('date_releve')
+                ->first(['valeur', 'date_releve']);
+
+            return $dernier ? [
+                ...$ligne,
+                'prix_ariary' => (float) $dernier->valeur,
+                'date_releve' => $dernier->date_releve->toDateString(),
+            ] : null;
+        })->filter()->values();
+
+        if ($produit) {
+            $lignes = $lignes->sortBy([['prix_ariary', 'asc'], ['distance_km', 'asc']])->values();
+        }
+
+        return [
+            'rayon_km' => $rayonKm,
+            'produit' => $produit ? ['id' => $produit->id, 'nom' => $produit->nom, 'unite' => $produit->unite_mesure] : null,
+            // Marchés que l'admin n'a pas encore placés sur la carte.
+            'nb_marches_sans_position' => Marche::where('actif', true)->whereNull('latitude')->count(),
+            'marches' => $lignes->take(10)->all(),
+        ];
+    }
+
+    /** Distance à vol d'oiseau (formule de haversine), en kilomètres. */
+    public static function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $rayonTerre = 6371.0;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+        $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
+
+        return $rayonTerre * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 
     private function historiquePrix(int $produitId, ?int $marcheId, int $jours): array

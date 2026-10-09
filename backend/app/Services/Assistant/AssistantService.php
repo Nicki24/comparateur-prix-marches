@@ -21,10 +21,13 @@ class AssistantService
 
     /**
      * @param  list<array{role: 'user'|'assistant', content: string}>  $historique
+     * @param  array{0: float, 1: float}|null  $position  [latitude, longitude] de l'utilisateur
      * @return array{reponse: string, fournisseur: string}
      */
-    public function repondre(array $historique): array
+    public function repondre(array $historique, ?array $position = null): array
     {
+        $this->outils->definirPosition($position);
+
         $erreurs = [];
         foreach ($this->fournisseursOrdonnes() as $fournisseur) {
             try {
@@ -68,6 +71,10 @@ class AssistantService
         - N'invente JAMAIS un prix, un marché ou un produit. Utilise toujours les outils :
           d'abord rechercher_produits (ou lister_marches) pour trouver les identifiants,
           puis comparer_prix ou historique_prix.
+        - Pour « près de moi », « le plus proche », « autour de moi » : utilise marches_proches.
+          Donne la distance (« à 1,2 km ») avec le prix. Si l'outil répond position_inconnue,
+          invite l'utilisateur à toucher le bouton 📍 à gauche du champ de saisie pour
+          partager sa position, puis à reposer sa question.
         - Cite la date du relevé quand tu donnes un prix. Si un relevé a plus de $jours jours,
           précise qu'il est peut-être dépassé.
         - S'il n'y a pas de données, dis-le simplement et propose une alternative

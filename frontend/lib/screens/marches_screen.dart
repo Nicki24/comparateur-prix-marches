@@ -13,6 +13,7 @@ import '../widgets/marketscope_header.dart';
 import '../widgets/ms_anim.dart';
 import '../widgets/ms_card.dart';
 import '../widgets/produit_icone.dart';
+import 'carte_marche_screen.dart';
 import 'comparaison_screen.dart';
 import '../utils/mise_en_page.dart';
 
@@ -78,22 +79,24 @@ class _MarchesScreenState extends State<MarchesScreen> {
                 ? 'Fermer la recherche'
                 : 'Rechercher un marché',
             icon: Icon(
-              _rechercheActive ? PhosphorIconsRegular.x : PhosphorIconsRegular.magnifyingGlass,
+              _rechercheActive
+                  ? PhosphorIconsRegular.x
+                  : PhosphorIconsRegular.magnifyingGlass,
             ),
             onPressed: _basculerRecherche,
           ),
         ],
       ),
       body: Column(
-          children: [
-            const ContenuCentre(
-              child: Padding(
-                padding: EdgeInsets.only(top: AppSpacing.sm),
-                child: MarketScopeSectionTitle(titre: 'Marchés'),
-              ),
+        children: [
+          const ContenuCentre(
+            child: Padding(
+              padding: EdgeInsets.only(top: AppSpacing.sm),
+              child: MarketScopeSectionTitle(titre: 'Marchés'),
             ),
-            ContenuCentre(
-              child: AnimatedSwitcher(
+          ),
+          ContenuCentre(
+            child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               transitionBuilder: (child, anim) => SizeTransition(
                 sizeFactor: anim,
@@ -109,139 +112,137 @@ class _MarchesScreenState extends State<MarchesScreen> {
                       hint: 'Nom du marché ou localisation',
                       autofocus: true,
                     )
-                  : const SizedBox.shrink(
-                      key: ValueKey('cache-recherche')),
-              ),
+                  : const SizedBox.shrink(key: ValueKey('cache-recherche')),
             ),
-            Expanded(
-              child: FutureBuilder<List<Marche>>(
-                future: _futur,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState !=
-                      ConnectionState.done) {
-                    return const Chargement(nombreCartes: 5);
-                  }
-                  if (snapshot.hasError) {
-                    return ErreurMessage(
-                      message: snapshot.error.toString(),
-                      onReessayer: _recharger,
-                    );
-                  }
+          ),
+          Expanded(
+            child: FutureBuilder<List<Marche>>(
+              future: _futur,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Chargement(nombreCartes: 5);
+                }
+                if (snapshot.hasError) {
+                  return ErreurMessage(
+                    message: snapshot.error.toString(),
+                    onReessayer: _recharger,
+                  );
+                }
 
-                  final marches = snapshot.data ?? [];
-                  if (marches.isEmpty) {
-                    return const ContenuVide(
-                      titre: 'Aucun marché',
-                      message:
-                          'Aucun marché n\'est encore disponible.\n'
-                          'Revenez bientôt !',
-                      icone: PhosphorIconsRegular.storefront,
-                    );
-                  }
+                final marches = snapshot.data ?? [];
+                if (marches.isEmpty) {
+                  return const ContenuVide(
+                    titre: 'Aucun marché',
+                    message:
+                        'Aucun marché n\'est encore disponible.\n'
+                        'Revenez bientôt !',
+                    icone: PhosphorIconsRegular.storefront,
+                  );
+                }
 
-                  final villes = marches
-                      .map((m) => m.localisation)
-                      .where((v) => v.isNotEmpty)
-                      .toSet()
-                      .toList()
-                    ..sort();
+                final villes =
+                    marches
+                        .map((m) => m.localisation)
+                        .where((v) => v.isNotEmpty)
+                        .toSet()
+                        .toList()
+                      ..sort();
 
-                  final filtrees = marches.where((m) {
-                    final okVille = _villeFiltre == null ||
-                        m.localisation == _villeFiltre;
-                    final nom = m.nom.toLowerCase();
-                    final loc = m.localisation.toLowerCase();
-                    final okTexte = _requete.isEmpty ||
-                        nom.contains(_requete) ||
-                        loc.contains(_requete);
-                    return okVille && okTexte;
-                  }).toList();
+                final filtrees = marches.where((m) {
+                  final okVille =
+                      _villeFiltre == null || m.localisation == _villeFiltre;
+                  final nom = m.nom.toLowerCase();
+                  final loc = m.localisation.toLowerCase();
+                  final okTexte =
+                      _requete.isEmpty ||
+                      nom.contains(_requete) ||
+                      loc.contains(_requete);
+                  return okVille && okTexte;
+                }).toList();
 
-                  if (filtrees.isEmpty) {
-                    return ContenuVide(
-                      titre: 'Aucun résultat',
-                      message: _requete.isEmpty
-                          ? 'Aucun marché pour ce filtre.'
-                          : 'Aucun marché ne correspond à '
+                if (filtrees.isEmpty) {
+                  return ContenuVide(
+                    titre: 'Aucun résultat',
+                    message: _requete.isEmpty
+                        ? 'Aucun marché pour ce filtre.'
+                        : 'Aucun marché ne correspond à '
                               '« ${_controleurRecherche.text} ».',
-                      icone: PhosphorIconsRegular.magnifyingGlassMinus,
-                      cta: 'Effacer les filtres',
-                      onCta: _effacerFiltres,
-                    );
-                  }
+                    icone: PhosphorIconsRegular.magnifyingGlassMinus,
+                    cta: 'Effacer les filtres',
+                    onCta: _effacerFiltres,
+                  );
+                }
 
-                  if (_tri == 'ville') {
-                    filtrees.sort((a, b) =>
-                        a.localisation.compareTo(b.localisation));
-                  } else {
-                    filtrees.sort((a, b) => a.nom
-                        .toLowerCase()
-                        .compareTo(b.nom.toLowerCase()));
-                  }
+                if (_tri == 'ville') {
+                  filtrees.sort(
+                    (a, b) => a.localisation.compareTo(b.localisation),
+                  );
+                } else {
+                  filtrees.sort(
+                    (a, b) =>
+                        a.nom.toLowerCase().compareTo(b.nom.toLowerCase()),
+                  );
+                }
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ContenuCentre(
-                        child: Padding(
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ContenuCentre(
+                      child: Padding(
                         padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.md,
-                            AppSpacing.sm,
-                            AppSpacing.md,
-                            2),
+                          AppSpacing.md,
+                          AppSpacing.sm,
+                          AppSpacing.md,
+                          2,
+                        ),
                         child: Text(
                           '${filtrees.length} marché${filtrees.length > 1 ? 's' : ''} suivi${filtrees.length > 1 ? 's' : ''}',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                         ),
                       ),
+                    ),
+                    ContenuCentre(
+                      child: _FiltresMarche(
+                        tri: _tri,
+                        villes: villes,
+                        villeFiltre: _villeFiltre,
+                        onTri: (tri) => setState(() => _tri = tri),
+                        onVille: (ville) =>
+                            setState(() => _villeFiltre = ville),
                       ),
-                      ContenuCentre(
-                        child: _FiltresMarche(
-                          tri: _tri,
-                          villes: villes,
-                          villeFiltre: _villeFiltre,
-                          onTri: (tri) =>
-                              setState(() => _tri = tri),
-                          onVille: (ville) => setState(
-                              () => _villeFiltre = ville),
-                        ),
-                      ),
-                      Expanded(
-                        child: RefreshIndicator(
-                          color: Theme.of(context).marque,
-                          onRefresh: _recharger,
-                          child: GridView.builder(
-                            physics:
-                                const AlwaysScrollableScrollPhysics(),
-                            padding: MiseEnPage.padding(
-                              context,
-                              const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                              boutonsFlottants: 1,
-                            ),
-                            gridDelegate:
-                                const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 520,
-                              mainAxisSpacing: 10,
-                              crossAxisSpacing: 12,
-                              mainAxisExtent: 80,
-                            ),
-                            itemCount: filtrees.length,
-                            itemBuilder: (context, index) =>
-                                MsCascade(
-                              index: index,
-                              child: _CarteMarche(
-                                marche: filtrees[index],
-                                onTap: () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => MarcheDetailScreen(
-                                        marche: filtrees[index]),
+                    ),
+                    Expanded(
+                      child: RefreshIndicator(
+                        color: Theme.of(context).marque,
+                        onRefresh: _recharger,
+                        child: GridView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: MiseEnPage.padding(
+                            context,
+                            const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                            boutonsFlottants: 1,
+                          ),
+                          gridDelegate:
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent: 520,
+                                mainAxisSpacing: 10,
+                                crossAxisSpacing: 12,
+                                mainAxisExtent: 80,
+                              ),
+                          itemCount: filtrees.length,
+                          itemBuilder: (context, index) => MsCascade(
+                            index: index,
+                            child: _CarteMarche(
+                              marche: filtrees[index],
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => MarcheDetailScreen(
+                                    marche: filtrees[index],
                                   ),
                                 ),
                               ),
@@ -249,13 +250,14 @@ class _MarchesScreenState extends State<MarchesScreen> {
                           ),
                         ),
                       ),
-                    ],
-                  );
-                },
-              ),
+                    ),
+                  ],
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -350,9 +352,7 @@ class _ChipFiltre extends StatelessWidget {
               : theme.fondCarte,
           borderRadius: BorderRadius.circular(99),
           border: Border.all(
-            color: selected
-                ? theme.marque.withValues(alpha: 0.5)
-                : theme.ligne,
+            color: selected ? theme.marque.withValues(alpha: 0.5) : theme.ligne,
           ),
         ),
         child: Text(
@@ -424,7 +424,7 @@ class _CarteMarche extends StatelessWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        marche.localisation,
+                        marche.adresse,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -493,18 +493,21 @@ class _MarcheDetailScreenState extends State<MarcheDetailScreen> {
     final marche = widget.marche;
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: MarketScopeHeader(
-        titre: marche.nom,
-        sousTitre: marche.localisation,
-      ),
+      appBar: MarketScopeHeader(titre: marche.nom, sousTitre: marche.adresse),
       body: RefreshIndicator(
         color: theme.marque,
         onRefresh: _recharger,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: MiseEnPage.padding(
-    context, const EdgeInsets.fromLTRB(
-              AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xl)),
+            context,
+            const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.xl,
+            ),
+          ),
           children: [
             _HeroMarche(marche: marche),
             const SizedBox(height: AppSpacing.lg),
@@ -533,8 +536,7 @@ class _MarcheDetailScreenState extends State<MarcheDetailScreen> {
                 if (releves.isEmpty) {
                   return const ContenuVide(
                     titre: 'Aucun prix pour l’instant',
-                    message:
-                        'Aucun relevé n’a encore été saisi sur ce marché.',
+                    message: 'Aucun relevé n’a encore été saisi sur ce marché.',
                     icone: PhosphorIconsRegular.receipt,
                   );
                 }
@@ -547,7 +549,10 @@ class _MarcheDetailScreenState extends State<MarcheDetailScreen> {
                           for (var i = 0; i < releves.length; i++) ...[
                             if (i > 0)
                               Divider(
-                                  height: 1, indent: 64, color: theme.ligne),
+                                height: 1,
+                                indent: 64,
+                                color: theme.ligne,
+                              ),
                             _LignePrixMarche(releve: releves[i]),
                           ],
                         ],
@@ -609,8 +614,10 @@ class _HeroMarche extends StatelessWidget {
               ),
               const Spacer(),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: couleurStatut.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -654,18 +661,43 @@ class _HeroMarche extends StatelessWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(PhosphorIconsRegular.mapPin,
-                  size: 15, color: AppColors.onInkMuted),
+              const Icon(
+                PhosphorIconsRegular.mapPin,
+                size: 15,
+                color: AppColors.onInkMuted,
+              ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  marche.localisation,
-                  style:
-                      const TextStyle(fontSize: 13, color: AppColors.onInkMuted),
+                  marche.adresse,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.onInkMuted,
+                  ),
                 ),
               ),
             ],
           ),
+          if (marche.position != null) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.onInk,
+                side: const BorderSide(color: AppColors.onInkMuted),
+              ),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => CarteMarcheScreen(
+                    initiale: marche.position,
+                    nomMarche: marche.nom,
+                    lectureSeule: true,
+                  ),
+                ),
+              ),
+              icon: const Icon(PhosphorIconsRegular.mapTrifold, size: 18),
+              label: const Text('Voir sur la carte'),
+            ),
+          ],
           if (marche.description != null &&
               marche.description!.trim().isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -701,7 +733,9 @@ class _LignePrixMarche extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md, vertical: 12),
+          horizontal: AppSpacing.md,
+          vertical: 12,
+        ),
         child: Row(
           children: [
             ProduitIcone(

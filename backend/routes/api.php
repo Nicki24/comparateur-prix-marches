@@ -52,10 +52,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/marches', [MarcheController::class, 'store']);
         Route::put('/marches/{marche}', [MarcheController::class, 'update']);
         Route::delete('/marches/{marche}', [MarcheController::class, 'destroy']);
+        // Suppression réelle (sans historique) et fusion de doublons.
+        Route::delete('/marches/{marche}/definitif', [MarcheController::class, 'supprimerDefinitivement']);
+        Route::post('/marches/{marche}/fusionner', [MarcheController::class, 'fusionner']);
 
         Route::post('/produits', [ProduitController::class, 'store']);
         Route::put('/produits/{produit}', [ProduitController::class, 'update']);
         Route::delete('/produits/{produit}', [ProduitController::class, 'destroy']);
+        Route::delete('/produits/{produit}/definitif', [ProduitController::class, 'supprimerDefinitivement']);
+        Route::post('/produits/{produit}/fusionner', [ProduitController::class, 'fusionner']);
 
         Route::get('/signalements', [SignalementController::class, 'index']);
         Route::post('/signalements/detecter-obsoletes', [SignalementController::class, 'detecterObsoletes']);

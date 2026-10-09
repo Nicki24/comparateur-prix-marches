@@ -50,6 +50,9 @@ dependencies:
   intl: ^0.20.1
   phosphor_flutter: ^2.1.0
   flutter_secure_storage: ^10.3.4
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
+  geolocator: ^14.0.2
 
 dev_dependencies:
   flutter_test:

@@ -6,9 +6,13 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../services/assistant_service.dart';
 import '../theme/app_theme.dart';
 
+/// Suggestion qui active d'abord le partage de position.
+const _suggestionProximite = 'Le riz le moins cher près de moi ?';
+
 /// Questions proposées quand la conversation est vide.
 const _suggestions = [
   'Où acheter le riz le moins cher ?',
+  _suggestionProximite,
   'Le prix de l’huile augmente-t-il ?',
   'Quels marchés à Toliara ?',
   'Comment ajouter un prix ?',
@@ -68,7 +72,9 @@ class _BulleAssistantState extends State<BulleAssistant>
                     height: 56 + t * 16,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.greenLight.withValues(alpha: 0.28 * (1 - t)),
+                      color: AppColors.greenLight.withValues(
+                        alpha: 0.28 * (1 - t),
+                      ),
                     ),
                   );
                 },
@@ -122,7 +128,11 @@ class _AvatarAssistant extends StatelessWidget {
           stops: [0, 0.55, 1],
         ),
       ),
-      child: Icon(PhosphorIconsRegular.sparkle, color: Colors.white, size: icone),
+      child: Icon(
+        PhosphorIconsRegular.sparkle,
+        color: Colors.white,
+        size: icone,
+      ),
     );
   }
 }
@@ -166,11 +176,27 @@ class _FeuilleAssistantState extends State<_FeuilleAssistant> {
     });
   }
 
-  void _envoyer([String? texte]) {
+  Future<void> _envoyer([String? texte]) async {
     final question = (texte ?? _saisie.text).trim();
     if (question.isEmpty || _conversation.enAttente) return;
     _saisie.clear();
-    _conversation.envoyer(question);
+    if (question == _suggestionProximite && !_conversation.partagePosition) {
+      await _basculerPosition();
+    }
+    await _conversation.envoyer(question);
+  }
+
+  Future<void> _basculerPosition() async {
+    final erreur = await _conversation.basculerPartagePosition();
+    if (!mounted) return;
+    final message =
+        erreur ??
+        (_conversation.partagePosition
+            ? 'Position partagée avec l’assistant pour vos questions.'
+            : 'Position non partagée.');
+    ScaffoldMessenger.maybeOf(context)
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -199,7 +225,8 @@ class _FeuilleAssistantState extends State<_FeuilleAssistant> {
                 children: [
                   _EnTete(
                     controleur: controleurFeuille,
-                    peutReinitialiser: messages.isNotEmpty && !_conversation.enAttente,
+                    peutReinitialiser:
+                        messages.isNotEmpty && !_conversation.enAttente,
                     onReinitialiser: _conversation.reinitialiser,
                   ),
                   Expanded(
@@ -208,14 +235,19 @@ class _FeuilleAssistantState extends State<_FeuilleAssistant> {
                         : ListView.builder(
                             controller: _defilement,
                             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                            itemCount: messages.length + (_conversation.enAttente ? 1 : 0),
+                            itemCount:
+                                messages.length +
+                                (_conversation.enAttente ? 1 : 0),
                             itemBuilder: (context, i) {
-                              if (i == messages.length) return const _IndicateurFrappe();
+                              if (i == messages.length) {
+                                return const _IndicateurFrappe();
+                              }
                               final m = messages[i];
                               return _Bulle(
                                 key: ObjectKey(m),
                                 message: m,
-                                onReessayer: i == messages.length - 1 && m.erreur
+                                onReessayer:
+                                    i == messages.length - 1 && m.erreur
                                     ? _conversation.reessayer
                                     : null,
                               );
@@ -226,6 +258,9 @@ class _FeuilleAssistantState extends State<_FeuilleAssistant> {
                     controleur: _saisie,
                     actif: !_conversation.enAttente,
                     onEnvoyer: _envoyer,
+                    positionPartagee: _conversation.partagePosition,
+                    localisationEnCours: _conversation.localisationEnCours,
+                    onBasculerPosition: _basculerPosition,
                   ),
                 ],
               );
@@ -280,7 +315,9 @@ class _EnTete extends StatelessWidget {
                     children: [
                       Text(
                         'Assistant MarketScope',
-                        style: AppTextStyles.titleLarge.copyWith(color: AppColors.paper),
+                        style: AppTextStyles.titleLarge.copyWith(
+                          color: AppColors.paper,
+                        ),
                       ),
                       Row(
                         children: [
@@ -367,7 +404,11 @@ class _Accueil extends StatelessWidget {
               _Apparition(
                 delai: Duration(milliseconds: 80 * i),
                 child: ActionChip(
-                  avatar: Icon(PhosphorIconsRegular.lightning, size: 16, color: theme.marque),
+                  avatar: Icon(
+                    PhosphorIconsRegular.lightning,
+                    size: 16,
+                    color: theme.marque,
+                  ),
                   label: Text(_suggestions[i]),
                   onPressed: () => onSuggestion(_suggestions[i]),
                 ),
@@ -404,7 +445,9 @@ class _Bulle extends StatelessWidget {
     }
 
     final bulle = Container(
-      constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.78),
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.sizeOf(context).width * 0.78,
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: fond,
@@ -423,7 +466,10 @@ class _Bulle extends StatelessWidget {
           SelectableText.rich(
             TextSpan(
               children: _texteEnrichi(message.texte),
-              style: theme.textTheme.bodyMedium?.copyWith(color: texte, height: 1.45),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: texte,
+                height: 1.45,
+              ),
             ),
           ),
           if (onReessayer != null) ...[
@@ -447,7 +493,9 @@ class _Bulle extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: Row(
-          mainAxisAlignment: moi ? MainAxisAlignment.end : MainAxisAlignment.start,
+          mainAxisAlignment: moi
+              ? MainAxisAlignment.end
+              : MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (!moi) ...[
@@ -468,19 +516,30 @@ List<TextSpan> _texteEnrichi(String texte) {
   final motif = RegExp(r'\*\*(.+?)\*\*');
   var debut = 0;
   for (final m in motif.allMatches(texte)) {
-    if (m.start > debut) spans.add(TextSpan(text: texte.substring(debut, m.start)));
-    spans.add(TextSpan(
-      text: m.group(1),
-      style: const TextStyle(fontWeight: FontWeight.w700),
-    ));
+    if (m.start > debut) {
+      spans.add(TextSpan(text: texte.substring(debut, m.start)));
+    }
+    spans.add(
+      TextSpan(
+        text: m.group(1),
+        style: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+    );
     debut = m.end;
   }
   if (debut < texte.length) spans.add(TextSpan(text: texte.substring(debut)));
   // Les puces « * » en début de ligne deviennent des « • ».
   return spans
-      .map((s) => s.style == null
-          ? TextSpan(text: s.text?.replaceAll(RegExp(r'^[ \t]*[\*\-] ', multiLine: true), '• '))
-          : s)
+      .map(
+        (s) => s.style == null
+            ? TextSpan(
+                text: s.text?.replaceAll(
+                  RegExp(r'^[ \t]*[\*\-] ', multiLine: true),
+                  '• ',
+                ),
+              )
+            : s,
+      )
       .toList();
 }
 
@@ -538,7 +597,11 @@ class _IndicateurFrappeState extends State<_IndicateurFrappe>
                       Transform.translate(
                         offset: Offset(
                           0,
-                          -4 * math.max(0, math.sin((_c.value - i * 0.18) * 2 * math.pi)),
+                          -4 *
+                              math.max(
+                                0,
+                                math.sin((_c.value - i * 0.18) * 2 * math.pi),
+                              ),
                         ),
                         child: Container(
                           width: 7,
@@ -566,16 +629,26 @@ class _ZoneSaisie extends StatelessWidget {
     required this.controleur,
     required this.actif,
     required this.onEnvoyer,
+    required this.positionPartagee,
+    required this.localisationEnCours,
+    required this.onBasculerPosition,
   });
 
   final TextEditingController controleur;
   final bool actif;
   final VoidCallback onEnvoyer;
+  final bool positionPartagee;
+  final bool localisationEnCours;
+  final VoidCallback onBasculerPosition;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final peutEnvoyer = actif && controleur.text.trim().isNotEmpty;
+    // Bordure de champ à 3:1 minimum (WCAG 1.4.11), comme dans le thème.
+    final bordure = theme.brightness == Brightness.dark
+        ? AppColors.darkLineStrong
+        : AppColors.lineStrong;
     return Container(
       decoration: BoxDecoration(
         color: theme.fondCarte,
@@ -589,6 +662,27 @@ class _ZoneSaisie extends StatelessWidget {
           children: [
             Row(
               children: [
+                // État du partage porté par l'icône pleine/vide ET le libellé,
+                // pas seulement la couleur (WCAG 1.4.1).
+                IconButton(
+                  tooltip: positionPartagee
+                      ? 'Arrêter de partager ma position'
+                      : 'Partager ma position avec l’assistant',
+                  isSelected: positionPartagee,
+                  onPressed: localisationEnCours ? null : onBasculerPosition,
+                  icon: localisationEnCours
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(PhosphorIconsRegular.mapPin),
+                  selectedIcon: Icon(
+                    PhosphorIconsFill.mapPin,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 4),
                 Expanded(
                   child: TextField(
                     controller: controleur,
@@ -599,16 +693,18 @@ class _ZoneSaisie extends StatelessWidget {
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => onEnvoyer(),
                     decoration: InputDecoration(
-                      hintText: actif ? 'Votre question…' : 'L’assistant réfléchit…',
+                      hintText: actif
+                          ? 'Votre question…'
+                          : 'L’assistant réfléchit…',
                       counterText: '',
                       isDense: true,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
-                        borderSide: BorderSide(color: theme.ligne),
+                        borderSide: BorderSide(color: bordure),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
-                        borderSide: BorderSide(color: theme.ligne),
+                        borderSide: BorderSide(color: bordure),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -631,7 +727,9 @@ class _ZoneSaisie extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'L’IA peut se tromper : vérifiez les prix dans l’application.',
+              positionPartagee
+                  ? 'Position partagée pour cette conversation, jamais enregistrée.'
+                  : 'L’IA peut se tromper : vérifiez les prix dans l’application.',
               style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
             ),
           ],
@@ -661,7 +759,10 @@ class _Apparition extends StatelessWidget {
         );
         return Opacity(
           opacity: t,
-          child: Transform.translate(offset: Offset(0, 10 * (1 - t)), child: child),
+          child: Transform.translate(
+            offset: Offset(0, 10 * (1 - t)),
+            child: child,
+          ),
         );
       },
       child: child,

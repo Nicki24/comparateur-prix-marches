@@ -1,4 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Accès à l'API et aux tuiles de carte. Sans cette ligne, l'APK de
+         production (release) n'a aucun accès réseau : seul le manifeste
+         debug la déclarait. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Position : bouton 📍 du chat et « Ma position » sur la carte,
+         demandée uniquement quand l'utilisateur appuie dessus. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <application
         android:label="MarketScope"
         android:allowBackup="false"
