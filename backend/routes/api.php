@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ProduitController;
 use App\Http\Controllers\Api\ReleveController;
 use App\Http\Controllers\Api\SignalementController;
 use App\Http\Controllers\Api\StatistiqueController;
+use App\Http\Controllers\Api\SystemeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -35,6 +36,10 @@ Route::get('/stats', [StatistiqueController::class, 'synthese']);
 
 // --- Assistant IA (public, limité par utilisateur ou par IP) ---
 Route::post('/assistant', [AssistantController::class, 'discuter'])->middleware('throttle:assistant');
+
+// --- Maintenance déclenchée par les tâches Wasmer (voir SystemeController) ---
+Route::post('/systeme/installer', [SystemeController::class, 'installer']);
+Route::post('/systeme/prix-obsoletes', [SystemeController::class, 'prixObsoletes']);
 
 // --- Zone authentifiée (contributeurs + admin) ---
 Route::middleware('auth:sanctum')->group(function () {

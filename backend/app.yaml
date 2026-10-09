@@ -25,15 +25,18 @@ jobs:
 - name: installer-production
   trigger: post-deployment
   action:
-    execute:
-      command: artisan
-      cli_args:
-      - app:installer-production
+    fetch:
+      path: /api/systeme/installer
+      method: POST
+      timeout: 120s
+      expect:
+        status_codes:
+        - 200
 - name: prix-obsoletes
   trigger: 0 3 * * *
   action:
-    execute:
-      command: artisan
-      cli_args:
-      - app:detecter-prix-obsoletes
+    fetch:
+      path: /api/systeme/prix-obsoletes
+      method: POST
+      timeout: 120s
 app_id: da_RpXImtBUrVQg

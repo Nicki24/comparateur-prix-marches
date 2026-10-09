@@ -52,4 +52,27 @@ class InstallerProductionTest extends TestCase
 
         $this->assertSame(0, User::count());
     }
+
+    public function test_la_route_systeme_installe_sans_exposer_de_detail(): void
+    {
+        putenv('ADMIN_EMAIL=admin@exemple.test');
+        putenv('ADMIN_PASSWORD=un-mot-de-passe-long');
+
+        $this->postJson('/api/systeme/installer')
+            ->assertOk()
+            ->assertExactJson(['ok' => true]);
+
+        $this->assertSame(8, Produit::count());
+    }
+
+    public function test_la_route_systeme_est_limitee(): void
+    {
+        putenv('ADMIN_EMAIL=admin@exemple.test');
+        putenv('ADMIN_PASSWORD=un-mot-de-passe-long');
+
+        for ($i = 0; $i < 3; $i++) {
+            $this->postJson('/api/systeme/installer')->assertOk();
+        }
+        $this->postJson('/api/systeme/installer')->assertStatus(429);
+    }
 }
