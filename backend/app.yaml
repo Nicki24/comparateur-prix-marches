@@ -1,52 +1,39 @@
-# Application Wasmer Edge de l'API MarketScope.
-# Les valeurs secrètes (APP_KEY, ADMIN_*, clés IA) ne vont JAMAIS ici :
-# elles se règlent dans le tableau de bord Wasmer (Settings → Environment
-# Vars) ou avec `wasmer app secrets create NOM valeur`.
 kind: wasmer.io/App.v0
 name: marketscope-api
 owner: norlandehubery
 package: .
-
 env:
   APP_NAME: MarketScope
   APP_ENV: production
-  APP_DEBUG: "false"
+  APP_DEBUG: 'false'
   APP_LOCALE: fr
   APP_FALLBACK_LOCALE: fr
-  # Système de fichiers en lecture seule : journaux vers la sortie
-  # standard (visibles dans l'onglet Logs) et vues compilées dans /tmp.
   LOG_CHANNEL: stderr
   LOG_LEVEL: warning
   VIEW_COMPILED_PATH: /tmp
-  # API par jetons : pas de session ; cache (limites d'essais) en base.
   SESSION_DRIVER: array
   CACHE_STORE: database
   QUEUE_CONNECTION: sync
-  # Base MySQL fournie par Wasmer (DB_HOST, DB_PORT, DB_NAME,
-  # DB_USERNAME, DB_PASSWORD injectés automatiquement).
   DB_CONNECTION: mysql
-  SANCTUM_EXPIRATION: "43200"
-  CORS_ALLOWED_ORIGINS: "*"
+  SANCTUM_EXPIRATION: '43200'
+  CORS_ALLOWED_ORIGINS: '*'
   ASSISTANT_PROVIDER: gemini
-
 capabilities:
   database:
     engine: mysql
-
 jobs:
-  # Après chaque déploiement : migrations + compte admin + produits
-  # (sans effet si déjà présents).
-  - name: installer-production
-    trigger: post-deployment
-    action:
-      execute:
-        command: artisan
-        cli_args: ["app:installer-production"]
-        timeout: 5m
-  # Chaque nuit à 3 h (UTC) : relevés de plus de 14 jours → « Obsolète ».
-  - name: prix-obsoletes
-    trigger: "0 3 * * *"
-    action:
-      execute:
-        command: artisan
-        cli_args: ["app:detecter-prix-obsoletes"]
+- name: installer-production
+  trigger: post-deployment
+  action:
+    execute:
+      command: artisan
+      cli_args:
+      - app:installer-production
+- name: prix-obsoletes
+  trigger: 0 3 * * *
+  action:
+    execute:
+      command: artisan
+      cli_args:
+      - app:detecter-prix-obsoletes
+app_id: da_RpXImtBUrVQg
