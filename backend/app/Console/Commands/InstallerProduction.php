@@ -58,11 +58,24 @@ class InstallerProduction extends Command
             return true;
         }
 
-        $email = (string) env('ADMIN_EMAIL');
+        // Tolère les espaces ou guillemets ajoutés par erreur autour des valeurs.
+        $email = trim((string) env('ADMIN_EMAIL'), " \t\n\r\"'");
         $motDePasse = (string) env('ADMIN_PASSWORD');
 
-        if (! filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($motDePasse) < 12) {
-            $this->error('Définissez les secrets ADMIN_EMAIL et ADMIN_PASSWORD (12 caractères minimum).');
+        $erreurs = [];
+        if ($email === '') {
+            $erreurs[] = 'ADMIN_EMAIL est absent';
+        } elseif (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $erreurs[] = "ADMIN_EMAIL n'est pas une adresse e-mail valide";
+        }
+        if ($motDePasse === '') {
+            $erreurs[] = 'ADMIN_PASSWORD est absent';
+        } elseif (mb_strlen($motDePasse) < 12) {
+            $erreurs[] = 'ADMIN_PASSWORD fait moins de 12 caractères';
+        }
+        // Jamais les valeurs elles-mêmes dans les journaux.
+        if ($erreurs !== []) {
+            $this->error('Compte admin non créé : '.implode(' ; ', $erreurs).'.');
 
             return false;
         }
