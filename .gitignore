@@ -47,3 +47,12 @@ node_modules/
 
 # APK et autres fichiers distribués (trop lourds pour Git).
 livrables/
+
+# Doublons et brouillons locaux de documents
+*(1).docx
+*_temp.docx
+~$*.docx
+
+# Consignes pour assistants IA (locales, hors dépôt)
+backend/AGENTS.md
+backend/CLAUDE.md

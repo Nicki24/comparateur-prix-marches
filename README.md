@@ -1,195 +1,212 @@
-# Comparateur des Prix des Marchés Locaux
+<p align="center">
+  <img src="frontend/assets/marketscope_logo_round.png" alt="Logo MarketScope" width="160">
+</p>
 
-Application de **comparaison des prix des produits essentiels sur les marchés locaux** de Toliara (Madagascar).
+<h1 align="center">MarketScope</h1>
 
-**Projet de fin d'études — Mémoire (2026) — ENI** — présenté par **Norlande**.
+<p align="center">
+  <strong>Comparez, suivez et comprenez les prix des marchés locaux de Toliara (Madagascar).</strong><br>
+  Application mobile Flutter + API Laravel — projet de fin d'études (ENI, 2026).
+</p>
+
+<p align="center">
+  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.32-02569B?logo=flutter&logoColor=white">
+  <img alt="Dart" src="https://img.shields.io/badge/Dart-3.8-0175C2?logo=dart&logoColor=white">
+  <img alt="Laravel" src="https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white">
+  <img alt="PHP" src="https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white">
+  <img alt="MySQL" src="https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-96%20au%20vert-2E7D32">
+  <img alt="Accessibilité" src="https://img.shields.io/badge/WCAG%202.2-AA-197F47">
+</p>
+
+<p align="center">
+  <a href="#-fonctionnalités">Fonctionnalités</a> ·
+  <a href="#-captures-décran">Captures</a> ·
+  <a href="#%EF%B8%8F-architecture">Architecture</a> ·
+  <a href="#-démarrage-rapide">Démarrage</a> ·
+  <a href="docs/DEPLOIEMENT.md">Déploiement</a> ·
+  <a href="docs/API.md">API</a>
+</p>
 
 ---
 
-## 📌 Contexte & Objectif
+## 📌 Le projet
 
-Ce projet vise à aider les consommateurs à comparer les prix des produits essentiels (riz, huile, sucre, tomates, etc.) entre les différents marchés de Toliara, afin de trouver le meilleur prix au quotidien.
+Sur les marchés de Toliara, le prix d'un même produit — riz, huile, sucre, tomates… — varie
+d'un marché à l'autre et d'un jour à l'autre. **MarketScope** rassemble des relevés de prix
+saisis sur le terrain par des contributeurs pour que chacun puisse savoir, en un coup d'œil,
+**où acheter moins cher** et **comment les prix évoluent**.
 
-## 🎯 Fonctionnalités principales (selon le cahier des charges)
+- 🔓 **Consultation libre**, sans créer de compte.
+- 📝 **Relevés de terrain** saisis par des contributeurs inscrits.
+- 🛡️ **Données fiables** : relevés immuables, un relevé par jour et par marché, détection
+  automatique des prix anormaux et obsolètes.
+- 🇫🇷 Interface entièrement **en français**.
 
-- **Consultation publique sans compte** : tout le monde peut rechercher et comparer les prix des produits par marché sans s'inscrire.
-- **Interface en français**.
-- **Contribution des prix** : les contributeurs enregistrés peuvent saisir les relevés de prix.
-- **Règles métier** :
-  - ⛔ Pas de modification des relevés après validation.
-  - 🔁 Maximum **1 relevé / contributeur / produit / marché / jour**.
-- **Statistiques & graphiques** : évolution des prix (bibliothèque `fl_chart`).
+## ✨ Fonctionnalités
+
+| Pour qui | Ce que l'on peut faire |
+|---|---|
+| **Tout le monde** (sans compte) | Comparer le prix d'un produit entre les marchés (écarts en %), suivre son évolution (graphiques moyenne / min / max), consulter les marchés, leur emplacement sur la carte et les chiffres de la plateforme. |
+| **Contributeurs** | Créer un compte, saisir un relevé (produit, marché, prix, date), consulter l'historique de ses relevés et leur statut (valide, signalé, obsolète). |
+| **Administrateur** | Gérer marchés et produits (créer, modifier, désactiver, réactiver, **fusionner les doublons**, supprimer ce qui n'a aucun relevé), **placer chaque marché sur la carte**, traiter les signalements, exporter les relevés en CSV. |
+| **Assistant IA** 🤖 | Répond en langage naturel (« Où acheter le riz le moins cher ? », « Le marché le plus proche de moi ? ») à partir des **vraies données** de la plateforme, jamais inventées. Peut utiliser la position de l'utilisateur, uniquement s'il la partage. |
+
+### Règles métier
+
+- ⛔ Un relevé **ne peut plus être modifié** après son envoi.
+- 🔁 **Un seul relevé par jour** pour un même contributeur, produit et marché.
+- ⚠️ Un relevé qui s'écarte de **plus de 40 %** de la moyenne des 14 derniers jours est **signalé** automatiquement.
+- 🕒 Un relevé de **plus de 14 jours** devient **obsolète** (tâche planifiée chaque nuit).
+- 🗑️ Un marché ou produit **lié à des relevés ne peut pas être supprimé** — seulement désactivé ou fusionné — pour préserver l'historique des prix.
 
 ## 📸 Captures d'écran
-
-Six captures de l'application en fonctionnement (rendu Flutter, format portrait mobile).
 
 | | | |
 |:-:|:-:|:-:|
 | ![Capture 1](docs/captures/capture-01.png) | ![Capture 2](docs/captures/capture-02.png) | ![Capture 3](docs/captures/capture-03.png) |
-| **1** | **2** | **3** |
 | ![Capture 4](docs/captures/capture-04.png) | ![Capture 5](docs/captures/capture-05.png) | ![Capture 6](docs/captures/capture-06.png) |
-| **4** | **5** | **6** |
-
-> Fichiers sources dans [`docs/captures/`](docs/captures/) — 620 × 895 px environ, 618 Ko au total.
 
 ## 🏗️ Architecture
 
-Stack choisie (**Plan A — application mobile**) :
-
-| Couche | Technologie | Dossier |
-|--------|-------------|---------|
-| 📱 Frontend (mobile) | **Flutter** + Dart | [`frontend/`](frontend/) |
-| ⚙️ Backend (API REST) | **Laravel** (PHP) | [`backend/`](backend/) |
-| 🗄️ Base de données | **MySQL** | — |
-
-```
-F:\Application comparaison de prix\
-├── frontend\   → Application mobile Flutter
-└── backend\    → API REST Laravel
+```mermaid
+flowchart LR
+    A["📱 Application Flutter<br/>(Android · Web)"] -- "HTTPS / JSON<br/>jeton Sanctum" --> B["⚙️ API REST Laravel<br/>(Wasmer Edge)"]
+    B --> C[("🗄️ MySQL")]
+    B -- "outils en lecture seule" --> D["🤖 Gemini<br/>(secours : OpenRouter)"]
+    A -- "tuiles de carte" --> E["🗺️ OpenStreetMap"]
 ```
 
----
+| Couche | Technologies | Dossier |
+|---|---|---|
+| 📱 Application mobile | Flutter 3.32 · Dart 3.8 · Material 3 | [`frontend/`](frontend/) |
+| ⚙️ API REST | Laravel 13 · PHP 8.3+ · Sanctum | [`backend/`](backend/) |
+| 🗄️ Base de données | MySQL 8 | migrations dans [`backend/database/`](backend/database/) |
+| ☁️ Hébergement | Wasmer Edge (API + MySQL) | [`backend/app.yaml`](backend/app.yaml) |
 
-## 🧰 État actuel du projet
+### Principales bibliothèques
 
-✅ **Environnement de développement entièrement installé et vérifié.**
+| Côté application (Flutter) | Rôle |
+|---|---|
+| `http` | Appels à l'API |
+| `fl_chart` | Graphiques d'évolution et de comparaison des prix |
+| `flutter_map` + `latlong2` | Carte OpenStreetMap (sans clé d'API) |
+| `geolocator` | Position de l'utilisateur (sur demande uniquement) |
+| `flutter_secure_storage` | Jeton de connexion chiffré (Keystore Android) |
+| `phosphor_flutter` | Icônes |
+| `intl` | Formats français (dates, Ariary) |
 
-### Outils installés
+| Côté API (Laravel) | Rôle |
+|---|---|
+| Laravel Sanctum | Authentification par jetons |
+| Rate limiting Laravel | Protection contre le bourrage d'identifiants et les abus |
+| Gemini / OpenRouter (HTTP) | Assistant IA avec appels d'outils |
 
-| Outil | Version | Emplacement / Détail |
-|-------|---------|----------------------|
-| **Flutter SDK** | 3.32.4 | `C:\src\flutter` (Dart 3.8.1) |
-| **Android Toolchain** | SDK 36.1.0 | Command-line tools + licences acceptées |
-| **Laravel** | 13.30.1 | `backend/` — sert sur `http://localhost:8000` |
-| **PHP** | 8.4.1 | `C:\php-8.4.1-nts-Win32-vs17-x64\php.exe` |
-| **Composer** | 2.9.2 | Gestionnaire de paquets PHP |
-| **MySQL** | 8.4.9 | Service `MySQL84` — **port 3308** |
-| **Node.js** | v22.22.3 | + npm 10.9.8 / npx |
-| **Git** | 2.49.0 | Contrôle de version |
-| **Android Studio** | 2025.3.2 | IDE Android |
-| **VS Code** | 1.121.0 | Éditeur principal |
+## 🧭 Structure du dépôt
 
-### Configuration de la base de données (backend)
-
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3308        # ⚠️ Port 3308 (3306/3307 déjà pris par WAMP)
-DB_DATABASE=comparateur_prix
-DB_USERNAME=root
-DB_PASSWORD=root1234   # à changer en production
+```
+comparateur-prix-marches/
+├── backend/              API REST Laravel
+│   ├── app/              Contrôleurs, modèles, services (assistant IA, anomalies…)
+│   ├── database/         Migrations et seeders
+│   ├── routes/api.php    Les 30 routes de l'API
+│   ├── tests/            56 tests (règles métier, sécurité, géolocalisation…)
+│   ├── app.yaml          Configuration Wasmer Edge
+│   └── wasmer.toml       Paquet Wasmer (PHP 8.3)
+├── frontend/             Application Flutter
+│   ├── lib/screens/      Écrans (accueil, comparaison, carte, saisie, admin…)
+│   ├── lib/services/     Accès à l'API, session, localisation
+│   ├── lib/widgets/      Design system MarketScope (cartes, boutons, états…)
+│   ├── lib/theme/        Thème clair / sombre (jetons de couleur WCAG AA)
+│   └── test/             40 tests (widgets, accessibilité, modèles)
+├── docs/                 Documentation, captures et documents du mémoire
+└── scripts/              Script de déploiement de l'API
 ```
 
-> ℹ️ **Pourquoi le port 3308 ?** Le poste dispose déjà d'un **WAMP** qui occupe les ports 3306 (MySQL 8.3) et 3307 (MariaDB 11.3). Le MySQL dédié au projet écoute donc sur **3308**.
+## 🚀 Démarrage rapide
 
-### Migrations
-Le schéma complet est implémenté : utilisateurs (avec rôle `contributeur`/`admin`), jetons Sanctum, **marchés**, **produits**, **relevés de prix** (contrainte unique `un_releve_par_jour_par_contributeur`) et **signalements** d'anomalies.
+### Prérequis
 
-### API REST (21 routes)
-- **Publique** : `GET /api/marches`, `GET /api/produits`, `GET /api/produits/{id}/comparaison` (prix triés + écarts %), `GET /api/produits/{id}/historique` (points pour `fl_chart`, filtre `marche_id`).
-- **Authentification** (Sanctum) : `POST /api/register`, `POST /api/login`, `POST /api/logout`, `GET /api/user`.
-- **Contributeur** : `POST /api/releves` (anti-doublon 1/jour, détection automatique prix anormal > ±40 %), `GET /api/mes-releves` (historique personnel, lecture seule).
-- **Admin** : gestion des marchés et produits (créer, modifier, désactiver, **réactiver**), `GET /api/signalements`, `POST /api/signalements/detecter-obsoletes` (prix > 14 jours).
+- **PHP 8.3+** (extensions `pdo_mysql`, `mbstring`, `openssl`) et **Composer 2**
+- **MySQL 8**
+- **Flutter 3.32+** avec le SDK Android (et le NDK 26.3.11579264 pour la version de production)
 
-> Le CORS est activé (`config/cors.php`) pour permettre à l'application Flutter Web d'appeler l'API pendant le développement.
-
-### Frontend Flutter
-
-Application mobile Android (+ Web) pour la consultation et la contribution.
-
-- **Consultation publique** (sans compte) : marchés, produits, comparaison des prix par marché (graphique en barres + écarts en %) et évolution historique (courbe `fl_chart`, modes moyenne/min/max).
-- **Espace contributeur** : inscription, connexion, saisie de relevé de prix (avec sélecteur de date et détection du prix anormal), consultation de son historique personnel (statut valide/signalé).
-- **Espace admin** : vue des signalements (détection des prix obsolètes), gestion complète des marchés et produits (créer, modifier, désactiver, réactiver).
-
-```bash
-cd frontend
-flutter pub get
-flutter run                          # émulateur Android / Chrome
-# Autre adresse API :
-flutter run --dart-define=API_URL=https://api.exemple.fr/api
-```
-
-> Par défaut, l'API est `http://localhost:8000/api` (web/désktop) ou `http://10.0.2.2:8000/api` (émulateur Android).
-
-### Tests (Laravel)
-```bash
-cd backend
-php artisan test    # 16 tests verts (règles métier + API)
-```
-
-### Tests (Flutter)
-```bash
-cd frontend
-flutter analyze     # aucune alerte
-flutter test        # 7 tests verts (widget + décodage des modèles)
-```
-
-> La configuration `phpunit.xml` utilise une base dédiée `comparateur_prix_test` (MySQL, port 3308). Les tests utilisent `RefreshDatabase` et `Sanctum::actingAs`.
-
-### Comptes de démonstration (seeder)
-| Rôle | Email | Mot de passe |
-|------|-------|--------------|
-| Admin | `admin@comparateur.mg` | `password123` |
-| Contributeur | `contrib@comparateur.mg` | `password123` |
-
----
-
-## 🚀 Lancer le projet sur un autre PC
-
-### 0. Prérequis (installer si besoin)
-
-- **PHP ≥ 8.3** + extensions `pdo_mysql`, `mbstring`, `openssl`
-- **Composer** 2.x
-- **MySQL** 8.x
-- **Flutter SDK** (démarrage) + un éditeur (VS Code / Android Studio)
-
-### 1. Cloner le dépôt
+### 1. API (Laravel)
 
 ```bash
 git clone https://github.com/Nicki24/comparateur-prix-marches.git
-cd comparateur-prix-marches
-```
-
-### 2. Backend (Laravel)
-
-```bash
-cd backend
+cd comparateur-prix-marches/backend
 composer install
-copy .env.example .env        # puis configurer la base MySQL (voir plus haut)
+cp .env.example .env          # puis renseigner la connexion MySQL (DB_*)
 php artisan key:generate
-php artisan migrate
+php artisan migrate --seed    # données de démonstration
 php artisan serve             # → http://localhost:8000
 ```
 
-### 3. Frontend (Flutter)
+> Le seeder crée des comptes et des prix **de démonstration** pour le développement local.
+> Leurs identifiants se trouvent dans [`backend/database/seeders/DatabaseSeeder.php`](backend/database/seeders/DatabaseSeeder.php) ;
+> ils ne doivent jamais être utilisés en production.
+
+### 2. Application (Flutter)
 
 ```bash
-cd frontend
+cd ../frontend
 flutter pub get
-flutter run                    # sur un appareil Android / émulateur / chrome
+flutter run                   # émulateur Android, appareil ou Chrome
 ```
 
----
+En développement, l'application appelle l'API locale (`http://localhost:8000/api`, ou
+`http://10.0.2.2:8000/api` depuis l'émulateur Android). La version de production
+(`flutter build apk`) appelle l'API en ligne. Pour forcer une autre adresse :
 
-## 🔗 Liens utiles
+```bash
+flutter run --dart-define=API_URL=https://mon-serveur.exemple/api
+```
 
-- **Dépôt GitHub** : https://github.com/Nicki24/comparateur-prix-marches
-- **Documentation Flutter** : https://docs.flutter.dev/
-- **Documentation Laravel** : https://laravel.com/docs
-- **SDK Flutter (Windows)** : https://docs.flutter.dev/get-started/install/windows
-- **Téléchargement Composer** : https://getcomposer.org/download/
-- **Téléchargement MySQL** : https://dev.mysql.com/downloads/
+## ✅ Qualité
 
----
+| | Commande | Résultat |
+|---|---|---|
+| Tests API | `cd backend && php artisan test` | 56 tests au vert |
+| Tests application | `cd frontend && flutter test` | 40 tests au vert |
+| Analyse statique | `cd frontend && flutter analyze` | aucune alerte |
+| Dépendances PHP | `cd backend && composer audit` | aucune faille connue |
 
-## 📝 Notes techniques importantes
+> Les tests de l'API utilisent une base MySQL dédiée, `comparateur_prix_test` (voir [`backend/phpunit.xml`](backend/phpunit.xml)).
 
-- **Backend** : API REST fonctionnelle (20 routes) + 16 tests ; **Frontend** : application Flutter fonctionnelle (consultation, contribution, admin) + 7 tests.
-- Le fichier `.env` du backend **ne doit jamais être commité** (il contient les identifiants de la base). Il est déjà exclu via `.gitignore`.
-- Les identifiants de base de données ci-dessus ne sont valables qu'en environnement local de développement.
-- **Jeton de session** : stocké localement via `shared_preferences` ; le jeton Sanctum est révoqué côté serveur à la déconnexion.
+### Sécurité
 
----
+- Jeton de session stocké **chiffré** (`flutter_secure_storage`), jamais en clair.
+- **Limitation des tentatives** : 5 connexions / minute par compte et IP, 10 inscriptions / heure par IP.
+- Jetons Sanctum **expirant après 30 jours**, révoqués à la déconnexion.
+- Export CSV protégé contre l'**injection de formules** (Excel).
+- Clés d'IA et secrets **uniquement côté serveur** ; aucune clé dans l'application.
+- Sauvegarde Android désactivée (`allowBackup="false"`) ; HTTPS obligatoire en production.
 
-*Application pédagogique réalisée dans le cadre d'un mémoire de fin d'études.*
+### Accessibilité (WCAG 2.2 AA)
+
+- Contrastes vérifiés (texte ≥ 4,5:1, contours de champs ≥ 3:1) en thème clair et sombre.
+- Chargements et erreurs annoncés aux lecteurs d'écran (TalkBack, NVDA).
+- Animations désactivées si l'utilisateur a choisi « réduire les animations ».
+- Cibles tactiles ≥ 48 dp, boutons d'icônes avec libellés, zoom de carte au bouton.
+
+## ☁️ Déploiement
+
+L'API est hébergée sur **[Wasmer Edge](https://wasmer.io)** (offre gratuite, base MySQL
+incluse) et l'application est distribuée sous forme d'**APK Android signé**. Toutes les
+étapes — secrets, premier déploiement, mise à jour, signature et distribution de l'APK —
+sont détaillées dans **[`docs/DEPLOIEMENT.md`](docs/DEPLOIEMENT.md)**.
+
+## 📚 Documentation
+
+| Document | Contenu |
+|---|---|
+| [`docs/API.md`](docs/API.md) | Les 30 routes de l'API, leurs accès et leurs règles |
+| [`docs/DEPLOIEMENT.md`](docs/DEPLOIEMENT.md) | Mise en ligne de l'API et publication de l'APK |
+| [`docs/memoire/`](docs/memoire/) | Cahier des charges, dossier de conception, MCD/MLD, rapport de suivi |
+
+## 👤 Auteur
+
+**Norlande** — projet de fin d'études, **École Nationale d'Informatique (ENI)**, 2026.
+
+<sub>Application pédagogique réalisée dans le cadre d'un mémoire de fin d'études.</sub>
