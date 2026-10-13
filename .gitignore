@@ -44,3 +44,6 @@ login.json
 /build/
 /dist/
 node_modules/
+
+# APK et autres fichiers distribués (trop lourds pour Git).
+livrables/
