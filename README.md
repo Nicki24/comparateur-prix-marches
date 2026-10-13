@@ -20,6 +20,12 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/Nicki24/comparateur-prix-marches/releases/latest">
+    <img alt="Télécharger l'APK Android" src="https://img.shields.io/github/v/release/Nicki24/comparateur-prix-marches?label=T%C3%A9l%C3%A9charger%20l%27APK&logo=android&logoColor=white&color=197F47&style=for-the-badge">
+  </a>
+</p>
+
+<p align="center">
   <a href="#-fonctionnalités">Fonctionnalités</a> ·
   <a href="#-captures-décran">Captures</a> ·
   <a href="#%EF%B8%8F-architecture">Architecture</a> ·
@@ -189,6 +195,13 @@ flutter run --dart-define=API_URL=https://mon-serveur.exemple/api
 - Chargements et erreurs annoncés aux lecteurs d'écran (TalkBack, NVDA).
 - Animations désactivées si l'utilisateur a choisi « réduire les animations ».
 - Cibles tactiles ≥ 48 dp, boutons d'icônes avec libellés, zoom de carte au bouton.
+
+## 📲 Installer l'application
+
+Téléchargez **`MarketScope-1.0.0.apk`** depuis la
+[dernière release](https://github.com/Nicki24/comparateur-prix-marches/releases/latest),
+ouvrez-le sur votre téléphone Android (6.0 ou plus récent) et autorisez l'installation
+d'applications inconnues lorsque le système le demande.
 
 ## ☁️ Déploiement
 
