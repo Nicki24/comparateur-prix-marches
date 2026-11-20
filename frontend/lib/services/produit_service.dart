@@ -1,5 +1,6 @@
 import '../models/produit.dart';
 import 'api_client.dart';
+import 'rafraichissement.dart';
 
 class ProduitService {
   /// Liste des produits actifs (ou tous si [tout] = true — admin).
@@ -30,12 +31,15 @@ class ProduitService {
     final produitData = data['data'] is Map<String, dynamic>
         ? data['data'] as Map<String, dynamic>
         : data;
-    return Produit.fromJson(produitData);
+    final produit = Produit.fromJson(produitData);
+    Rafraichissement.instance.signaler();
+    return produit;
   }
 
   /// Désactive un produit (admin, suppression logique).
   static Future<void> desactiver(int id) async {
     await ApiClient.instance.delete('/produits/$id');
+    Rafraichissement.instance.signaler();
   }
 
   /// Modifie un produit (admin).
@@ -56,12 +60,15 @@ class ProduitService {
     final produitData = data['data'] is Map<String, dynamic>
         ? data['data'] as Map<String, dynamic>
         : data;
-    return Produit.fromJson(produitData);
+    final produit = Produit.fromJson(produitData);
+    Rafraichissement.instance.signaler();
+    return produit;
   }
 
   /// Réactive un produit désactivé (admin, suppression logique inverse).
   static Future<void> reactiver(int id) async {
     await ApiClient.instance.put('/produits/$id', {'actif': true});
+    Rafraichissement.instance.signaler();
   }
 
   /// Supprime définitivement un produit sans historique (admin).
@@ -72,6 +79,7 @@ class ProduitService {
     final data =
         await ApiClient.instance.delete('/produits/$id/definitif')
             as Map<String, dynamic>?;
+    Rafraichissement.instance.signaler();
     return data?['message'] as String? ?? 'Élément supprimé.';
   }
 
@@ -83,6 +91,7 @@ class ProduitService {
               'cible_id': cibleId,
             })
             as Map<String, dynamic>?;
+    Rafraichissement.instance.signaler();
     return data?['message'] as String? ?? 'Éléments fusionnés.';
   }
 }

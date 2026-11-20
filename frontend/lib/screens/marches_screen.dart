@@ -4,6 +4,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/marche.dart';
 import '../models/releve_prix.dart';
 import '../services/marche_service.dart';
+import '../services/rafraichissement.dart';
 import '../services/releve_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
@@ -36,12 +37,23 @@ class _MarchesScreenState extends State<MarchesScreen> {
   void initState() {
     super.initState();
     _futur = MarcheService.lister();
+    Rafraichissement.instance.addListener(_actualiser);
   }
 
   @override
   void dispose() {
+    Rafraichissement.instance.removeListener(_actualiser);
     _controleurRecherche.dispose();
     super.dispose();
+  }
+
+  /// Recharge la liste après une création / modification / désactivation
+  /// de marché, même quand cet onglet n'est pas visible.
+  void _actualiser() {
+    if (!mounted) {
+      return;
+    }
+    setState(() => _futur = MarcheService.lister());
   }
 
   Future<void> _recharger() async {

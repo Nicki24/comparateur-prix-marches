@@ -9,6 +9,7 @@ import '../services/produit_service.dart';
 import '../services/releve_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
+import '../widgets/confirmation_abandon.dart';
 import '../widgets/etats.dart';
 import '../widgets/marketscope_header.dart';
 import '../widgets/ms_anim.dart';
@@ -37,21 +38,80 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
   Marche? _marcheChoisi;
   DateTime _date = DateTime.now();
 
+  /// Vrai dès que l'utilisateur touche au formulaire (même s'il efface
+  /// ensuite son texte) : on ne veut jamais perdre une saisie sans prévenir.
+  bool _modifie = false;
+  bool _autoriserSortie = false;
+
+  bool get _aDesModifications => _modifie;
+
   bool _enChargement = false;
   String? _erreur;
 
   @override
   void initState() {
     super.initState();
+    _prixController.addListener(_marquerModifie);
+    _commentaireController.addListener(_marquerModifie);
     _futurProduits = ProduitService.lister();
     _futurMarches = MarcheService.lister();
   }
 
   @override
   void dispose() {
+    _prixController.removeListener(_marquerModifie);
+    _commentaireController.removeListener(_marquerModifie);
     _prixController.dispose();
     _commentaireController.dispose();
     super.dispose();
+  }
+
+  void _marquerModifie() {
+    if (!_modifie && mounted) {
+      setState(() => _modifie = true);
+    }
+  }
+
+  void _choisirProduit(Produit? produit) {
+    setState(() {
+      _modifie = true;
+      _produitChoisi = produit;
+    });
+  }
+
+  void _choisirMarche(Marche? marche) {
+    setState(() {
+      _modifie = true;
+      _marcheChoisi = marche;
+    });
+  }
+
+  /// Laisse le route se fermer, après un rebuild pour que [PopScope]
+  /// voie bien `canPop: true`.
+  void _autoriserEtFermer() {
+    if (_autoriserSortie || !mounted) {
+      return;
+    }
+    setState(() => _autoriserSortie = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    });
+  }
+
+  Future<void> _quitter() async {
+    if (_autoriserSortie) {
+      return;
+    }
+    if (!_aDesModifications) {
+      Navigator.of(context).pop();
+      return;
+    }
+    if (!await confirmerAbandonModifications(context)) {
+      return;
+    }
+    _autoriserEtFermer();
   }
 
   Future<void> _choisirDate() async {
@@ -63,7 +123,10 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
       helpText: 'Date du relevé',
     );
     if (choix != null) {
-      setState(() => _date = choix);
+      setState(() {
+        _date = choix;
+        _modifie = true;
+      });
     }
   }
 
@@ -94,7 +157,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
       if (!mounted) {
         return;
       }
-      Navigator.of(context).pop();
+      _autoriserEtFermer();
     } catch (e) {
       if (!mounted) {
         return;
@@ -134,8 +197,17 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const MarketScopeHeader(titre: 'Nouveau relevé de prix'),
+    return PopScope(
+      // Tant que le formulaire est rempli, Retour ne ferme pas l'écran :
+      // on demande d'abord confirmation.
+      canPop: _autoriserSortie || !_aDesModifications,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (!didPop) {
+          await _quitter();
+        }
+      },
+      child: Scaffold(
+        appBar: const MarketScopeHeader(titre: 'Nouveau relevé de prix'),
       body: MsDecorFond(
         child: ListView(
           padding: MiseEnPage.padding(
@@ -209,8 +281,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
                     child: _ChampProduit(
                       futurProduits: _futurProduits,
                       produit: _produitChoisi,
-                      onChanged: (p) =>
-                          setState(() => _produitChoisi = p),
+                      onChanged: _choisirProduit,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -219,8 +290,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
                     child: _ChampMarche(
                       futurMarches: _futurMarches,
                       marche: _marcheChoisi,
-                      onChanged: (m) =>
-                          setState(() => _marcheChoisi = m),
+                      onChanged: _choisirMarche,
                     ),
                   ),
                   const _SectionReleve(
@@ -352,6 +422,7 @@ class _SaisieReleveScreenState extends State<SaisieReleveScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -9,6 +9,7 @@ import '../services/marche_service.dart';
 import '../services/produit_service.dart';
 import '../theme/app_theme.dart';
 import 'carte_marche_screen.dart';
+import '../widgets/confirmation_abandon.dart';
 import '../widgets/confirmation_forte.dart';
 import '../widgets/etats.dart';
 import '../widgets/marketscope_header.dart';
@@ -315,90 +316,143 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
     );
     final formulaire = GlobalKey<FormState>();
     LatLng? position = existant?.position;
+    var modifie = false;
+    var autoriserFermeture = false;
+
+    void marquerModifie(StateSetter setDialogState) {
+      if (!modifie) {
+        setDialogState(() => modifie = true);
+      }
+    }
+
+    void fermer(
+      BuildContext dialogContext,
+      StateSetter setDialogState,
+      bool? valeur,
+    ) {
+      autoriserFermeture = true;
+      setDialogState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (dialogContext.mounted) {
+          Navigator.of(dialogContext).pop(valeur);
+        }
+      });
+    }
+
+    Future<void> annuler(
+      BuildContext dialogContext,
+      StateSetter setDialogState,
+    ) async {
+      if (modifie && !await confirmerAbandonModifications(dialogContext)) {
+        return;
+      }
+      if (!dialogContext.mounted) {
+        return;
+      }
+      fermer(dialogContext, setDialogState, false);
+    }
 
     final ok = await showDialog<bool>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(
-            estModification ? 'Modifier le marché' : 'Nouveau marché',
-          ),
-          content: Form(
-            key: formulaire,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: nomController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nom du marché',
+      builder: (_) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => PopScope(
+          // Retour / Annuler ne ferment le dialogue qu'après confirmation
+          // si l'administrateur a commencé à remplir le formulaire.
+          canPop: autoriserFermeture || !modifie,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (!didPop) {
+              await annuler(dialogContext, setDialogState);
+            }
+          },
+          child: AlertDialog(
+            title: Text(
+              estModification ? 'Modifier le marché' : 'Nouveau marché',
+            ),
+            content: Form(
+              key: formulaire,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nomController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nom du marché',
+                      ),
+                      onChanged: (_) => marquerModifie(setDialogState),
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Nom requis.'
+                          : null,
                     ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Nom requis.' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: localisationController,
-                    decoration: const InputDecoration(
-                      labelText: 'Ville',
-                      hintText: 'Ex. Toliara',
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: localisationController,
+                      decoration: const InputDecoration(
+                        labelText: 'Ville',
+                        hintText: 'Ex. Toliara',
+                      ),
+                      onChanged: (_) => marquerModifie(setDialogState),
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Ville requise.'
+                          : null,
                     ),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Ville requise.'
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: quartierController,
-                    decoration: const InputDecoration(
-                      labelText: 'Quartier (facultatif)',
-                      hintText: 'Ex. Andranomena',
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: quartierController,
+                      decoration: const InputDecoration(
+                        labelText: 'Quartier (facultatif)',
+                        hintText: 'Ex. Andranomena',
+                      ),
+                      onChanged: (_) => marquerModifie(setDialogState),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _ChampPosition(
-                    position: position,
-                    onChoisir: () async {
-                      final choix = await Navigator.of(context)
-                          .push<ChoixPosition>(
-                            MaterialPageRoute(
-                              builder: (_) => CarteMarcheScreen(
-                                initiale: position,
-                                nomMarche: nomController.text.trim(),
+                    const SizedBox(height: 12),
+                    _ChampPosition(
+                      position: position,
+                      onChoisir: () async {
+                        final choix = await Navigator.of(dialogContext)
+                            .push<ChoixPosition>(
+                              MaterialPageRoute(
+                                builder: (_) => CarteMarcheScreen(
+                                  initiale: position,
+                                  nomMarche: nomController.text.trim(),
+                                ),
                               ),
-                            ),
-                          );
-                      if (choix != null) {
-                        setDialogState(() => position = choix.point);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Description (facultatif)',
+                            );
+                        if (choix != null && dialogContext.mounted) {
+                          setDialogState(() {
+                            position = choix.point;
+                            modifie = true;
+                          });
+                        }
+                      },
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: descriptionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Description (facultatif)',
+                      ),
+                      onChanged: (_) => marquerModifie(setDialogState),
+                    ),
+                  ],
+                ),
               ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => annuler(dialogContext, setDialogState),
+                child: const Text('Annuler'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (formulaire.currentState?.validate() ?? false) {
+                    fermer(dialogContext, setDialogState, true);
+                  }
+                },
+                child: Text(estModification ? 'Enregistrer' : 'Créer'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Annuler'),
-            ),
-            FilledButton(
-              onPressed: () {
-                if (formulaire.currentState?.validate() ?? false) {
-                  Navigator.of(context).pop(true);
-                }
-              },
-              child: Text(estModification ? 'Enregistrer' : 'Créer'),
-            ),
-          ],
         ),
       ),
     );
@@ -464,58 +518,110 @@ class _AdminGestionScreenState extends State<AdminGestionScreen> {
       text: existant?.categorie,
     );
     final formulaire = GlobalKey<FormState>();
+    var modifie = false;
+    var autoriserFermeture = false;
+
+    void marquerModifie(StateSetter setDialogState) {
+      if (!modifie) {
+        setDialogState(() => modifie = true);
+      }
+    }
+
+    void fermer(
+      BuildContext dialogContext,
+      StateSetter setDialogState,
+      bool? valeur,
+    ) {
+      autoriserFermeture = true;
+      setDialogState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (dialogContext.mounted) {
+          Navigator.of(dialogContext).pop(valeur);
+        }
+      });
+    }
+
+    Future<void> annuler(
+      BuildContext dialogContext,
+      StateSetter setDialogState,
+    ) async {
+      if (modifie && !await confirmerAbandonModifications(dialogContext)) {
+        return;
+      }
+      if (!dialogContext.mounted) {
+        return;
+      }
+      fermer(dialogContext, setDialogState, false);
+    }
 
     final ok = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          estModification ? 'Modifier le produit' : 'Nouveau produit',
-        ),
-        content: Form(
-          key: formulaire,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: nomController,
-                decoration: const InputDecoration(labelText: 'Nom du produit'),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Nom requis.' : null,
+      builder: (_) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => PopScope(
+          canPop: autoriserFermeture || !modifie,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (!didPop) {
+              await annuler(dialogContext, setDialogState);
+            }
+          },
+          child: AlertDialog(
+            title: Text(
+              estModification ? 'Modifier le produit' : 'Nouveau produit',
+            ),
+            content: Form(
+              key: formulaire,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: nomController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nom du produit',
+                    ),
+                    onChanged: (_) => marquerModifie(setDialogState),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Nom requis.'
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: uniteController,
+                    decoration: const InputDecoration(
+                      labelText: 'Unité de mesure',
+                      hintText: 'kilo, litre, unité…',
+                    ),
+                    onChanged: (_) => marquerModifie(setDialogState),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Unité requise.'
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: categorieController,
+                    decoration: const InputDecoration(
+                      labelText: 'Catégorie (facultatif)',
+                    ),
+                    onChanged: (_) => marquerModifie(setDialogState),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: uniteController,
-                decoration: const InputDecoration(
-                  labelText: 'Unité de mesure',
-                  hintText: 'kilo, litre, unité…',
-                ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Unité requise.' : null,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => annuler(dialogContext, setDialogState),
+                child: const Text('Annuler'),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: categorieController,
-                decoration: const InputDecoration(
-                  labelText: 'Catégorie (facultatif)',
-                ),
+              FilledButton(
+                onPressed: () {
+                  if (formulaire.currentState?.validate() ?? false) {
+                    fermer(dialogContext, setDialogState, true);
+                  }
+                },
+                child: Text(estModification ? 'Enregistrer' : 'Créer'),
               ),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Annuler'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formulaire.currentState?.validate() ?? false) {
-                Navigator.of(context).pop(true);
-              }
-            },
-            child: Text(estModification ? 'Enregistrer' : 'Créer'),
-          ),
-        ],
       ),
     );
 

@@ -1,5 +1,6 @@
 import '../models/releve_prix.dart';
 import 'api_client.dart';
+import 'rafraichissement.dart';
 
 class ReleveService {
   /// Soumet un relevé de prix (contributeur authentifié).
@@ -24,7 +25,9 @@ class ReleveService {
     final releveData = data['data'] is Map<String, dynamic>
         ? data['data'] as Map<String, dynamic>
         : data;
-    return RelevePrix.fromJson(releveData);
+    final releve = RelevePrix.fromJson(releveData);
+    Rafraichissement.instance.signaler();
+    return releve;
   }
 
   /// Historique personnel : les relevés de l'utilisateur connecté.

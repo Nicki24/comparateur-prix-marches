@@ -39,6 +39,35 @@ class _SignalementsScreenState extends State<SignalementsScreen> {
   }
 
   Future<void> _detecterObsoletes() async {
+    final confirme = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          PhosphorIconsRegular.clockCountdown,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        title: const Text('Détecter les prix obsolètes ?'),
+        content: const Text(
+          'Cette action va examiner les relevés de prix et marquer comme '
+          'obsolètes ceux qui n’ont pas été mis à jour récemment. '
+          'Les nouveaux signalements seront visibles par les administrateurs.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Lancer la détection'),
+          ),
+        ],
+      ),
+    );
+    if (confirme != true || !mounted) {
+      return;
+    }
+
     setState(() => _enDetection = true);
     try {
       final nombre = await SignalementService.detecterObsoletes();

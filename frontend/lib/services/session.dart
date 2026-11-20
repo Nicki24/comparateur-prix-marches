@@ -32,6 +32,13 @@ class Session extends ChangeNotifier {
   User? get user => _user;
   bool get estConnecte => _token != null && _user != null;
 
+  /// Alerte « session expirée » à afficher par le widget racine.
+  /// [versionExpiration] change à chaque nouvelle expiration pour que
+  /// l'alerte ne s'affiche qu'une fois, même si plusieurs requêtes échouent
+  /// en même temps avec un 401.
+  String? messageExpiration;
+  int versionExpiration = 0;
+
   /// Restaure la session depuis le stockage chiffré.
   Future<void> _restaurer() async {
     try {
@@ -87,6 +94,7 @@ class Session extends ChangeNotifier {
   Future<void> connecter(String token, User user) async {
     _token = token;
     _user = user;
+    messageExpiration = null;
     await _persister();
     notifyListeners();
   }
@@ -96,8 +104,29 @@ class Session extends ChangeNotifier {
     await AuthService.deconnexion();
     _token = null;
     _user = null;
+    messageExpiration = null;
     await _persister();
     notifyListeners();
+  }
+
+  /// Le jeton n'est plus reconnu par l'API (401) : on vide la session
+  /// localement sans rappeler /logout (qui renverrait un nouveau 401).
+  Future<void> expirer() async {
+    final etaitConnecte = estConnecte;
+    _token = null;
+    _user = null;
+    await _persister();
+    if (etaitConnecte) {
+      messageExpiration =
+          'Votre session a expiré. Veuillez vous reconnecter.';
+      versionExpiration++;
+    }
+    notifyListeners();
+  }
+
+  /// L'alerte ayant été affichée, on évite de la rejouer sur un rebuild.
+  void effacerAlerteExpiration() {
+    messageExpiration = null;
   }
 }
 

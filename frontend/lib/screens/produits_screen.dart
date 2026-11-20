@@ -5,6 +5,7 @@ import '../models/comparaison.dart';
 import '../models/produit.dart';
 import '../services/comparison_service.dart';
 import '../services/produit_service.dart';
+import '../services/rafraichissement.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/barre_recherche.dart';
@@ -36,6 +37,15 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
   void initState() {
     super.initState();
     _futur = _charger();
+    Rafraichissement.instance.addListener(_actualiser);
+  }
+
+  /// Recalcule la liste et les meilleurs prix après toute modification.
+  void _actualiser() {
+    if (!mounted) {
+      return;
+    }
+    setState(() => _futur = _charger(forcer: true));
   }
 
   Future<List<Produit>> _charger({bool forcer = false}) async {
@@ -64,6 +74,7 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
 
   @override
   void dispose() {
+    Rafraichissement.instance.removeListener(_actualiser);
     _controleurRecherche.dispose();
     super.dispose();
   }

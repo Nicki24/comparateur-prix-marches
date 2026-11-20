@@ -2,6 +2,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../models/marche.dart';
 import 'api_client.dart';
+import 'rafraichissement.dart';
 
 class MarcheService {
   /// Liste des marchés actifs (ou tous si [tout] = true).
@@ -38,12 +39,15 @@ class MarcheService {
     final marcheData = data['data'] is Map<String, dynamic>
         ? data['data'] as Map<String, dynamic>
         : data;
-    return Marche.fromJson(marcheData);
+    final marche = Marche.fromJson(marcheData);
+    Rafraichissement.instance.signaler();
+    return marche;
   }
 
   /// Désactive un marché (admin, suppression logique).
   static Future<void> desactiver(int id) async {
     await ApiClient.instance.delete('/marches/$id');
+    Rafraichissement.instance.signaler();
   }
 
   /// Modifie un marché (admin).
@@ -70,12 +74,15 @@ class MarcheService {
     final marcheData = data['data'] is Map<String, dynamic>
         ? data['data'] as Map<String, dynamic>
         : data;
-    return Marche.fromJson(marcheData);
+    final marche = Marche.fromJson(marcheData);
+    Rafraichissement.instance.signaler();
+    return marche;
   }
 
   /// Réactive un marché désactivé (admin, suppression logique inverse).
   static Future<void> reactiver(int id) async {
     await ApiClient.instance.put('/marches/$id', {'actif': true});
+    Rafraichissement.instance.signaler();
   }
 
   /// Supprime définitivement un marché sans historique (admin).
@@ -86,6 +93,7 @@ class MarcheService {
     final data =
         await ApiClient.instance.delete('/marches/$id/definitif')
             as Map<String, dynamic>?;
+    Rafraichissement.instance.signaler();
     return data?['message'] as String? ?? 'Élément supprimé.';
   }
 
@@ -97,6 +105,7 @@ class MarcheService {
               'cible_id': cibleId,
             })
             as Map<String, dynamic>?;
+    Rafraichissement.instance.signaler();
     return data?['message'] as String? ?? 'Éléments fusionnés.';
   }
 }

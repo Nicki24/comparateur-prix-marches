@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../services/session.dart';
@@ -41,6 +43,37 @@ class _AccueilScreenState extends State<AccueilScreen> {
         _visites.add(index);
       });
 
+  /// Alerte lorsqu'on veut fermer l'application (bouton Retour du
+  /// téléphone). Sur le web, le navigateur gère lui-même la fermeture
+  /// de l'onglet via le garde-fou ajouté dans `web/index.html`.
+  Future<bool> _confirmerQuitter() async {
+    final quitter = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          PhosphorIconsRegular.signOut,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        title: const Text('Voulez-vous vraiment quitter ?'),
+        content: const Text(
+          'L’application sera fermée. Vos relevés et vos données '
+          'restent enregistrés.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Rester'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Quitter'),
+          ),
+        ],
+      ),
+    );
+    return quitter ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -58,10 +91,22 @@ class _AccueilScreenState extends State<AccueilScreen> {
 
     final bureau = MiseEnPage.estBureau(context);
 
-    return NavigationPrincipale(
-      index: _index,
-      onSelection: _allerA,
-      child: Scaffold(
+    return PopScope(
+      // Sur le web, on laisse le navigateur gérer le bouton Retour et la
+      // fermeture de l'onglet (confirmation native via beforeunload).
+      canPop: kIsWeb,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || kIsWeb) {
+          return;
+        }
+        if (await _confirmerQuitter()) {
+          SystemNavigator.pop();
+        }
+      },
+      child: NavigationPrincipale(
+        index: _index,
+        onSelection: _allerA,
+        child: Scaffold(
       body: Column(
         children: [
           // Barre d'état + bandeau sur fond encre, continus avec le header.
@@ -144,6 +189,7 @@ class _AccueilScreenState extends State<AccueilScreen> {
             ),
           ],
         ],
+      ),
       ),
       ),
     );

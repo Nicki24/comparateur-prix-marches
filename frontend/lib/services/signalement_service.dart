@@ -1,5 +1,6 @@
 import '../models/signalement.dart';
 import 'api_client.dart';
+import 'rafraichissement.dart';
 
 class SignalementService {
   /// Liste des signalements d'anomalies (admin).
@@ -17,6 +18,7 @@ class SignalementService {
     final data = await ApiClient.instance
         .post('/signalements/detecter-obsoletes', {}) as Map<String, dynamic>;
 
+    Rafraichissement.instance.signaler();
     return (data['nombre_signalements'] as num?)?.toInt() ?? 0;
   }
 }

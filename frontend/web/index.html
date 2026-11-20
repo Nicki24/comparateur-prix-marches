@@ -54,6 +54,14 @@
       var el = document.getElementById('loading');
       if (el) el.classList.add('hidden');
     }, 8000);
+
+    // Demande confirmation avant de fermer l'onglet ou de recharger la page.
+    // Les navigateurs imposent leur propre libellé (non personnalisable).
+    window.addEventListener('beforeunload', function (event) {
+      event.preventDefault();
+      event.returnValue = '';
+      return '';
+    });
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>

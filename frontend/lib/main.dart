@@ -5,6 +5,7 @@ import 'screens/accueil_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/preferences_app.dart';
 import 'theme/app_theme.dart';
+import 'widgets/alerte_session_expiree.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +44,11 @@ class App extends StatelessWidget {
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: prefs.themeMode,
+          // Alerte globale : un 401 sur n'importe quelle requête renvoie
+          // vers la connexion, quel que soit l'onglet affiché.
+          builder: (context, child) => AlerteSessionExpiree(
+            child: child ?? const SizedBox.shrink(),
+          ),
           // Fondu doux entre clair et sombre plutôt qu'un changement sec.
           themeAnimationDuration: const Duration(milliseconds: 450),
           themeAnimationCurve: Curves.easeInOutCubic,

@@ -60,8 +60,10 @@ class ApiClient {
     Map<String, dynamic>? query,
     String? token,
   ]) async {
-    return _executer(() =>
-        http.get(_uri(chemin, query), headers: _headers(token: token)));
+    return _executer(
+      () => http.get(_uri(chemin, query), headers: _headers(token: token)),
+      chemin: chemin,
+    );
   }
 
   Future<dynamic> post(
@@ -75,26 +77,34 @@ class ApiClient {
         headers: _headers(),
         body: jsonEncode(corps),
       ),
+      chemin: chemin,
       timeout: timeout,
     );
   }
 
   Future<dynamic> put(String chemin, Map<String, dynamic> corps) async {
-    return _executer(() => http.put(
-          _uri(chemin),
-          headers: _headers(),
-          body: jsonEncode(corps),
-        ));
+    return _executer(
+      () => http.put(
+        _uri(chemin),
+        headers: _headers(),
+        body: jsonEncode(corps),
+      ),
+      chemin: chemin,
+    );
   }
 
   Future<dynamic> delete(String chemin) async {
-    return _executer(() => http.delete(_uri(chemin), headers: _headers()));
+    return _executer(
+      () => http.delete(_uri(chemin), headers: _headers()),
+      chemin: chemin,
+    );
   }
 
   /// Exécute la requête et convertit les échecs réseau (serveur éteint,
   /// pas de connexion, délai dépassé) en [ApiException] lisible.
   Future<dynamic> _executer(
     Future<http.Response> Function() requete, {
+    required String chemin,
     Duration timeout = _timeout,
   }) async {
     final http.Response reponse;
@@ -107,13 +117,29 @@ class ApiClient {
       throw const ApiException(0,
           'Serveur injoignable. Vérifiez votre connexion internet puis réessayez.');
     }
-    return _verifier(reponse);
+    return _verifier(reponse, chemin);
   }
 
-  dynamic _verifier(http.Response reponse) {
+  /// Un 401 sur /login ou /register signifie « mauvais identifiants » :
+  /// ce n'est pas une session expirée. /logout ne doit pas non plus
+  /// déclencher l'alerte (le jeton peut déjà être invalide).
+  static bool _estRouteConnexion(String chemin) {
+    final normalise = chemin.startsWith('/') ? chemin : '/$chemin';
+    return normalise == '/login' ||
+        normalise == '/register' ||
+        normalise == '/logout';
+  }
+
+  dynamic _verifier(http.Response reponse, String chemin) {
     final decode = _decoder(reponse.body);
     if (reponse.statusCode >= 200 && reponse.statusCode < 300) {
       return decode;
+    }
+
+    if (reponse.statusCode == 401 &&
+        !_estRouteConnexion(chemin) &&
+        Session.instance.token != null) {
+      unawaited(Session.instance.expirer());
     }
 
     var message = 'Erreur serveur (${reponse.statusCode}).';

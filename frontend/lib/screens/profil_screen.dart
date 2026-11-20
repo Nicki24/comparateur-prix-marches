@@ -3,6 +3,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/releve_prix.dart';
 import '../services/preferences_app.dart';
+import '../services/rafraichissement.dart';
 import '../services/releve_service.dart';
 import '../services/session.dart';
 import '../theme/app_theme.dart';
@@ -30,12 +31,57 @@ class _ProfilScreenState extends State<ProfilScreen> {
   bool _enDeconnexion = false;
 
   Future<void> _deconnecter() async {
+    if (_enDeconnexion) {
+      return;
+    }
+    if (!await _confirmerDeconnexion()) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
     setState(() => _enDeconnexion = true);
     await Session.instance.deconnecter();
     if (!mounted) {
       return;
     }
     setState(() => _enDeconnexion = false);
+  }
+
+  /// Alerte affichée avant de couper la session, pour les contributeurs
+  /// comme pour les administrateurs.
+  Future<bool> _confirmerDeconnexion() async {
+    final estAdmin = Session.instance.user?.estAdmin ?? false;
+    final confirme = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          PhosphorIconsRegular.signOut,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        title: const Text('Se déconnecter ?'),
+        content: Text(
+          estAdmin
+              ? 'Vous êtes connecté en tant qu’administrateur. '
+                  'Vos modifications sont déjà enregistrées, mais vous '
+                  'devrez vous reconnecter pour continuer à les gérer.'
+              : 'Vous allez quitter votre session contributeur. '
+                  'Vos relevés restent enregistrés et vous pourrez '
+                  'vous reconnecter à tout moment.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Rester connecté'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Se déconnecter'),
+          ),
+        ],
+      ),
+    );
+    return confirme ?? false;
   }
 
   @override
@@ -434,8 +480,27 @@ class _StatsContributeur extends StatefulWidget {
 }
 
 class _StatsContributeurState extends State<_StatsContributeur> {
-  // Chargé une fois (et non à chaque reconstruction du profil).
-  late final _futur = ReleveService.mesRelevesAvecTotal();
+  late Future<({List<RelevePrix> releves, int total})> _futur;
+
+  @override
+  void initState() {
+    super.initState();
+    _futur = ReleveService.mesRelevesAvecTotal();
+    Rafraichissement.instance.addListener(_actualiser);
+  }
+
+  @override
+  void dispose() {
+    Rafraichissement.instance.removeListener(_actualiser);
+    super.dispose();
+  }
+
+  void _actualiser() {
+    if (!mounted) {
+      return;
+    }
+    setState(() => _futur = ReleveService.mesRelevesAvecTotal());
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -9,6 +9,7 @@ import '../services/api_client.dart';
 import '../services/comparison_service.dart';
 import '../services/marche_service.dart';
 import '../services/produit_service.dart';
+import '../services/rafraichissement.dart';
 import '../services/releve_service.dart';
 import '../services/session.dart';
 import '../theme/app_theme.dart';
@@ -50,6 +51,25 @@ class _DashboardAccueilState extends State<DashboardAccueil> {
   void initState() {
     super.initState();
     _futur = _DonneesDashboard.charger();
+    Rafraichissement.instance.addListener(_actualiser);
+  }
+
+  @override
+  void dispose() {
+    Rafraichissement.instance.removeListener(_actualiser);
+    super.dispose();
+  }
+
+  /// Recharge en arrière-plan dès qu'une donnée change (marché, produit,
+  /// relevé…). L'onglet reste monté : en revenant dessus, l'utilisateur
+  /// voit directement les données à jour, sans geste de rafraîchissement.
+  void _actualiser() {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _futur = _DonneesDashboard.charger(forcer: true);
+    });
   }
 
   Future<void> _recharger() async {
@@ -794,8 +814,28 @@ class _DerniersReleves extends StatefulWidget {
 }
 
 class _DerniersRelevesState extends State<_DerniersReleves> {
-  // Chargé une seule fois (et non à chaque reconstruction de l'écran).
-  late final Future<List<RelevePrix>> _futur = ReleveService.mesReleves();
+  // Rechargé à chaque modification (nouveau relevé, suppression, fusion…).
+  late Future<List<RelevePrix>> _futur;
+
+  @override
+  void initState() {
+    super.initState();
+    _futur = ReleveService.mesReleves();
+    Rafraichissement.instance.addListener(_actualiser);
+  }
+
+  @override
+  void dispose() {
+    Rafraichissement.instance.removeListener(_actualiser);
+    super.dispose();
+  }
+
+  void _actualiser() {
+    if (!mounted) {
+      return;
+    }
+    setState(() => _futur = ReleveService.mesReleves());
+  }
 
   @override
   Widget build(BuildContext context) {

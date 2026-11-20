@@ -1,6 +1,7 @@
 import '../models/comparaison.dart';
 import '../models/historique_point.dart';
 import 'api_client.dart';
+import 'rafraichissement.dart';
 
 class ComparisonService {
   /// Durée pendant laquelle une comparaison déjà chargée est réutilisée.
@@ -9,20 +10,28 @@ class ComparisonService {
   /// Cache mémoire : le bandeau, l'accueil et la liste des produits
   /// demandent les mêmes comparaisons au démarrage. La requête en cours
   /// est partagée, ce qui évite de solliciter l'API plusieurs fois.
-  static final _cache = <int, ({DateTime date, Future<Comparaison> futur})>{};
+  static final _cache =
+      <int, ({DateTime date, int version, Future<Comparaison> futur})>{};
 
   /// Comparaison du dernier prix par marché pour un produit.
   ///
   /// [forcer] ignore le cache (tirer pour rafraîchir).
   static Future<Comparaison> comparer(int produitId, {bool forcer = false}) {
     final enCache = _cache[produitId];
+    // Une écriture (marché, produit, relevé…) périme tout le cache : les
+    // prix affichés doivent refléter la dernière modification.
     if (!forcer &&
         enCache != null &&
+        enCache.version == Rafraichissement.instance.version &&
         DateTime.now().difference(enCache.date) < _dureeCache) {
       return enCache.futur;
     }
     final futur = _charger(produitId);
-    _cache[produitId] = (date: DateTime.now(), futur: futur);
+    _cache[produitId] = (
+      date: DateTime.now(),
+      version: Rafraichissement.instance.version,
+      futur: futur,
+    );
     // Une erreur ne doit pas rester en cache (l'appelant la reçoit quand même).
     futur.then<void>((_) {}, onError: (Object _) => _cache.remove(produitId));
     return futur;

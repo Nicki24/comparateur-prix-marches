@@ -3,6 +3,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../models/releve_prix.dart';
 import '../services/releve_service.dart';
+import '../services/rafraichissement.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/etats.dart';
@@ -30,6 +31,20 @@ class _MesRelevesScreenState extends State<MesRelevesScreen> {
   void initState() {
     super.initState();
     _futur = ReleveService.mesRelevesAvecTotal();
+    Rafraichissement.instance.addListener(_actualiser);
+  }
+
+  @override
+  void dispose() {
+    Rafraichissement.instance.removeListener(_actualiser);
+    super.dispose();
+  }
+
+  void _actualiser() {
+    if (!mounted) {
+      return;
+    }
+    setState(() => _futur = ReleveService.mesRelevesAvecTotal());
   }
 
   Future<void> _recharger() async {
